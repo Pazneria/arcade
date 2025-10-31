@@ -480,6 +480,11 @@
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let hoverCabinet = null;
+        let pendingHoverCabinet = null;
+        let hoverLockState = 'idle';
+        let hoverLockUntil = 0;
+        const HOVER_LOCK_HOLD_MS = 500;
+        const LOOK_TARGET_SETTLED_EPSILON = 0.05;
         let activeCabinet = null;
         let targetZ = cameraRig.position.z;
         let scrollVelocity = 0;
@@ -512,8 +517,25 @@
           while (candidate && !cabinets.includes(candidate)) {
             candidate = candidate.parent;
           }
-          hoverCabinet = candidate && cabinets.includes(candidate) ? candidate : null;
-          renderer.domElement.style.cursor = hoverCabinet ? 'pointer' : 'default';
+          pendingHoverCabinet = candidate && cabinets.includes(candidate) ? candidate : null;
+          const now = performance.now();
+          if (hoverLockState === 'idle') {
+            applyHoverSelection(pendingHoverCabinet);
+          } else if (hoverLockState === 'hold' && now >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(pendingHoverCabinet);
+          }
+        });
+
+        renderer.domElement.addEventListener('pointerleave', () => {
+          if (activeCabinet || scriptedMotion) return;
+          pendingHoverCabinet = null;
+          if (hoverLockState === 'idle') {
+            applyHoverSelection(null);
+          } else if (hoverLockState === 'hold' && performance.now() >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(null);
+          }
         });
 
         renderer.domElement.addEventListener('click', () => {
@@ -535,7 +557,7 @@
         function focusCabinet(cabinet) {
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
           startScriptedMotion(cabinet.userData.focusPosition, 900);
-          hoverCabinet = null;
+          resetHoverState();
           activeCabinet = cabinet;
           infoTitle.textContent = cabinet.userData.game.name;
           infoDescription.textContent = cabinet.userData.game.description;
@@ -561,6 +583,27 @@
             duration,
           };
           scrollVelocity = 0;
+        }
+
+        function applyHoverSelection(cabinet) {
+          if (hoverCabinet === cabinet) return;
+          hoverCabinet = cabinet;
+          if (hoverCabinet) {
+            hoverLockState = 'panning';
+            hoverLockUntil = 0;
+          } else {
+            hoverLockState = 'idle';
+            hoverLockUntil = 0;
+          }
+          renderer.domElement.style.cursor = hoverCabinet ? 'pointer' : 'default';
+        }
+
+        function resetHoverState() {
+          hoverCabinet = null;
+          pendingHoverCabinet = null;
+          hoverLockState = 'idle';
+          hoverLockUntil = 0;
+          renderer.domElement.style.cursor = 'default';
         }
 
         function updateCabinetEmissive() {
@@ -713,6 +756,17 @@
 
           const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
           lookTarget.lerp(desiredLookTarget, lookLerpSpeed);
+
+          if (hoverLockState === 'panning' && hoverCabinet) {
+            const lookDelta = lookTarget.distanceTo(desiredLookTarget);
+            if (lookDelta < LOOK_TARGET_SETTLED_EPSILON) {
+              hoverLockState = 'hold';
+              hoverLockUntil = now + HOVER_LOCK_HOLD_MS;
+            }
+          } else if (hoverLockState === 'hold' && now >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(pendingHoverCabinet);
+          }
 
           camera.lookAt(lookTarget);
 
