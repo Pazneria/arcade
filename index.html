@@ -124,6 +124,18 @@
         line-height: 1.5;
       }
 
+      #info-prompt {
+        margin: 0 0 1.5rem;
+        font-family: "Orbitron", system-ui, sans-serif;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      #info-prompt:empty {
+        display: none;
+      }
+
       #info-actions {
         display: flex;
         flex-wrap: wrap;
@@ -291,6 +303,7 @@
       <div id="info-panel" role="dialog" aria-modal="true">
         <h2 id="info-title">Cabinet Title</h2>
         <p id="info-description">Description placeholder</p>
+        <p id="info-prompt" aria-live="polite"></p>
         <div id="info-actions">
           <a id="play-button" href="#" target="_blank" rel="noopener">Play</a>
           <button id="close-panel">Back to walkway</button>
@@ -336,6 +349,7 @@
       const infoPanel = document.getElementById('info-panel');
       const infoTitle = document.getElementById('info-title');
       const infoDescription = document.getElementById('info-description');
+      const infoPrompt = document.getElementById('info-prompt');
       const playButton = document.getElementById('play-button');
       const closePanelButton = document.getElementById('close-panel');
 
@@ -471,9 +485,6 @@
           cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
           cabinetGroup.add(cabinet);
 
-          const focusOffset = side === 'left' ? 2.8 : -2.8;
-          cabinet.userData.focusPosition = new THREE.Vector3(x + focusOffset, 1.6, z + 1.2);
-
           cabinets.push(cabinet);
         });
 
@@ -486,6 +497,7 @@
         const HOVER_LOCK_HOLD_MS = 500;
         const LOOK_TARGET_SETTLED_EPSILON = 0.05;
         let activeCabinet = null;
+        let approachingCabinet = null;
         let targetZ = cameraRig.position.z;
         let scrollVelocity = 0;
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
@@ -494,6 +506,7 @@
         const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
         const focusRigTarget = new THREE.Vector3();
         const rigGoal = new THREE.Vector3();
+        const APPROACH_ALIGNMENT_EPSILON = 0.12;
 
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
@@ -501,7 +514,7 @@
         window.addEventListener(
           'wheel',
           (event) => {
-            if (activeCabinet) return;
+            if (activeCabinet || approachingCabinet) return;
             scrollVelocity += event.deltaY * 0.025;
           },
           { passive: true }
@@ -511,7 +524,7 @@
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          if (activeCabinet) return;
+          if (activeCabinet || approachingCabinet) return;
           raycaster.setFromCamera(pointer, camera);
           const intersects = raycaster.intersectObjects(cabinets, true);
           let candidate = intersects.length ? intersects[0].object : null;
@@ -529,7 +542,7 @@
         });
 
         renderer.domElement.addEventListener('pointerleave', () => {
-          if (activeCabinet) return;
+          if (activeCabinet || approachingCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
             applyHoverSelection(null);
@@ -540,7 +553,7 @@
         });
 
         renderer.domElement.addEventListener('click', () => {
-          if (hoverCabinet && !activeCabinet) {
+          if (hoverCabinet && !activeCabinet && !approachingCabinet) {
             focusCabinet(hoverCabinet);
           }
         });
@@ -559,22 +572,26 @@
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
           resetHoverState();
           hoverCabinet = cabinet;
-          focusRigTarget.copy(cabinet.userData.focusPosition);
+          approachingCabinet = cabinet;
+          focusRigTarget.set(0, 1.6, cabinet.position.z);
           targetZ = focusRigTarget.z;
-          activeCabinet = cabinet;
+          scrollVelocity = 0;
+          activeCabinet = null;
           infoTitle.textContent = cabinet.userData.game.name;
           infoDescription.textContent = cabinet.userData.game.description;
+          infoPrompt.textContent = `Ready to play ${cabinet.userData.game.name}?`;
           playButton.href = cabinet.userData.game.url;
-          infoPanel.classList.add('visible');
+          infoPanel.classList.remove('visible');
           renderer.domElement.style.cursor = 'default';
         }
 
         function exitCabinetView() {
-          if (!activeCabinet) return;
+          if (!activeCabinet && !approachingCabinet) return;
           activeCabinet = null;
-          hoverCabinet = null;
+          approachingCabinet = null;
+          resetHoverState();
           infoPanel.classList.remove('visible');
-          renderer.domElement.style.cursor = 'default';
+          infoPrompt.textContent = '';
           targetZ = walkwayReturnPosition.z;
         }
 
@@ -711,7 +728,8 @@
           const now = performance.now();
           const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
           lastFrameTime = now;
-          if (!activeCabinet) {
+          const cameraLocked = approachingCabinet || activeCabinet;
+          if (!cameraLocked) {
             const damping = Math.exp(-2.8 * deltaSeconds);
             scrollVelocity *= damping;
             if (Math.abs(scrollVelocity) < 0.00001) {
@@ -732,6 +750,16 @@
 
           cameraRig.position.lerp(rigGoal, 0.08);
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+
+          if (approachingCabinet) {
+            const alignmentDistance = cameraRig.position.distanceTo(focusRigTarget);
+            if (alignmentDistance < APPROACH_ALIGNMENT_EPSILON) {
+              activeCabinet = approachingCabinet;
+              hoverCabinet = approachingCabinet;
+              approachingCabinet = null;
+              infoPanel.classList.add('visible');
+            }
+          }
 
           const lookTargetCabinet = activeCabinet ?? hoverCabinet;
           if (lookTargetCabinet) {
