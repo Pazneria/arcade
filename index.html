@@ -285,7 +285,7 @@
 
     <div id="overlay">
       <div id="ui-top">
-        <div id="instruction">Scroll to move • Move mouse to look • Click a cabinet</div>
+        <div id="instruction">Scroll to move • Click a cabinet to explore</div>
         <a class="neon-button" href="/">Exit Arcade</a>
       </div>
       <div id="info-panel" role="dialog" aria-modal="true">
@@ -417,7 +417,6 @@
         cameraRig.add(camera);
         scene.add(cameraRig);
 
-        const targetRotation = { yaw: 0 };
         const lookTarget = new THREE.Vector3(0, 1.5, -5);
 
         const ambientLight = new THREE.AmbientLight(0x1f2438, 1.4);
@@ -483,33 +482,27 @@
         let targetZ = cameraRig.position.z;
         const minZ = -games.length * spacing - 4;
         const maxZ = 12;
+        let scriptedMotion = null;
+        const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
 
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
 
-        const pointerMoveHandler = (event) => {
-          const rect = renderer.domElement.getBoundingClientRect();
-          pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-          pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          if (!activeCabinet) {
-            targetRotation.yaw = THREE.MathUtils.lerp(targetRotation.yaw, pointer.x * 0.45, 0.2);
-          }
-        };
-
-        window.addEventListener('mousemove', pointerMoveHandler);
-
         window.addEventListener(
           'wheel',
           (event) => {
-            if (activeCabinet) return;
+            if (activeCabinet || scriptedMotion) return;
             targetZ += event.deltaY * 0.004;
             targetZ = THREE.MathUtils.clamp(targetZ, minZ, maxZ);
           },
           { passive: true }
         );
 
-        renderer.domElement.addEventListener('pointermove', () => {
-          if (activeCabinet) return;
+        renderer.domElement.addEventListener('pointermove', (event) => {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+          pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+          if (activeCabinet || scriptedMotion) return;
           raycaster.setFromCamera(pointer, camera);
           const intersects = raycaster.intersectObjects(cabinets, true);
           let candidate = intersects.length ? intersects[0].object : null;
@@ -521,7 +514,7 @@
         });
 
         renderer.domElement.addEventListener('click', () => {
-          if (hoverCabinet && !activeCabinet) {
+          if (hoverCabinet && !activeCabinet && !scriptedMotion) {
             focusCabinet(hoverCabinet);
           }
         });
@@ -537,21 +530,33 @@
         });
 
         function focusCabinet(cabinet) {
+          walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+          startScriptedMotion(cabinet.userData.focusPosition, 900);
+          hoverCabinet = null;
           activeCabinet = cabinet;
           infoTitle.textContent = cabinet.userData.game.name;
           infoDescription.textContent = cabinet.userData.game.description;
           playButton.href = cabinet.userData.game.url;
           infoPanel.classList.add('visible');
-          targetRotation.yaw = 0;
           renderer.domElement.style.cursor = 'default';
         }
 
         function exitCabinetView() {
           if (!activeCabinet) return;
+          startScriptedMotion(walkwayReturnPosition, 900);
           activeCabinet = null;
           infoPanel.classList.remove('visible');
           renderer.domElement.style.cursor = 'default';
-          targetZ = cameraRig.position.z;
+          targetZ = walkwayReturnPosition.z;
+        }
+
+        function startScriptedMotion(target, duration = 900) {
+          scriptedMotion = {
+            start: cameraRig.position.clone(),
+            target: target.clone(),
+            startTime: performance.now(),
+            duration,
+          };
         }
 
         function updateCabinetEmissive() {
@@ -660,16 +665,28 @@
 
         function animate() {
           requestAnimationFrame(animate);
-          if (!activeCabinet) {
+          const now = performance.now();
+          if (scriptedMotion) {
+            const elapsed = now - scriptedMotion.startTime;
+            const t = Math.min(elapsed / scriptedMotion.duration, 1);
+            const eased = t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
+            cameraRig.position.lerpVectors(scriptedMotion.start, scriptedMotion.target, eased);
+            if (t >= 1) {
+              cameraRig.position.copy(scriptedMotion.target);
+              scriptedMotion = null;
+            }
+          } else if (!activeCabinet) {
             cameraRig.position.z = THREE.MathUtils.lerp(cameraRig.position.z, targetZ, 0.08);
-            lookTarget.set(0, 1.5, cameraRig.position.z - 10);
-          } else if (activeCabinet.userData.focusPosition) {
-            const focus = activeCabinet.userData.focusPosition;
-            cameraRig.position.lerp(focus, 0.08);
-            lookTarget.copy(activeCabinet.position).setY(2.4);
+            cameraRig.position.x = THREE.MathUtils.lerp(cameraRig.position.x, 0, 0.08);
+            cameraRig.position.y = THREE.MathUtils.lerp(cameraRig.position.y, 1.6, 0.08);
+            walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
           }
 
-          cameraRig.rotation.y = THREE.MathUtils.lerp(cameraRig.rotation.y, targetRotation.yaw, 0.1);
+          if (activeCabinet) {
+            lookTarget.copy(activeCabinet.position).setY(2.4);
+          } else {
+            lookTarget.set(0, 1.5, cameraRig.position.z - 10);
+          }
 
           camera.lookAt(lookTarget);
 
