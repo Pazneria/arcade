@@ -418,6 +418,7 @@
         scene.add(cameraRig);
 
         const lookTarget = new THREE.Vector3(0, 1.5, -5);
+        const desiredLookTarget = lookTarget.clone();
 
         const ambientLight = new THREE.AmbientLight(0x1f2438, 1.4);
         scene.add(ambientLight);
@@ -685,10 +686,15 @@
           }
 
           if (activeCabinet) {
-            lookTarget.copy(activeCabinet.position).setY(2.4);
+            desiredLookTarget.copy(activeCabinet.position).setY(2.4);
+          } else if (hoverCabinet) {
+            desiredLookTarget.copy(hoverCabinet.position).setY(cameraRig.position.y);
           } else {
-            lookTarget.set(0, 1.5, cameraRig.position.z - 10);
+            desiredLookTarget.set(0, 1.5, cameraRig.position.z - 10);
           }
+
+          const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
+          lookTarget.lerp(desiredLookTarget, lookLerpSpeed);
 
           camera.lookAt(lookTarget);
 
