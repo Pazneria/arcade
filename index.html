@@ -559,15 +559,16 @@
           infoPanel.classList.remove('visible');
           const alignZ = THREE.MathUtils.clamp(cabinet.position.z, minZ, maxZ);
           const walkwayAlign = new THREE.Vector3(0, 1.6, alignZ);
-          const forwardLookTarget = new THREE.Vector3(0, 1.6, alignZ - 8);
           const cabinetLookTarget = cabinet.position.clone().setY(2.4);
-          const approachPosition = cabinet.userData.focusPosition.clone();
 
           startScriptedMotion(
             [
-              { position: walkwayAlign, duration: 600, lookTarget: forwardLookTarget, lookLerpSpeed: 0.1 },
-              { position: walkwayAlign, duration: 450, lookTarget: cabinetLookTarget, lookLerpSpeed: 0.16 },
-              { position: approachPosition, duration: 700, lookTarget: cabinetLookTarget, lookLerpSpeed: 0.2 },
+              {
+                position: walkwayAlign,
+                duration: 700,
+                lookTarget: cabinetLookTarget,
+                lookLerpSpeed: 0.16,
+              },
             ],
             {
               onComplete: () => {
