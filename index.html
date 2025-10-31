@@ -457,9 +457,9 @@
         scene.add(cabinetGroup);
 
         const cabinets = [];
-        const spacing = 8;
-        const laneOffset = 6.5;
-        const startZ = -6;
+        const spacing = 6.5;
+        const laneOffset = 5.5;
+        const startZ = -3.5;
 
         games.forEach((game, index) => {
           const side = index % 2 === 0 ? 'left' : 'right';
@@ -467,6 +467,7 @@
           const x = side === 'left' ? -laneOffset : laneOffset;
           const z = startZ - index * spacing;
           cabinet.position.set(x, 0, z);
+          cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
           cabinetGroup.add(cabinet);
 
           const focusOffset = side === 'left' ? 2.8 : -2.8;
@@ -480,7 +481,8 @@
         let hoverCabinet = null;
         let activeCabinet = null;
         let targetZ = cameraRig.position.z;
-        const minZ = -games.length * spacing - 4;
+        const lastCabinetZ = startZ - (games.length - 1) * spacing;
+        const minZ = lastCabinetZ - 4;
         const maxZ = 12;
         let scriptedMotion = null;
         const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
