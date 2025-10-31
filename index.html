@@ -496,7 +496,7 @@
           'wheel',
           (event) => {
             if (activeCabinet || scriptedMotion) return;
-            scrollVelocity += event.deltaY * 0.0125;
+            scrollVelocity += event.deltaY * 0.025;
           },
           { passive: true }
         );
