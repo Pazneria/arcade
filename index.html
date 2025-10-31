@@ -401,8 +401,9 @@
       position: fixed;
       inset: 0;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 400ms ease;
+      opacity: 0.35;
+      transition: opacity 240ms ease;
+      will-change: opacity;
       background: repeating-linear-gradient(
         rgba(255, 255, 255, 0.04) 0px,
         rgba(255, 255, 255, 0.04) 1px,
@@ -413,12 +414,22 @@
       z-index: 10;
     }
 
-    body.crt-mode {
-      filter: contrast(1.05) saturate(1.2);
+    body {
+      --crt-filter: contrast(1.05) saturate(1.2);
     }
 
-    body.crt-mode .crt-overlay {
-      opacity: 0.35;
+    body:not(.crt-mode) {
+      --crt-filter: contrast(1) saturate(1);
+    }
+
+    body:not(.crt-mode) .crt-overlay {
+      opacity: 0;
+    }
+
+    .page-wrapper {
+      filter: var(--crt-filter);
+      transition: filter 240ms ease;
+      will-change: filter;
     }
 
     body.crt-mode .game-card {
@@ -489,7 +500,7 @@
     }
   </style>
 </head>
-<body>
+<body class="crt-mode">
   <div id="loading-screen" aria-hidden="true">
     <div class="loader" role="presentation"></div>
   </div>
@@ -502,7 +513,7 @@
       <a href="/" aria-label="Return to main hub">← Back to Hub</a>
       <div class="toggle-group">
         <span class="meta-label">Filters</span>
-        <button class="toggle-button" type="button" id="crtToggle">CRT Mode</button>
+        <button class="toggle-button" type="button" id="crtToggle" aria-pressed="true">CRT Mode: ON</button>
       </div>
     </nav>
 
@@ -647,10 +658,17 @@
     }
 
     const crtToggle = document.getElementById('crtToggle');
-    crtToggle.addEventListener('click', () => {
-      document.body.classList.toggle('crt-mode');
+    const updateCrtState = () => {
       const active = document.body.classList.contains('crt-mode');
       crtToggle.textContent = active ? 'CRT Mode: ON' : 'CRT Mode';
+      crtToggle.setAttribute('aria-pressed', String(active));
+    };
+
+    updateCrtState();
+
+    crtToggle.addEventListener('click', () => {
+      document.body.classList.toggle('crt-mode');
+      updateCrtState();
     });
 
     window.addEventListener('load', () => {
