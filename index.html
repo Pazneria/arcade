@@ -491,7 +491,6 @@
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const minZ = lastCabinetZ - 4;
         const maxZ = 12;
-        let scriptedMotion = null;
         const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
 
         const emissivePulse = new THREE.Color(0x0ff0fc);
@@ -500,7 +499,7 @@
         window.addEventListener(
           'wheel',
           (event) => {
-            if (activeCabinet || scriptedMotion) return;
+            if (activeCabinet) return;
             scrollVelocity += event.deltaY * 0.025;
           },
           { passive: true }
@@ -510,7 +509,7 @@
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          if (activeCabinet || scriptedMotion) return;
+          if (activeCabinet) return;
           raycaster.setFromCamera(pointer, camera);
           const intersects = raycaster.intersectObjects(cabinets, true);
           let candidate = intersects.length ? intersects[0].object : null;
@@ -528,7 +527,7 @@
         });
 
         renderer.domElement.addEventListener('pointerleave', () => {
-          if (activeCabinet || scriptedMotion) return;
+          if (activeCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
             applyHoverSelection(null);
@@ -539,7 +538,7 @@
         });
 
         renderer.domElement.addEventListener('click', () => {
-          if (hoverCabinet && !activeCabinet && !scriptedMotion) {
+          if (hoverCabinet && !activeCabinet) {
             focusCabinet(hoverCabinet);
           }
         });
@@ -556,108 +555,23 @@
 
         function focusCabinet(cabinet) {
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
-          infoPanel.classList.remove('visible');
-          const alignZ = THREE.MathUtils.clamp(cabinet.position.z, minZ, maxZ);
-          const walkwayAlign = new THREE.Vector3(0, 1.6, alignZ);
-          const cabinetLookTarget = cabinet.position.clone().setY(2.4);
-
-          startScriptedMotion(
-            [
-              {
-                position: walkwayAlign,
-                duration: 700,
-                lookTarget: cabinetLookTarget,
-                lookLerpSpeed: 0.16,
-              },
-            ],
-            {
-              onComplete: () => {
-                if (activeCabinet === cabinet) {
-                  infoPanel.classList.add('visible');
-                }
-              },
-            }
-          );
           resetHoverState();
           activeCabinet = cabinet;
           infoTitle.textContent = cabinet.userData.game.name;
           infoDescription.textContent = cabinet.userData.game.description;
           playButton.href = cabinet.userData.game.url;
+          infoPanel.classList.add('visible');
           renderer.domElement.style.cursor = 'default';
         }
 
         function exitCabinetView() {
           if (!activeCabinet) return;
-          startScriptedMotion(walkwayReturnPosition, 900);
           activeCabinet = null;
           infoPanel.classList.remove('visible');
           renderer.domElement.style.cursor = 'default';
           targetZ = walkwayReturnPosition.z;
         }
 
-        function startScriptedMotion(targetOrSteps, durationOrOptions) {
-          let options = {};
-          if (typeof durationOrOptions === 'number') {
-            options.defaultDuration = durationOrOptions;
-          } else if (durationOrOptions) {
-            options = durationOrOptions;
-          }
-
-          const defaultDuration = options.defaultDuration ?? 900;
-
-          const stepsSource = Array.isArray(targetOrSteps)
-            ? targetOrSteps
-            : [targetOrSteps];
-
-          const toVector3 = (value) => {
-            if (!value) return null;
-            if (value.isVector3) return value.clone();
-            if (typeof value.x === 'number' && typeof value.y === 'number' && typeof value.z === 'number') {
-              return new THREE.Vector3(value.x, value.y, value.z);
-            }
-            return null;
-          };
-
-          const steps = stepsSource
-            .map((step) => {
-              if (!step) return null;
-              if (step.isVector3) {
-                return {
-                  position: step.clone(),
-                  duration: defaultDuration,
-                  lookTarget: null,
-                  lookLerpSpeed: null,
-                };
-              }
-
-              const position = toVector3(step.position ?? step);
-              if (!position) return null;
-
-              return {
-                position,
-                duration: step.duration ?? defaultDuration,
-                lookTarget: toVector3(step.lookTarget),
-                lookLerpSpeed:
-                  typeof step.lookLerpSpeed === 'number' ? step.lookLerpSpeed : null,
-              };
-            })
-            .filter(Boolean);
-
-          if (!steps.length) {
-            scriptedMotion = null;
-            return;
-          }
-
-          scriptedMotion = {
-            steps,
-            currentStep: 0,
-            start: cameraRig.position.clone(),
-            startTime: performance.now(),
-            onComplete: options.onComplete ?? null,
-          };
-
-          scrollVelocity = 0;
-        }
 
         function applyHoverSelection(cabinet) {
           if (hoverCabinet === cabinet) return;
@@ -791,43 +705,7 @@
           const now = performance.now();
           const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
           lastFrameTime = now;
-          let forcedLookTarget = null;
-          let forcedLookLerp = null;
-          if (scriptedMotion) {
-            const step = scriptedMotion.steps[scriptedMotion.currentStep];
-            if (step) {
-              const elapsed = now - scriptedMotion.startTime;
-              const t = Math.min(elapsed / step.duration, 1);
-              const eased = t >= 1 ? 1 : 1 - Math.pow(1 - t, 3);
-              cameraRig.position.lerpVectors(scriptedMotion.start, step.position, eased);
-              if (step.lookTarget) {
-                forcedLookTarget = step.lookTarget;
-              }
-              if (typeof step.lookLerpSpeed === 'number') {
-                forcedLookLerp = step.lookLerpSpeed;
-              }
-              if (t >= 1) {
-                cameraRig.position.copy(step.position);
-                scriptedMotion.currentStep += 1;
-                if (scriptedMotion.currentStep >= scriptedMotion.steps.length) {
-                  const onComplete = scriptedMotion.onComplete;
-                  scriptedMotion = null;
-                  if (typeof onComplete === 'function') {
-                    onComplete();
-                  }
-                } else {
-                  scriptedMotion.start = cameraRig.position.clone();
-                  scriptedMotion.startTime = now;
-                }
-              }
-            } else {
-              const onComplete = scriptedMotion.onComplete;
-              scriptedMotion = null;
-              if (typeof onComplete === 'function') {
-                onComplete();
-              }
-            }
-          } else if (!activeCabinet) {
+          if (!activeCabinet) {
             const damping = Math.exp(-2.8 * deltaSeconds);
             scrollVelocity *= damping;
             if (Math.abs(scrollVelocity) < 0.00001) {
@@ -847,18 +725,13 @@
             walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
           }
 
-          if (forcedLookTarget) {
-            desiredLookTarget.copy(forcedLookTarget);
-          } else if (activeCabinet) {
-            desiredLookTarget.copy(activeCabinet.position).setY(2.4);
-          } else if (hoverCabinet) {
+          if (hoverCabinet) {
             desiredLookTarget.copy(hoverCabinet.position).setY(cameraRig.position.y);
           } else {
             desiredLookTarget.set(0, 1.5, cameraRig.position.z - 10);
           }
 
-          const lookLerpSpeed =
-            typeof forcedLookLerp === 'number' ? forcedLookLerp : activeCabinet ? 0.2 : 0.08;
+          const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
           lookTarget.lerp(desiredLookTarget, lookLerpSpeed);
 
           if (hoverLockState === 'panning' && hoverCabinet) {
