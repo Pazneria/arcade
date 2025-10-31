@@ -365,7 +365,15 @@
         }
       })();
 
-      const prefersMobileLayout = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+      const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+
+      function shouldUseMobileLayout() {
+        return coarsePointerQuery.matches || window.innerWidth < 768;
+      }
+
+      let layoutMode = null;
+      let arcadeHasInitialized = false;
+      let arcadeCleanup = null;
 
       const games = [
         // Add new cabinets here. Each entry controls the cabinet model, its overlay content, and link.
@@ -404,12 +412,52 @@
         mobileFallback.classList.add('visible');
       }
 
+      function maybeToggleLayout() {
+        if (!supportsWebGL) return;
+
+        fallbackMessage.classList.remove('visible');
+
+        const useMobileLayout = shouldUseMobileLayout();
+
+        if (useMobileLayout) {
+          if (layoutMode === 'arcade' && typeof arcadeCleanup === 'function') {
+            arcadeCleanup();
+            arcadeCleanup = null;
+          }
+
+          infoPanel.classList.remove('visible');
+          infoPrompt.textContent = '';
+          buildMobileDirectory();
+          mobileFallback.classList.add('visible');
+          layoutMode = 'mobile';
+          return;
+        }
+
+        mobileFallback.classList.remove('visible');
+
+        if (layoutMode !== 'arcade' || !sceneContainer.firstChild) {
+          if (!arcadeHasInitialized || !sceneContainer.firstChild) {
+            arcadeCleanup = initArcade();
+            arcadeHasInitialized = true;
+          }
+          layoutMode = 'arcade';
+        }
+      }
+
+      const handlePointerPreferenceChange = () => maybeToggleLayout();
+
       if (!supportsWebGL) {
         fallbackMessage.classList.add('visible');
-      } else if (prefersMobileLayout) {
-        buildMobileDirectory();
       } else {
-        initArcade();
+        maybeToggleLayout();
+
+        if (typeof coarsePointerQuery.addEventListener === 'function') {
+          coarsePointerQuery.addEventListener('change', handlePointerPreferenceChange);
+        } else if (typeof coarsePointerQuery.addListener === 'function') {
+          coarsePointerQuery.addListener(handlePointerPreferenceChange);
+        }
+
+        window.addEventListener('resize', maybeToggleLayout);
       }
 
       function initArcade() {
@@ -511,16 +559,14 @@
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
 
-        window.addEventListener(
-          'wheel',
-          (event) => {
-            if (activeCabinet || approachingCabinet) return;
-            scrollVelocity += event.deltaY * 0.025;
-          },
-          { passive: true }
-        );
+        const onWheel = (event) => {
+          if (activeCabinet || approachingCabinet) return;
+          scrollVelocity += event.deltaY * 0.025;
+        };
 
-        renderer.domElement.addEventListener('pointermove', (event) => {
+        window.addEventListener('wheel', onWheel, { passive: true });
+
+        const onPointerMove = (event) => {
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -539,9 +585,11 @@
             hoverLockState = 'idle';
             applyHoverSelection(pendingHoverCabinet);
           }
-        });
+        };
 
-        renderer.domElement.addEventListener('pointerleave', () => {
+        renderer.domElement.addEventListener('pointermove', onPointerMove);
+
+        const onPointerLeave = () => {
           if (activeCabinet || approachingCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
@@ -550,23 +598,31 @@
             hoverLockState = 'idle';
             applyHoverSelection(null);
           }
-        });
+        };
 
-        renderer.domElement.addEventListener('click', () => {
+        renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+
+        const onRendererClick = () => {
           if (hoverCabinet && !activeCabinet && !approachingCabinet) {
             focusCabinet(hoverCabinet);
           }
-        });
+        };
 
-        closePanelButton.addEventListener('click', () => {
+        renderer.domElement.addEventListener('click', onRendererClick);
+
+        const onClosePanelClick = () => {
           exitCabinetView();
-        });
+        };
 
-        window.addEventListener('keydown', (event) => {
+        closePanelButton.addEventListener('click', onClosePanelClick);
+
+        const onKeyDown = (event) => {
           if (event.key === 'Escape') {
             exitCabinetView();
           }
-        });
+        };
+
+        window.addEventListener('keydown', onKeyDown);
 
         function focusCabinet(cabinet) {
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
@@ -722,9 +778,10 @@
         }
 
         let lastFrameTime = performance.now();
+        let animationFrameId = 0;
 
         function animate() {
-          requestAnimationFrame(animate);
+          animationFrameId = requestAnimationFrame(animate);
           const now = performance.now();
           const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
           lastFrameTime = now;
@@ -789,13 +846,56 @@
           renderer.render(scene, camera);
         }
 
-        animate();
+        animationFrameId = requestAnimationFrame(animate);
 
-        window.addEventListener('resize', () => {
+        const onResize = () => {
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        };
+
+        window.addEventListener('resize', onResize);
+
+        return () => {
+          cancelAnimationFrame(animationFrameId);
+          window.removeEventListener('wheel', onWheel);
+          window.removeEventListener('keydown', onKeyDown);
+          window.removeEventListener('resize', onResize);
+          renderer.domElement.removeEventListener('pointermove', onPointerMove);
+          renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
+          renderer.domElement.removeEventListener('click', onRendererClick);
+          closePanelButton.removeEventListener('click', onClosePanelClick);
+          renderer.domElement.style.cursor = 'default';
+          infoPanel.classList.remove('visible');
+          infoPrompt.textContent = '';
+          if (renderer.domElement.parentElement === sceneContainer) {
+            sceneContainer.removeChild(renderer.domElement);
+          }
+
+          scene.traverse((child) => {
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+              child.geometry.dispose();
+            }
+
+            const materials = Array.isArray(child.material)
+              ? child.material
+              : child.material
+              ? [child.material]
+              : [];
+
+            materials.forEach((material) => {
+              if (!material) return;
+              if (material.map && typeof material.map.dispose === 'function') {
+                material.map.dispose();
+              }
+              if (typeof material.dispose === 'function') {
+                material.dispose();
+              }
+            });
+          });
+
+          renderer.dispose();
+        };
       }
     </script>
   </body>
