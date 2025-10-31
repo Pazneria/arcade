@@ -482,6 +482,7 @@
         let hoverCabinet = null;
         let activeCabinet = null;
         let targetZ = cameraRig.position.z;
+        let scrollVelocity = 0;
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const minZ = lastCabinetZ - 4;
         const maxZ = 12;
@@ -495,8 +496,7 @@
           'wheel',
           (event) => {
             if (activeCabinet || scriptedMotion) return;
-            targetZ += event.deltaY * 0.004;
-            targetZ = THREE.MathUtils.clamp(targetZ, minZ, maxZ);
+            scrollVelocity += event.deltaY * 0.0025;
           },
           { passive: true }
         );
@@ -560,6 +560,7 @@
             startTime: performance.now(),
             duration,
           };
+          scrollVelocity = 0;
         }
 
         function updateCabinetEmissive() {
@@ -666,9 +667,13 @@
           return cabinet;
         }
 
+        let lastFrameTime = performance.now();
+
         function animate() {
           requestAnimationFrame(animate);
           const now = performance.now();
+          const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
+          lastFrameTime = now;
           if (scriptedMotion) {
             const elapsed = now - scriptedMotion.startTime;
             const t = Math.min(elapsed / scriptedMotion.duration, 1);
@@ -679,6 +684,19 @@
               scriptedMotion = null;
             }
           } else if (!activeCabinet) {
+            const damping = Math.exp(-2.8 * deltaSeconds);
+            scrollVelocity *= damping;
+            if (Math.abs(scrollVelocity) < 0.00001) {
+              scrollVelocity = 0;
+            }
+            targetZ += scrollVelocity * deltaSeconds;
+            if (targetZ < minZ) {
+              targetZ = minZ;
+              scrollVelocity = Math.max(0, scrollVelocity);
+            } else if (targetZ > maxZ) {
+              targetZ = maxZ;
+              scrollVelocity = Math.min(0, scrollVelocity);
+            }
             cameraRig.position.z = THREE.MathUtils.lerp(cameraRig.position.z, targetZ, 0.08);
             cameraRig.position.x = THREE.MathUtils.lerp(cameraRig.position.x, 0, 0.08);
             cameraRig.position.y = THREE.MathUtils.lerp(cameraRig.position.y, 1.6, 0.08);
