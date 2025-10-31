@@ -749,7 +749,9 @@
           }
 
           cameraRig.position.lerp(rigGoal, 0.08);
-          walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+          if (!cameraLocked) {
+            walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+          }
 
           if (approachingCabinet) {
             const alignmentDistance = cameraRig.position.distanceTo(focusRigTarget);
