@@ -573,7 +573,7 @@
           resetHoverState();
           hoverCabinet = cabinet;
           approachingCabinet = cabinet;
-          focusRigTarget.set(0, 1.6, cabinet.position.z);
+          focusRigTarget.set(0, 1.6, cabinet.userData.focusPosition.z);
           targetZ = focusRigTarget.z;
           scrollVelocity = 0;
           activeCabinet = null;
