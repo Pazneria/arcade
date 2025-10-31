@@ -472,15 +472,17 @@
         scene.fog = new THREE.FogExp2(0x03060d, 0.035);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
-        camera.position.set(0, 1.6, 12);
+        const CAMERA_START_POSITION = new THREE.Vector3(0, -1.5, 0);
+        camera.position.copy(CAMERA_START_POSITION);
 
         const cameraRig = new THREE.Group();
-        cameraRig.position.set(0, 1.6, 12);
+        cameraRig.position.copy(CAMERA_START_POSITION);
         cameraRig.add(camera);
         scene.add(cameraRig);
 
-        const lookTarget = new THREE.Vector3(0, 1.5, -5);
-        const desiredLookTarget = lookTarget.clone();
+        const DEFAULT_LOOK_TARGET = new THREE.Vector3(0, 1.5, -999);
+        const lookTarget = DEFAULT_LOOK_TARGET.clone();
+        const desiredLookTarget = DEFAULT_LOOK_TARGET.clone();
 
         const ambientLight = new THREE.AmbientLight(0x1f2438, 1.4);
         scene.add(ambientLight);
@@ -551,7 +553,7 @@
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const minZ = lastCabinetZ - 4;
         const maxZ = 12;
-        const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
+        const walkwayReturnPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, cameraRig.position.z);
         const focusRigTarget = new THREE.Vector3();
         const rigGoal = new THREE.Vector3();
         const APPROACH_ALIGNMENT_EPSILON = 0.12;
@@ -625,11 +627,11 @@
         window.addEventListener('keydown', onKeyDown);
 
         function focusCabinet(cabinet) {
-          walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+          walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
           resetHoverState();
           hoverCabinet = cabinet;
           approachingCabinet = cabinet;
-          focusRigTarget.set(0, 1.6, cabinet.userData.focusPosition.z);
+          focusRigTarget.set(0, CAMERA_START_POSITION.y, cabinet.userData.focusPosition.z);
           targetZ = focusRigTarget.z;
           scrollVelocity = 0;
           activeCabinet = null;
@@ -800,14 +802,14 @@
               targetZ = maxZ;
               scrollVelocity = Math.min(0, scrollVelocity);
             }
-            rigGoal.set(0, 1.6, targetZ);
+            rigGoal.set(0, CAMERA_START_POSITION.y, targetZ);
           } else {
             rigGoal.copy(focusRigTarget);
           }
 
           cameraRig.position.lerp(rigGoal, 0.08);
           if (!cameraLocked) {
-            walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+            walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
           }
 
           if (approachingCabinet) {
@@ -822,9 +824,9 @@
 
           const lookTargetCabinet = activeCabinet ?? hoverCabinet;
           if (lookTargetCabinet) {
-            desiredLookTarget.copy(lookTargetCabinet.position).setY(cameraRig.position.y);
+            desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
           } else {
-            desiredLookTarget.set(0, 1.5, cameraRig.position.z - 10);
+            desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
           }
 
           const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
