@@ -492,6 +492,8 @@
         const minZ = lastCabinetZ - 4;
         const maxZ = 12;
         const walkwayReturnPosition = new THREE.Vector3(0, 1.6, cameraRig.position.z);
+        const focusRigTarget = new THREE.Vector3();
+        const rigGoal = new THREE.Vector3();
 
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
@@ -556,6 +558,9 @@
         function focusCabinet(cabinet) {
           walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
           resetHoverState();
+          hoverCabinet = cabinet;
+          focusRigTarget.copy(cabinet.userData.focusPosition);
+          targetZ = focusRigTarget.z;
           activeCabinet = cabinet;
           infoTitle.textContent = cabinet.userData.game.name;
           infoDescription.textContent = cabinet.userData.game.description;
@@ -567,6 +572,7 @@
         function exitCabinetView() {
           if (!activeCabinet) return;
           activeCabinet = null;
+          hoverCabinet = null;
           infoPanel.classList.remove('visible');
           renderer.domElement.style.cursor = 'default';
           targetZ = walkwayReturnPosition.z;
@@ -719,14 +725,17 @@
               targetZ = maxZ;
               scrollVelocity = Math.min(0, scrollVelocity);
             }
-            cameraRig.position.z = THREE.MathUtils.lerp(cameraRig.position.z, targetZ, 0.08);
-            cameraRig.position.x = THREE.MathUtils.lerp(cameraRig.position.x, 0, 0.08);
-            cameraRig.position.y = THREE.MathUtils.lerp(cameraRig.position.y, 1.6, 0.08);
-            walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+            rigGoal.set(0, 1.6, targetZ);
+          } else {
+            rigGoal.copy(focusRigTarget);
           }
 
-          if (hoverCabinet) {
-            desiredLookTarget.copy(hoverCabinet.position).setY(cameraRig.position.y);
+          cameraRig.position.lerp(rigGoal, 0.08);
+          walkwayReturnPosition.set(0, 1.6, cameraRig.position.z);
+
+          const lookTargetCabinet = activeCabinet ?? hoverCabinet;
+          if (lookTargetCabinet) {
+            desiredLookTarget.copy(lookTargetCabinet.position).setY(cameraRig.position.y);
           } else {
             desiredLookTarget.set(0, 1.5, cameraRig.position.z - 10);
           }
