@@ -535,6 +535,7 @@
           const z = startZ - index * spacing;
           cabinet.position.set(x, 0, z);
           cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+          cabinet.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, z);
           cabinetGroup.add(cabinet);
 
           cabinets.push(cabinet);
