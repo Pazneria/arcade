@@ -473,7 +473,9 @@
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
         const CAMERA_START_POSITION = new THREE.Vector3(0, 1.5, 0);
-        camera.position.copy(CAMERA_START_POSITION);
+        // Keep the camera height controlled solely by the rig so it remains at 1.5m
+        // when focusing on a cabinet.
+        camera.position.set(0, 0, 0);
 
         const cameraRig = new THREE.Group();
         cameraRig.position.copy(CAMERA_START_POSITION);
