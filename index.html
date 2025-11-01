@@ -472,7 +472,7 @@
         scene.fog = new THREE.FogExp2(0x03060d, 0.035);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
-        const CAMERA_START_POSITION = new THREE.Vector3(0, -1.5, 0);
+        const CAMERA_START_POSITION = new THREE.Vector3(0, 1.5, 0);
         camera.position.copy(CAMERA_START_POSITION);
 
         const cameraRig = new THREE.Group();
@@ -524,7 +524,7 @@
         const cabinets = [];
         const spacing = 6.5;
         const laneOffset = 5.5;
-        const startZ = 11.5;
+        const startZ = -3;
 
         games.forEach((game, index) => {
           const side = index % 2 === 0 ? 'left' : 'right';
