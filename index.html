@@ -472,8 +472,8 @@
         scene.fog = new THREE.FogExp2(0x03060d, 0.035);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
-        const CAMERA_START_POSITION = new THREE.Vector3(0, 1.5, 0);
-        // Keep the camera height controlled solely by the rig so it remains at 1.5m
+        const CAMERA_START_POSITION = new THREE.Vector3(0, 2, 0);
+        // Keep the camera height controlled solely by the rig so it remains at 2m
         // when focusing on a cabinet.
         camera.position.set(0, 0, 0);
 
