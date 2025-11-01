@@ -561,8 +561,8 @@
         scene.fog = new THREE.FogExp2(0x03060d, 0.035);
 
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
-        const CAMERA_START_POSITION = new THREE.Vector3(0, 2.5, 0);
-        // Keep the camera height controlled solely by the rig so it remains at 2.5m
+        const CAMERA_START_POSITION = new THREE.Vector3(0, 2.8, 0);
+        // Keep the camera height controlled solely by the rig so it remains at 2.8m
         // when focusing on a cabinet.
         camera.position.set(0, 0, 0);
 
@@ -581,7 +581,7 @@
         const hemi = new THREE.HemisphereLight(0x2188ff, 0x05070d, 0.7);
         scene.add(hemi);
 
-        const spotLeft = new THREE.SpotLight(0x0ff0fc, 2.5, 45, Math.PI / 4, 0.7, 1.2);
+        const spotLeft = new THREE.SpotLight(0x0ff0fc, 2.8, 45, Math.PI / 4, 0.7, 1.2);
         spotLeft.position.set(-8, 6, 2);
         scene.add(spotLeft);
 
