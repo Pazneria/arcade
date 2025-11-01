@@ -905,15 +905,6 @@
           base.position.y = 0.12;
           cabinet.add(base);
 
-          const accentMaterial = new THREE.MeshBasicMaterial({
-            color: side === 'left' ? 0x0ff0fc : 0xff4de1,
-          });
-          const accentGeometry = new THREE.CylinderGeometry(0.06, 0.06, 3.6, 12);
-          const accent = new THREE.Mesh(accentGeometry, accentMaterial);
-          accent.position.set(side === 'left' ? 1.35 : -1.35, 1.7, 0.95);
-          accent.rotation.z = Math.PI / 2.5;
-          cabinet.add(accent);
-
           return cabinet;
         }
 
