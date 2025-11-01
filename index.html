@@ -606,6 +606,29 @@
         gridHelper.position.y = 0.001;
         scene.add(gridHelper);
 
+        const wallHeight = 8;
+        const wallGeometry = new THREE.PlaneGeometry(200, wallHeight);
+        const wallMaterial = new THREE.MeshStandardMaterial({
+          color: 0x031026,
+          metalness: 0.2,
+          roughness: 0.7,
+          transparent: true,
+          opacity: 0.88,
+          side: THREE.DoubleSide,
+          emissive: 0x021c3a,
+          emissiveIntensity: 0.22,
+        });
+
+        const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
+        leftWall.position.set(-8, wallHeight / 2, 0);
+        leftWall.rotation.y = Math.PI / 2;
+        scene.add(leftWall);
+
+        const rightWall = leftWall.clone();
+        rightWall.position.set(8, wallHeight / 2, 0);
+        rightWall.rotation.y = -Math.PI / 2;
+        scene.add(rightWall);
+
         const textureLoader = new THREE.TextureLoader();
         textureLoader.crossOrigin = 'anonymous';
 
