@@ -811,7 +811,7 @@
             rigGoal.y = CAMERA_START_POSITION.y;
           }
 
-          cameraRig.position.lerp(rigGoal, 0.08);
+          cameraRig.position.lerp(rigGoal, 0.05);
           cameraRig.position.y = CAMERA_START_POSITION.y;
           if (!cameraLocked) {
             walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
