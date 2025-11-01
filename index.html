@@ -69,6 +69,42 @@
         gap: 1rem;
       }
 
+      #intro-text {
+        position: relative;
+        align-self: center;
+        margin-top: clamp(1.5rem, 9vh, 7rem);
+        font-family: "Orbitron", system-ui, sans-serif;
+        font-size: clamp(1.45rem, 2.5vw + 1rem, 3.1rem);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #90ffd7;
+        text-shadow: 0 0 0.4rem rgba(79, 255, 210, 0.65), 0 0 1.6rem rgba(15, 240, 252, 0.45);
+        opacity: 0;
+        transform: translateY(36px) scaleY(1.08);
+        filter: blur(6px);
+        animation: introTextEnter 2.9s cubic-bezier(0.19, 1, 0.22, 1) 0.8s forwards,
+          introTextPulse 4.2s ease-in-out 3.4s infinite;
+        pointer-events: none;
+        white-space: nowrap;
+        text-align: center;
+        mix-blend-mode: screen;
+      }
+
+      #intro-text span {
+        color: var(--accent-primary);
+      }
+
+      #intro-text::after {
+        content: "";
+        position: absolute;
+        inset: 55% -20% auto -20%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(144, 255, 215, 0.7), transparent);
+        opacity: 0;
+        transform: translateY(-8px) scaleX(0.6);
+        animation: introSweep 2.4s ease-out 0.8s forwards;
+      }
+
       .neon-button {
         pointer-events: auto;
         background: linear-gradient(120deg, rgba(15, 240, 252, 0.15), rgba(255, 77, 225, 0.1));
@@ -272,6 +308,58 @@
         opacity: 0.5;
       }
 
+      @keyframes introTextEnter {
+        0% {
+          opacity: 0;
+          transform: translateY(60px) scaleY(1.2);
+          letter-spacing: 0.45em;
+          filter: blur(12px);
+        }
+        45% {
+          opacity: 1;
+          transform: translateY(0) scaleY(1);
+          letter-spacing: 0.18em;
+          filter: blur(0);
+        }
+        60% {
+          opacity: 0.3;
+        }
+        70% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scaleY(1);
+          letter-spacing: 0.18em;
+          filter: blur(0);
+        }
+      }
+
+      @keyframes introTextPulse {
+        0%,
+        100% {
+          text-shadow: 0 0 0.35rem rgba(79, 255, 210, 0.55), 0 0 1.4rem rgba(15, 240, 252, 0.4);
+        }
+        50% {
+          text-shadow: 0 0 0.6rem rgba(144, 255, 215, 0.85), 0 0 1.8rem rgba(15, 240, 252, 0.6);
+        }
+      }
+
+      @keyframes introSweep {
+        0% {
+          opacity: 0;
+          transform: translateY(-24px) scaleX(0.3);
+        }
+        45% {
+          opacity: 0.9;
+          transform: translateY(0) scaleX(1.1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(12px) scaleX(0.4);
+        }
+      }
+
       @keyframes scan {
         0% {
           transform: translateY(-20%);
@@ -300,6 +388,7 @@
         <div id="instruction">Scroll to move • Click a cabinet to explore</div>
         <a class="neon-button" href="/">Exit Arcade</a>
       </div>
+      <div id="intro-text" aria-hidden="true">Games.<span>&nbsp;Lots of games.</span></div>
       <div id="info-panel" role="dialog" aria-modal="true">
         <h2 id="info-title">Cabinet Title</h2>
         <p id="info-description">Description placeholder</p>
@@ -524,6 +613,10 @@
         scene.add(cabinetGroup);
 
         const cabinets = [];
+        const introAnimations = [];
+        let introClockStart = null;
+        let introDone = false;
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
         const spacing = 6.5;
         const laneOffset = 5.5;
         const startZ = -7;
@@ -533,9 +626,26 @@
           const cabinet = createCabinet(game, side, index);
           const x = side === 'left' ? -laneOffset : laneOffset;
           const z = startZ - index * spacing;
-          cabinet.position.set(x, 0, z);
+          const finalPosition = new THREE.Vector3(x, 0, z);
+          cabinet.position.copy(finalPosition);
           cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
           cabinet.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, z);
+          cabinet.userData.restPosition = finalPosition.clone();
+
+          const slideOffset = side === 'left' ? -12 : 12;
+          const fromX = finalPosition.x + slideOffset;
+          cabinet.position.x = fromX;
+          const pairIndex = Math.floor(index / 2);
+          const delay = pairIndex * 240 + (side === 'left' ? 0 : 120);
+          introAnimations.push({
+            cabinet,
+            fromX,
+            toX: finalPosition.x,
+            delay,
+            duration: 1300,
+            done: false,
+          });
+
           cabinetGroup.add(cabinet);
 
           cabinets.push(cabinet);
@@ -565,6 +675,7 @@
         const tempColor = new THREE.Color();
 
         const onWheel = (event) => {
+          if (!introDone) return;
           if (activeCabinet || approachingCabinet) return;
           scrollVelocity += event.deltaY * 0.025;
         };
@@ -572,6 +683,7 @@
         window.addEventListener('wheel', onWheel, { passive: true });
 
         const onPointerMove = (event) => {
+          if (!introDone) return;
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -595,6 +707,7 @@
         renderer.domElement.addEventListener('pointermove', onPointerMove);
 
         const onPointerLeave = () => {
+          if (!introDone) return;
           if (activeCabinet || approachingCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
@@ -608,6 +721,7 @@
         renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
         const onRendererClick = () => {
+          if (!introDone) return;
           if (hoverCabinet && !activeCabinet && !approachingCabinet) {
             focusCabinet(hoverCabinet);
           }
@@ -630,6 +744,7 @@
         window.addEventListener('keydown', onKeyDown);
 
         function focusCabinet(cabinet) {
+          if (!introDone) return;
           walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
           resetHoverState();
           hoverCabinet = cabinet;
@@ -790,6 +905,34 @@
           const now = performance.now();
           const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
           lastFrameTime = now;
+
+          if (introClockStart === null) {
+            introClockStart = now;
+          }
+
+          let introActive = false;
+          introAnimations.forEach((animation) => {
+            if (animation.done) return;
+            const elapsed = now - introClockStart - animation.delay;
+            if (elapsed < 0) {
+              introActive = true;
+              return;
+            }
+            const progress = Math.min(1, elapsed / animation.duration);
+            const eased = easeOutCubic(progress);
+            animation.cabinet.position.x = THREE.MathUtils.lerp(animation.fromX, animation.toX, eased);
+            if (progress >= 1) {
+              animation.done = true;
+              animation.cabinet.position.x = animation.toX;
+            } else {
+              introActive = true;
+            }
+          });
+
+          if (!introActive && !introDone) {
+            introDone = true;
+          }
+
           const cameraLocked = approachingCabinet || activeCabinet;
           if (!cameraLocked) {
             const damping = Math.exp(-2.8 * deltaSeconds);
