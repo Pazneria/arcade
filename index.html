@@ -761,6 +761,26 @@
           renderer.domElement.style.cursor = 'default';
         }
 
+        const onPlayButtonClick = (event) => {
+          event.preventDefault();
+          const gameUrl = playButton.href;
+
+          const cabinetX = activeCabinet ? activeCabinet.position.x : 0;
+          const moveDistance = 3;
+
+          if (cabinetX < 0) {
+            focusRigTarget.x -= moveDistance;
+          } else {
+            focusRigTarget.x += moveDistance;
+          }
+
+          setTimeout(() => {
+            window.open(gameUrl, '_blank', 'noopener');
+          }, 800);
+        };
+
+        playButton.addEventListener('click', onPlayButtonClick);
+
         function exitCabinetView() {
           if (!activeCabinet && !approachingCabinet) return;
           activeCabinet = null;
@@ -1016,6 +1036,7 @@
           renderer.domElement.removeEventListener('pointermove', onPointerMove);
           renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
           renderer.domElement.removeEventListener('click', onRendererClick);
+          playButton.removeEventListener('click', onPlayButtonClick);
           closePanelButton.removeEventListener('click', onClosePanelClick);
           renderer.domElement.style.cursor = 'default';
           infoPanel.classList.remove('visible');
