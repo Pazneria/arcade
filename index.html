@@ -213,6 +213,45 @@
       let layoutMode = null;
       let arcadeHasInitialized = false;
       let arcadeCleanup = null;
+      const RETURN_STATE_KEY = 'arcade:return-state:v1';
+      const RETURN_STATE_MAX_AGE_MS = 1000 * 60 * 60;
+
+      function readReturnState() {
+        try {
+          const raw = window.sessionStorage.getItem(RETURN_STATE_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed.cabinetIndex !== 'number') return null;
+          if (!Number.isFinite(parsed.cabinetIndex)) return null;
+          if (typeof parsed.savedAt !== 'number' || !Number.isFinite(parsed.savedAt)) return null;
+          if (Date.now() - parsed.savedAt > RETURN_STATE_MAX_AGE_MS) return null;
+          return parsed;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function writeReturnState(cabinetIndex) {
+        try {
+          window.sessionStorage.setItem(
+            RETURN_STATE_KEY,
+            JSON.stringify({
+              cabinetIndex,
+              savedAt: Date.now(),
+            })
+          );
+        } catch (error) {
+          // Ignore storage errors (private mode, quota, etc.).
+        }
+      }
+
+      function clearReturnState() {
+        try {
+          window.sessionStorage.removeItem(RETURN_STATE_KEY);
+        } catch (error) {
+          // Ignore storage errors.
+        }
+      }
 
             const games = [
         {
@@ -506,7 +545,8 @@
         const exitDoor = createExitDoor(doorZ);
         scene.add(exitDoor.root);
 
-        const interactableTargets = [...cabinets, exitDoor.root, ...exitDoor.switchArrows];
+        const cabinetActionButtons = cabinets.flatMap((cabinet) => cabinet.userData.actionButtons || []);
+        const interactableTargets = [...cabinets, ...cabinetActionButtons, exitDoor.root, ...exitDoor.switchArrows];
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let hoverCabinet = null;
@@ -530,9 +570,51 @@
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
 
+        function applyReturnStateIfPresent() {
+          const returnState = readReturnState();
+          if (!returnState) return false;
+          const cabinet = cabinets[returnState.cabinetIndex];
+          if (!cabinet || !cabinet.userData || !cabinet.userData.focusPosition) {
+            clearReturnState();
+            return false;
+          }
+
+          introAnimations.forEach((animation) => {
+            animation.done = true;
+            animation.cabinet.position.z = animation.toZ;
+          });
+          introDone = true;
+          introClockStart = performance.now();
+
+          focusRigTarget.copy(cabinet.userData.focusPosition);
+          rigGoal.copy(focusRigTarget);
+          rigGoal.y = CAMERA_START_POSITION.y;
+          cameraRig.position.copy(rigGoal);
+          targetZ = focusRigTarget.z;
+          walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, targetZ);
+          scrollVelocity = 0;
+          hoverLockState = 'idle';
+          hoverLockUntil = 0;
+          pendingHoverCabinet = null;
+          approachingCabinet = null;
+          activeCabinet = cabinet;
+          hoverCabinet = cabinet;
+
+          if (cabinet.userData.lookPosition) {
+            desiredLookTarget.copy(cabinet.userData.lookPosition);
+          } else {
+            desiredLookTarget.copy(cabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+          }
+          lookTarget.copy(desiredLookTarget);
+          clearReturnState();
+          return true;
+        }
+
+        applyReturnStateIfPresent();
+
         const onWheel = (event) => {
           if (!introDone) return;
-          if (exitDoor.opening.active) return;
+          if (exitDoor.opening.active || launchSequence) return;
           if (activeCabinet || approachingCabinet) return;
           scrollVelocity += event.deltaY * 0.025;
         };
@@ -541,7 +623,7 @@
 
         const onPointerMove = (event) => {
           if (!introDone) return;
-          if (exitDoor.opening.active) return;
+          if (exitDoor.opening.active || launchSequence) return;
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -566,6 +648,7 @@
 
         const onPointerLeave = () => {
           if (!introDone) return;
+          if (launchSequence) return;
           if (approachingCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
@@ -578,9 +661,53 @@
 
         renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
+        const isGameCabinet = (target) => !!(target && target.userData && target.userData.game);
+        const CABINET_LAUNCH_DURATION_SECONDS = 0.32;
+        let launchSequence = null;
+
+        function startCabinetLaunch(cabinet) {
+          if (!isGameCabinet(cabinet) || launchSequence) return;
+          const url = cabinet.userData.game?.url || cabinet.userData.url;
+          if (!url) return;
+          const cabinetIndex = cabinets.indexOf(cabinet);
+          if (cabinetIndex >= 0) {
+            writeReturnState(cabinetIndex);
+          }
+          launchSequence = {
+            cabinet,
+            url,
+            elapsed: 0,
+            from: cameraRig.position.clone(),
+            to: new THREE.Vector3(
+              THREE.MathUtils.clamp(cabinet.position.x * 0.62, -3.6, 3.6),
+              CAMERA_START_POSITION.y,
+              cameraRig.position.z
+            ),
+          };
+          activeCabinet = cabinet;
+          approachingCabinet = null;
+          scrollVelocity = 0;
+        }
+
+        function syncCabinetActionButtons() {
+          const target = isGameCabinet(activeCabinet)
+            ? activeCabinet
+            : isGameCabinet(approachingCabinet)
+            ? approachingCabinet
+            : null;
+
+          cabinets.forEach((cabinet) => {
+            const buttons = cabinet.userData.actionButtons || [];
+            const visible = cabinet === target;
+            buttons.forEach((button) => {
+              button.visible = visible;
+            });
+          });
+        }
+
         const onRendererClick = () => {
           if (!introDone) return;
-          if (exitDoor.opening.active) return;
+          if (exitDoor.opening.active || launchSequence) return;
           if (approachingCabinet) return;
 
           if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign') {
@@ -588,17 +715,36 @@
             return;
           }
 
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-play') {
+            const targetCabinet = hoverCabinet.userData.cabinet;
+            if (activeCabinet === targetCabinet) {
+              startCabinetLaunch(targetCabinet);
+            }
+            return;
+          }
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-back') {
+            exitCabinetView();
+            return;
+          }
+
           if (activeCabinet) {
-            if (hoverCabinet === activeCabinet) {
-              if (activeCabinet === exitDoor.root) {
+            if (isGameCabinet(activeCabinet)) {
+              if (hoverCabinet === activeCabinet) {
+                return;
+              }
+              exitCabinetView();
+              return;
+            }
+
+            if (activeCabinet === exitDoor.root) {
+              if (hoverCabinet === activeCabinet) {
                 triggerExitDoorOpen();
                 return;
               }
-              navigateToTarget(activeCabinet);
+              exitCabinetView();
               return;
             }
-            exitCabinetView();
-            return;
           }
 
           if (hoverCabinet) {
@@ -610,7 +756,7 @@
         renderer.domElement.addEventListener('click', onRendererClick);
 
         const onKeyDown = (event) => {
-          if (exitDoor.opening.active) return;
+          if (exitDoor.opening.active || launchSequence) return;
           if (event.key === 'Escape') {
             exitCabinetView();
           }
@@ -1200,6 +1346,92 @@
           );
         }
 
+
+        function addCabinetActionPanel(cabinet, options = {}) {
+          const panelY = options.panelY ?? 1.52;
+          const panelZ = options.panelZ ?? 1.5;
+          const panelWidth = options.panelWidth ?? 1.9;
+          const panelHeight = options.panelHeight ?? 0.34;
+
+          const panel = new THREE.Mesh(
+            new THREE.BoxGeometry(panelWidth, panelHeight, 0.08),
+            new THREE.MeshStandardMaterial({
+              color: 0x0b121d,
+              emissive: 0x14283d,
+              emissiveIntensity: 0.28,
+              metalness: 0.2,
+              roughness: 0.5,
+            })
+          );
+          panel.position.set(0, panelY, panelZ);
+          cabinet.add(panel);
+
+          if (!cabinet.userData.actionButtons) {
+            cabinet.userData.actionButtons = [];
+          }
+
+          function createLabelTexture(text) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 88;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = 'rgba(8, 16, 28, 0.88)';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.strokeStyle = 'rgba(112, 238, 255, 0.5)';
+              ctx.lineWidth = 4;
+              ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+              ctx.fillStyle = 'rgba(235, 250, 255, 0.97)';
+              ctx.font = '700 32px Orbitron, Rajdhani, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            texture.needsUpdate = true;
+            return texture;
+          }
+
+          const actionMaterial = new THREE.MeshStandardMaterial({
+            color: 0x122233,
+            emissive: 0x21476a,
+            emissiveIntensity: 0.35,
+            metalness: 0.22,
+            roughness: 0.42,
+          });
+
+          const playButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
+          playButton.position.set(-0.48, panelY, panelZ + 0.08);
+          playButton.userData.action = 'cabinet-play';
+          playButton.userData.cabinet = cabinet;
+          playButton.visible = false;
+          cabinet.add(playButton);
+
+          const playLabel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.72, 0.16),
+            new THREE.MeshBasicMaterial({ map: createLabelTexture('PLAY'), toneMapped: false, transparent: true })
+          );
+          playLabel.position.set(0, 0, 0.055);
+          playButton.add(playLabel);
+
+          const backButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
+          backButton.position.set(0.48, panelY, panelZ + 0.08);
+          backButton.userData.action = 'cabinet-back';
+          backButton.userData.cabinet = cabinet;
+          backButton.visible = false;
+          cabinet.add(backButton);
+
+          const backLabel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.72, 0.16),
+            new THREE.MeshBasicMaterial({ map: createLabelTexture('BACK'), toneMapped: false, transparent: true })
+          );
+          backLabel.position.set(0, 0, 0.055);
+          backButton.add(backLabel);
+
+          cabinet.userData.actionButtons.push(playButton, backButton);
+        }
+
         function addControlPanel(cabinet, options = {}) {
           const panelColor = options.panelColor ?? 0x04070f;
           const panelEmissive = options.panelEmissive ?? 0x000000;
@@ -1309,6 +1541,12 @@
             emissiveIntensity: 0.2,
           });
 
+          addCabinetActionPanel(cabinet, {
+            panelY: 1.5,
+            panelZ: 1.56,
+            panelWidth: 1.9,
+          });
+
           const bezelTop = new THREE.Mesh(
             new THREE.BoxGeometry(1.9, 0.12, 0.1),
             new THREE.MeshStandardMaterial({ color: 0x0d1117, metalness: 0.4, roughness: 0.52 })
@@ -1415,6 +1653,12 @@
             emissiveIntensity: 0.2,
           });
 
+          addCabinetActionPanel(cabinet, {
+            panelY: 1.56,
+            panelZ: 1.48,
+            panelWidth: 1.86,
+          });
+
           addControlPanel(cabinet, {
             panelColor: 0x3c1f4a,
             panelEmissive: 0x4a1f58,
@@ -1481,6 +1725,12 @@
             emissiveIntensity: 0.8,
             planeWidth: 1.8,
             planeHeight: 1.25,
+          });
+
+          addCabinetActionPanel(cabinet, {
+            panelY: 1.58,
+            panelZ: 1.42,
+            panelWidth: 1.92,
           });
 
           addControlPanel(cabinet, {
@@ -1552,8 +1802,23 @@
             introDone = true;
           }
 
-          const cameraLocked = approachingCabinet || activeCabinet;
-          if (!cameraLocked) {
+          const launching = !!launchSequence;
+          const cameraLocked = approachingCabinet || activeCabinet || launching;
+          if (launching) {
+            launchSequence.elapsed = Math.min(
+              CABINET_LAUNCH_DURATION_SECONDS,
+              launchSequence.elapsed + deltaSeconds
+            );
+            const raw = launchSequence.elapsed / CABINET_LAUNCH_DURATION_SECONDS;
+            const eased = 1 - Math.pow(1 - raw, 3);
+            rigGoal.lerpVectors(launchSequence.from, launchSequence.to, eased);
+            focusRigTarget.copy(launchSequence.to);
+            if (raw >= 1) {
+              const launchUrl = launchSequence.url;
+              launchSequence = null;
+              window.location.href = launchUrl;
+            }
+          } else if (!cameraLocked) {
             const damping = Math.exp(-2.8 * deltaSeconds);
             scrollVelocity *= damping;
             if (Math.abs(scrollVelocity) < 0.00001) {
@@ -1572,7 +1837,6 @@
             rigGoal.copy(focusRigTarget);
             rigGoal.y = CAMERA_START_POSITION.y;
           }
-
           cameraRig.position.lerp(rigGoal, 0.05);
           cameraRig.position.y = CAMERA_START_POSITION.y;
           if (!cameraLocked) {
@@ -1588,17 +1852,20 @@
             }
           }
 
-          const lookTargetCabinet = activeCabinet ?? hoverCabinet;
-          if (lookTargetCabinet) {
-            if (lookTargetCabinet.userData.lookPosition) {
-              desiredLookTarget.copy(lookTargetCabinet.userData.lookPosition);
-            } else {
-              desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
-            }
+          if (launchSequence) {
+            desiredLookTarget.copy(launchSequence.cabinet.position).setY(DEFAULT_LOOK_TARGET.y);
           } else {
-            desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
+            const lookTargetCabinet = activeCabinet ?? hoverCabinet;
+            if (lookTargetCabinet) {
+              if (lookTargetCabinet.userData.lookPosition) {
+                desiredLookTarget.copy(lookTargetCabinet.userData.lookPosition);
+              } else {
+                desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+              }
+            } else {
+              desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
+            }
           }
-
           const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
           lookTarget.lerp(desiredLookTarget, lookLerpSpeed);
 
@@ -1618,25 +1885,33 @@
           updateExitDoorOpen(deltaSeconds, now);
           updateCabinetEmissive(deltaSeconds, now);
           updateDeepField(deltaSeconds, now);
+          syncCabinetActionButtons();
 
           renderer.render(scene, camera);
         }
 
         animationFrameId = requestAnimationFrame(animate);
-
         const onResize = () => {
           camera.aspect = window.innerWidth / window.innerHeight;
           camera.updateProjectionMatrix();
           renderer.setSize(window.innerWidth, window.innerHeight);
         };
 
+        const onPageShow = (event) => {
+          if (event.persisted) {
+            applyReturnStateIfPresent();
+          }
+        };
+
         window.addEventListener('resize', onResize);
+        window.addEventListener('pageshow', onPageShow);
 
         return () => {
           cancelAnimationFrame(animationFrameId);
           window.removeEventListener('wheel', onWheel);
           window.removeEventListener('keydown', onKeyDown);
           window.removeEventListener('resize', onResize);
+          window.removeEventListener('pageshow', onPageShow);
           renderer.domElement.removeEventListener('pointermove', onPointerMove);
           renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
           renderer.domElement.removeEventListener('click', onRendererClick);
@@ -1673,6 +1948,8 @@
     </script>
   </body>
 </html>
+
+
 
 
 
