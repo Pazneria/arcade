@@ -62,49 +62,6 @@
         z-index: 10;
       }
 
-      #ui-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 1rem;
-      }
-
-      #intro-text {
-        position: relative;
-        align-self: center;
-        margin-top: clamp(1.5rem, 9vh, 7rem);
-        font-family: "Orbitron", system-ui, sans-serif;
-        font-size: clamp(1.45rem, 2.5vw + 1rem, 3.1rem);
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: #90ffd7;
-        text-shadow: 0 0 0.4rem rgba(79, 255, 210, 0.65), 0 0 1.6rem rgba(15, 240, 252, 0.45);
-        opacity: 0;
-        transform: translateY(36px) scaleY(1.08);
-        filter: blur(6px);
-        animation: introTextEnter 2.9s cubic-bezier(0.19, 1, 0.22, 1) 0.8s forwards,
-          introTextPulse 4.2s ease-in-out 3.4s infinite;
-        pointer-events: none;
-        white-space: nowrap;
-        text-align: center;
-        mix-blend-mode: screen;
-      }
-
-      #intro-text span {
-        color: var(--accent-primary);
-      }
-
-      #intro-text::after {
-        content: "";
-        position: absolute;
-        inset: 55% -20% auto -20%;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(144, 255, 215, 0.7), transparent);
-        opacity: 0;
-        transform: translateY(-8px) scaleX(0.6);
-        animation: introSweep 2.4s ease-out 0.8s forwards;
-      }
-
       .neon-button {
         pointer-events: auto;
         background: linear-gradient(120deg, rgba(15, 240, 252, 0.15), rgba(255, 77, 225, 0.1));
@@ -127,96 +84,6 @@
         transform: translateY(-2px);
         box-shadow: 0 0 1.5rem rgba(255, 77, 225, 0.4);
         outline: none;
-      }
-
-      #info-panel {
-        pointer-events: auto;
-        align-self: center;
-        margin-top: auto;
-        max-width: min(32rem, 90vw);
-        background: var(--panel-bg);
-        border: 1px solid var(--panel-border);
-        border-radius: 16px;
-        padding: 1.75rem;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.45);
-        display: none;
-      }
-
-      #info-panel.visible {
-        display: block;
-      }
-
-      #info-panel h2 {
-        font-family: "Orbitron", system-ui, sans-serif;
-        letter-spacing: 0.08em;
-        font-size: 1.45rem;
-        margin: 0 0 0.5rem;
-      }
-
-      #info-panel p {
-        margin: 0 0 1.25rem;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-
-      #info-prompt {
-        margin: 0 0 1.5rem;
-        font-family: "Orbitron", system-ui, sans-serif;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      #info-prompt:empty {
-        display: none;
-      }
-
-      #info-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-      }
-
-      #play-button {
-        background: linear-gradient(120deg, rgba(15, 240, 252, 0.35), rgba(255, 77, 225, 0.4));
-        border: 1px solid rgba(15, 240, 252, 0.6);
-        border-radius: 12px;
-        padding: 0.75rem 1.75rem;
-        font-family: "Orbitron", system-ui, sans-serif;
-        font-size: 0.95rem;
-        letter-spacing: 0.08em;
-        cursor: pointer;
-        text-decoration: none;
-        color: var(--text);
-        transition: transform 200ms ease, box-shadow 200ms ease;
-      }
-
-      #play-button:hover,
-      #play-button:focus-visible {
-        transform: translateY(-2px);
-        box-shadow: 0 0 1.5rem rgba(15, 240, 252, 0.55);
-        outline: none;
-      }
-
-      #close-panel {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        color: var(--muted);
-        border-radius: 12px;
-        padding: 0.7rem 1.25rem;
-        cursor: pointer;
-        font-size: 0.85rem;
-        letter-spacing: 0.06em;
-      }
-
-      #instruction {
-        pointer-events: none;
-        font-size: 0.8rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.6);
-        text-shadow: 0 0 0.5rem rgba(15, 240, 252, 0.35);
       }
 
       #fallback-message,
@@ -278,100 +145,6 @@
         text-decoration: none;
       }
 
-      #scanlines {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        background-image: repeating-linear-gradient(
-          0deg,
-          rgba(0, 0, 0, 0.18) 0px,
-          rgba(0, 0, 0, 0.18) 2px,
-          transparent 2px,
-          transparent 4px
-        );
-        opacity: 0.25;
-        mix-blend-mode: screen;
-        z-index: 1;
-      }
-
-      #scanlines::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          to bottom,
-          transparent,
-          rgba(15, 240, 252, 0.12),
-          transparent
-        );
-        animation: scan 4.5s linear infinite;
-        opacity: 0.5;
-      }
-
-      @keyframes introTextEnter {
-        0% {
-          opacity: 0;
-          transform: translateY(60px) scaleY(1.2);
-          letter-spacing: 0.45em;
-          filter: blur(12px);
-        }
-        45% {
-          opacity: 1;
-          transform: translateY(0) scaleY(1);
-          letter-spacing: 0.18em;
-          filter: blur(0);
-        }
-        60% {
-          opacity: 0.3;
-        }
-        70% {
-          opacity: 1;
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0) scaleY(1);
-          letter-spacing: 0.18em;
-          filter: blur(0);
-        }
-      }
-
-      @keyframes introTextPulse {
-        0%,
-        100% {
-          text-shadow: 0 0 0.35rem rgba(79, 255, 210, 0.55), 0 0 1.4rem rgba(15, 240, 252, 0.4);
-        }
-        50% {
-          text-shadow: 0 0 0.6rem rgba(144, 255, 215, 0.85), 0 0 1.8rem rgba(15, 240, 252, 0.6);
-        }
-      }
-
-      @keyframes introSweep {
-        0% {
-          opacity: 0;
-          transform: translateY(-24px) scaleX(0.3);
-        }
-        45% {
-          opacity: 0.9;
-          transform: translateY(0) scaleX(1.1);
-        }
-        100% {
-          opacity: 0;
-          transform: translateY(12px) scaleX(0.4);
-        }
-      }
-
-      @keyframes scan {
-        0% {
-          transform: translateY(-20%);
-        }
-        50% {
-          transform: translateY(20%);
-        }
-        100% {
-          transform: translateY(-20%);
-        }
-      }
-
       @media (max-width: 768px) {
         body {
           overflow-y: auto;
@@ -381,24 +154,7 @@
   </head>
   <body>
     <div id="scene-container"></div>
-    <div id="scanlines"></div>
-
-    <div id="overlay">
-      <div id="ui-top">
-        <div id="instruction">Scroll to move • Click a cabinet to explore</div>
-        <a class="neon-button" href="/">Exit Arcade</a>
-      </div>
-      <div id="intro-text" aria-hidden="true">Games.<span>&nbsp;Lots of games.</span></div>
-      <div id="info-panel" role="dialog" aria-modal="true">
-        <h2 id="info-title">Cabinet Title</h2>
-        <p id="info-description">Description placeholder</p>
-        <p id="info-prompt" aria-live="polite"></p>
-        <div id="info-actions">
-          <a id="play-button" href="#" target="_blank" rel="noopener">Play</a>
-          <button id="close-panel">Back to walkway</button>
-        </div>
-      </div>
-    </div>
+    <div id="overlay"></div>
 
     <section id="fallback-message">
       <h1>Neon Arcade Requires WebGL</h1>
@@ -435,12 +191,6 @@
       const fallbackMessage = document.getElementById('fallback-message');
       const mobileFallback = document.getElementById('mobile-fallback');
       const fallbackGrid = document.getElementById('fallback-grid');
-      const infoPanel = document.getElementById('info-panel');
-      const infoTitle = document.getElementById('info-title');
-      const infoDescription = document.getElementById('info-description');
-      const infoPrompt = document.getElementById('info-prompt');
-      const playButton = document.getElementById('play-button');
-      const closePanelButton = document.getElementById('close-panel');
 
       const supportsWebGL = (() => {
         try {
@@ -464,8 +214,7 @@
       let arcadeHasInitialized = false;
       let arcadeCleanup = null;
 
-      const games = [
-        // Add new cabinets here. Each entry controls the cabinet model, its overlay content, and link.
+            const games = [
         {
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
@@ -483,6 +232,18 @@
           description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
           url: 'https://example.com/ghost-signal',
           thumbnail: 'https://images.unsplash.com/photo-1604079628040-94301bb21b11?auto=format&fit=crop&w=600&q=80',
+        },
+        {
+          name: 'Chrome Drift',
+          description: 'Thread impossible corners, chain boost drifts, and light up the night circuit.',
+          url: 'https://example.com/chrome-drift',
+          thumbnail: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
+        },
+        {
+          name: 'Night Courier',
+          description: 'Slam through midnight streets delivering impossible payloads before dawn.',
+          url: 'https://example.com/night-courier',
+          thumbnail: 'https://images.unsplash.com/photo-1518773553398-650c184e0bb3?auto=format&fit=crop&w=600&q=80',
         },
       ];
 
@@ -513,9 +274,6 @@
             arcadeCleanup();
             arcadeCleanup = null;
           }
-
-          infoPanel.classList.remove('visible');
-          infoPrompt.textContent = '';
           buildMobileDirectory();
           mobileFallback.classList.add('visible');
           layoutMode = 'mobile';
@@ -589,45 +347,101 @@
         spotRight.position.set(8, 6, -4);
         scene.add(spotRight);
 
-        const floorGeometry = new THREE.PlaneGeometry(60, 200, 32, 32);
         const floorMaterial = new THREE.MeshStandardMaterial({
-          color: 0x050a1a,
-          metalness: 0.2,
-          roughness: 0.6,
-          emissive: 0x021627,
-          emissiveIntensity: 0.5,
+          color: 0x0c1019,
+          emissive: 0x10192a,
+          emissiveIntensity: 0.12,
+          metalness: 0.07,
+          roughness: 0.93,
         });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(90, 260, 1, 1), floorMaterial);
         floor.rotation.x = -Math.PI / 2;
         floor.position.y = -0.01;
+        floor.visible = false;
         scene.add(floor);
 
-        const gridHelper = new THREE.GridHelper(80, 80, 0x0ff0fc, 0x082637);
-        gridHelper.position.y = 0.001;
-        scene.add(gridHelper);
+        scene.background = new THREE.Color(0x020307);
+        scene.fog = new THREE.FogExp2(0x090c13, 0.0085);
 
-        const wallHeight = 8;
-        const wallGeometry = new THREE.PlaneGeometry(200, wallHeight);
-        const wallMaterial = new THREE.MeshStandardMaterial({
-          color: 0x031026,
-          metalness: 0.2,
-          roughness: 0.7,
-          transparent: true,
-          opacity: 0.88,
-          side: THREE.DoubleSide,
-          emissive: 0x021c3a,
-          emissiveIntensity: 0.22,
-        });
+        function createGlowTexture(coreRgba, midRgba, edgeRgba) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+          }
+          const gradient = ctx.createRadialGradient(128, 128, 12, 128, 128, 120);
+          gradient.addColorStop(0, coreRgba);
+          gradient.addColorStop(0.5, midRgba);
+          gradient.addColorStop(1, edgeRgba);
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 256, 256);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.needsUpdate = true;
+          return texture;
+        }
 
-        const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
-        leftWall.position.set(-8, wallHeight / 2, 0);
-        leftWall.rotation.y = Math.PI / 2;
-        scene.add(leftWall);
+        function randomXOutsideWalkway(span, clearance = 7.2) {
+          const halfSpan = span * 0.5;
+          for (let attempt = 0; attempt < 14; attempt += 1) {
+            const x = (Math.random() - 0.5) * span;
+            if (Math.abs(x) >= clearance) {
+              return x;
+            }
+          }
+          const edge = clearance + Math.random() * Math.max(0.2, halfSpan - clearance);
+          return (Math.random() < 0.5 ? -1 : 1) * edge;
+        }
 
-        const rightWall = leftWall.clone();
-        rightWall.position.set(8, wallHeight / 2, 0);
-        rightWall.rotation.y = -Math.PI / 2;
-        scene.add(rightWall);
+        function addStarField(targetGroup, options = {}) {
+          const count = options.count ?? 1200;
+          const spreadX = options.spreadX ?? 56;
+          const spreadY = options.spreadY ?? 24;
+          const nearZ = options.nearZ ?? 8;
+          const farZ = options.farZ ?? -220;
+          const centerY = options.centerY ?? CAMERA_START_POSITION.y;
+          const symmetricY = options.symmetricY ?? true;
+          const size = options.size ?? 0.07;
+          const color = options.color ?? 0xf2f6ff;
+          const opacity = options.opacity ?? 0.8;
+          const zMin = Math.min(nearZ, farZ);
+          const zMax = Math.max(nearZ, farZ);
+
+          const positions = new Float32Array(count * 3);
+          for (let i = 0; i < count; i += 1) {
+            const base = i * 3;
+            positions[base] = (Math.random() - 0.5) * spreadX;
+            positions[base + 1] =
+              centerY + (symmetricY ? (Math.random() - 0.5) * spreadY : Math.random() * spreadY);
+            positions[base + 2] = zMin + Math.random() * (zMax - zMin);
+          }
+
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          const material = new THREE.PointsMaterial({
+            color,
+            size,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+          });
+          const points = new THREE.Points(geometry, material);
+          targetGroup.add(points);
+          return points;
+        }
+
+        const deepFieldGroup = new THREE.Group();
+        scene.add(deepFieldGroup);
+
+        let deepStarField = null;
+
+        function updateDeepField(deltaSeconds, now) {
+          // Keep stars fixed for a static deep-space backdrop.
+        }
 
         const textureLoader = new THREE.TextureLoader();
         textureLoader.crossOrigin = 'anonymous';
@@ -643,6 +457,10 @@
         const spacing = 6.5;
         const laneOffset = 5.5;
         const startZ = -7;
+        const introSpawnOffset = 220;
+        const introHoldMs = 500;
+        const introDurationMs = 760;
+        const showcaseCabinetStyles = ['workshop', 'workshop', 'workshop', 'workshop', 'sunset'];
 
         games.forEach((game, index) => {
           const side = index % 2 === 0 ? 'left' : 'right';
@@ -654,26 +472,41 @@
           cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
           cabinet.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, z);
           cabinet.userData.restPosition = finalPosition.clone();
-
-          const slideOffset = side === 'left' ? -12 : 12;
-          const fromX = finalPosition.x + slideOffset;
-          cabinet.position.x = fromX;
+          const fromZ = finalPosition.z - introSpawnOffset;
+          cabinet.position.z = fromZ;
           const pairIndex = Math.floor(index / 2);
-          const delay = pairIndex * 240 + (side === 'left' ? 0 : 120);
+          const delay = introHoldMs + pairIndex * 140 + (side === 'left' ? 0 : 70);
           introAnimations.push({
             cabinet,
-            fromX,
-            toX: finalPosition.x,
+            fromZ,
+            toZ: finalPosition.z,
             delay,
-            duration: 1300,
+            duration: introDurationMs,
             done: false,
           });
 
           cabinetGroup.add(cabinet);
-
           cabinets.push(cabinet);
         });
 
+        const lastCabinetZ = startZ - (games.length - 1) * spacing;
+        const doorZ = lastCabinetZ - spacing * 1.15;
+        deepStarField = addStarField(deepFieldGroup, {
+          count: 1300,
+          spreadX: 120,
+          spreadY: 60,
+          centerY: CAMERA_START_POSITION.y,
+          symmetricY: true,
+          nearZ: doorZ - 3,
+          farZ: doorZ - 230,
+          size: 0.1,
+          color: 0xffffff,
+          opacity: 1,
+        });
+        const exitDoor = createExitDoor(doorZ);
+        scene.add(exitDoor.root);
+
+        const interactableTargets = [...cabinets, exitDoor.root, ...exitDoor.switchArrows];
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let hoverCabinet = null;
@@ -686,8 +519,8 @@
         let approachingCabinet = null;
         let targetZ = cameraRig.position.z;
         let scrollVelocity = 0;
-        const lastCabinetZ = startZ - (games.length - 1) * spacing;
-        const minZ = lastCabinetZ - 4;
+        const walkwayDoorStandoff = Math.max(4.2, laneOffset - 0.8);
+        const minZ = doorZ + walkwayDoorStandoff;
         const maxZ = 12;
         const walkwayReturnPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, cameraRig.position.z);
         const focusRigTarget = new THREE.Vector3();
@@ -699,6 +532,7 @@
 
         const onWheel = (event) => {
           if (!introDone) return;
+          if (exitDoor.opening.active) return;
           if (activeCabinet || approachingCabinet) return;
           scrollVelocity += event.deltaY * 0.025;
         };
@@ -707,17 +541,18 @@
 
         const onPointerMove = (event) => {
           if (!introDone) return;
+          if (exitDoor.opening.active) return;
           const rect = renderer.domElement.getBoundingClientRect();
           pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
           pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          if (activeCabinet || approachingCabinet) return;
+          if (approachingCabinet) return;
           raycaster.setFromCamera(pointer, camera);
-          const intersects = raycaster.intersectObjects(cabinets, true);
+          const intersects = raycaster.intersectObjects(interactableTargets, true);
           let candidate = intersects.length ? intersects[0].object : null;
-          while (candidate && !cabinets.includes(candidate)) {
+          while (candidate && !interactableTargets.includes(candidate)) {
             candidate = candidate.parent;
           }
-          pendingHoverCabinet = candidate && cabinets.includes(candidate) ? candidate : null;
+          pendingHoverCabinet = candidate && interactableTargets.includes(candidate) ? candidate : null;
           const now = performance.now();
           if (hoverLockState === 'idle') {
             applyHoverSelection(pendingHoverCabinet);
@@ -731,7 +566,7 @@
 
         const onPointerLeave = () => {
           if (!introDone) return;
-          if (activeCabinet || approachingCabinet) return;
+          if (approachingCabinet) return;
           pendingHoverCabinet = null;
           if (hoverLockState === 'idle') {
             applyHoverSelection(null);
@@ -745,20 +580,37 @@
 
         const onRendererClick = () => {
           if (!introDone) return;
-          if (hoverCabinet && !activeCabinet && !approachingCabinet) {
+          if (exitDoor.opening.active) return;
+          if (approachingCabinet) return;
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign') {
+            exitDoor.cycleSign(hoverCabinet.userData.delta ?? 1);
+            return;
+          }
+
+          if (activeCabinet) {
+            if (hoverCabinet === activeCabinet) {
+              if (activeCabinet === exitDoor.root) {
+                triggerExitDoorOpen();
+                return;
+              }
+              navigateToTarget(activeCabinet);
+              return;
+            }
+            exitCabinetView();
+            return;
+          }
+
+          if (hoverCabinet) {
             focusCabinet(hoverCabinet);
+            return;
           }
         };
 
         renderer.domElement.addEventListener('click', onRendererClick);
 
-        const onClosePanelClick = () => {
-          exitCabinetView();
-        };
-
-        closePanelButton.addEventListener('click', onClosePanelClick);
-
         const onKeyDown = (event) => {
+          if (exitDoor.opening.active) return;
           if (event.key === 'Escape') {
             exitCabinetView();
           }
@@ -766,54 +618,444 @@
 
         window.addEventListener('keydown', onKeyDown);
 
-        function focusCabinet(cabinet) {
+        function focusCabinet(target) {
           if (!introDone) return;
           walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
           resetHoverState();
-          hoverCabinet = cabinet;
-          approachingCabinet = cabinet;
-          focusRigTarget.set(0, CAMERA_START_POSITION.y, cabinet.userData.focusPosition.z);
+          hoverCabinet = target;
+          approachingCabinet = target;
+          focusRigTarget.copy(target.userData.focusPosition);
           targetZ = focusRigTarget.z;
           scrollVelocity = 0;
           activeCabinet = null;
-          infoTitle.textContent = cabinet.userData.game.name;
-          infoDescription.textContent = cabinet.userData.game.description;
-          infoPrompt.textContent = `Ready to play ${cabinet.userData.game.name}?`;
-          playButton.href = cabinet.userData.game.url;
-          infoPanel.classList.remove('visible');
           renderer.domElement.style.cursor = 'default';
         }
 
-        const onPlayButtonClick = (event) => {
-          event.preventDefault();
-          const gameUrl = playButton.href;
-
-          const cabinetX = activeCabinet ? activeCabinet.position.x : 0;
-          const moveDistance = 3;
-
-          if (cabinetX < 0) {
-            focusRigTarget.x -= moveDistance;
-          } else {
-            focusRigTarget.x += moveDistance;
-          }
-
-          setTimeout(() => {
-            window.location.href = gameUrl;
-          }, 800);
-        };
-
-        playButton.addEventListener('click', onPlayButtonClick);
+        function navigateToTarget(target) {
+          if (!target) return;
+          const url = target.userData.url || (target.userData.game ? target.userData.game.url : null);
+          if (!url) return;
+          window.location.href = url;
+        }
 
         function exitCabinetView() {
           if (!activeCabinet && !approachingCabinet) return;
           activeCabinet = null;
           approachingCabinet = null;
           resetHoverState();
-          infoPanel.classList.remove('visible');
-          infoPrompt.textContent = '';
           targetZ = walkwayReturnPosition.z;
         }
 
+        const arcadeEntryUrl = document.referrer && document.referrer !== window.location.href ? document.referrer : '/';
+        const exitTransition = {
+          // Default to site destination; switch to 'reset' for local loop testing.
+          mode: 'navigate',
+          destination: 'https://pazneria.github.io/',
+          fallbackDestination: arcadeEntryUrl,
+          delayMs: 420,
+        };
+        const EXIT_DOOR_OPEN_DURATION_SECONDS = 2.2;
+        const EXIT_DOOR_OPEN_ANGLE = -1.45;
+        const EXIT_PORTAL_LIGHT_MAX_OPACITY = 0.86;
+        const EXIT_PORTAL_BLOOM_MAX_OPACITY = 0.3;
+
+        function performExitTransition() {
+          if (exitTransition.mode === 'navigate') {
+            const target = exitTransition.destination || exitTransition.fallbackDestination || '/';
+            window.location.href = target;
+            return;
+          }
+          window.location.reload();
+        }
+
+        function triggerExitDoorOpen() {
+          if (activeCabinet !== exitDoor.root) return;
+          if (exitDoor.opening.active || exitDoor.opening.progress >= 1) return;
+          exitDoor.opening.active = true;
+          exitDoor.opening.completed = false;
+        }
+
+        function updateExitDoorOpen(deltaSeconds, now) {
+          if (!exitDoor.opening.active) return;
+          const openSpeed = 1 / EXIT_DOOR_OPEN_DURATION_SECONDS;
+          exitDoor.opening.progress = Math.min(1, exitDoor.opening.progress + deltaSeconds * openSpeed);
+          if (exitDoor.opening.progress >= 1) {
+            exitDoor.opening.active = false;
+            if (!exitDoor.opening.completed) {
+              exitDoor.opening.completed = true;
+              window.setTimeout(performExitTransition, exitTransition.delayMs);
+            }
+          }
+        }
+
+        function createExitDoor(doorZ) {
+          const root = new THREE.Group();
+          root.position.set(0, 0, doorZ);
+          root.rotation.y = 0;
+          root.userData.url = '/';
+          root.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, doorZ + 3.8);
+          root.userData.lookPosition = new THREE.Vector3(0, 2.1, doorZ);
+
+          const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x6f4b31,
+            metalness: 0.08,
+            roughness: 0.83,
+          });
+          const trimMaterial = new THREE.MeshStandardMaterial({
+            color: 0x825638,
+            metalness: 0.06,
+            roughness: 0.78,
+          });
+          const doorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x6d4730,
+            emissive: 0x1a100a,
+            emissiveIntensity: 0.08,
+            metalness: 0.05,
+            roughness: 0.72,
+          });
+          const panelMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4c2f1f,
+            metalness: 0.04,
+            roughness: 0.9,
+          });
+          const brassMaterial = new THREE.MeshStandardMaterial({
+            color: 0xc6a46f,
+            emissive: 0x4b2f0e,
+            emissiveIntensity: 0.22,
+            metalness: 0.82,
+            roughness: 0.25,
+          });
+
+          const openingWidth = 2.18;
+          const openingHeight = 3.86;
+          const frameDepth = 0.34;
+          const jambWidth = 0.24;
+
+          const leftJamb = new THREE.Mesh(
+            new THREE.BoxGeometry(jambWidth, openingHeight + 0.34, frameDepth),
+            frameMaterial
+          );
+          leftJamb.position.set(-openingWidth / 2 - jambWidth * 0.5, 2.05, 0);
+          root.add(leftJamb);
+
+          const rightJamb = leftJamb.clone();
+          rightJamb.position.x = openingWidth / 2 + jambWidth * 0.5;
+          root.add(rightJamb);
+
+          const header = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2, 0.24, frameDepth),
+            trimMaterial
+          );
+          header.position.set(0, openingHeight + 0.22, 0);
+          root.add(header);
+
+          const threshold = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2, 0.12, frameDepth),
+            trimMaterial
+          );
+          threshold.position.set(0, 0.06, 0);
+          root.add(threshold);
+
+          const roomPlaneMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff0dd,
+            transparent: true,
+            opacity: 0.24,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const roomPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth - 0.18, openingHeight - 0.2),
+            roomPlaneMaterial
+          );
+          roomPlane.position.set(0, 2.04, -0.1);
+          root.add(roomPlane);
+
+          const portalLightMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff0d8,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            fog: false,
+            toneMapped: false,
+          });
+          const portalLight = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth - 0.2, openingHeight - 0.22),
+            portalLightMaterial
+          );
+          portalLight.position.set(0, 2.04, -0.22);
+          portalLight.rotation.y = Math.PI;
+          portalLight.renderOrder = 2;
+          root.add(portalLight);
+
+          const portalBloomMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff2de,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            fog: false,
+            toneMapped: false,
+          });
+          const portalBloom = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth + 0.65, openingHeight + 0.72),
+            portalBloomMaterial
+          );
+          portalBloom.position.set(0, 2.04, -0.26);
+          portalBloom.rotation.y = Math.PI;
+          portalBloom.renderOrder = 1;
+          root.add(portalBloom);
+
+          const roomLight = new THREE.PointLight(0xffe7c9, 0.72, 10, 2);
+          roomLight.position.set(0, 2.35, -1.7);
+          root.add(roomLight);
+
+          const doorSpot = new THREE.SpotLight(0xfff0dc, 0, 18, Math.PI / 6, 0.35, 1.1);
+          doorSpot.position.set(0, 3.2, -2.9);
+          const doorLightTarget = new THREE.Object3D();
+          doorLightTarget.position.set(0, 2.05, 2.6);
+          root.add(doorLightTarget);
+          root.add(doorSpot);
+
+          const doorWidth = openingWidth - 0.16;
+          const doorHeight = openingHeight - 0.2;
+          const DOOR_CLOSED_ROTATION = -0.33;
+          const doorPivot = new THREE.Group();
+          doorPivot.position.set(-doorWidth * 0.5, 2.04, 0.04);
+          doorPivot.rotation.y = DOOR_CLOSED_ROTATION;
+          root.add(doorPivot);
+          doorSpot.target = doorLightTarget;
+
+          const door = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, doorHeight, 0.11), doorMaterial);
+          door.position.set(doorWidth * 0.5, 0, 0);
+          doorPivot.add(door);
+
+          const panelTop = new THREE.Mesh(
+            new THREE.BoxGeometry(doorWidth * 0.72, doorHeight * 0.34, 0.04),
+            panelMaterial
+          );
+          panelTop.position.set(doorWidth * 0.5, 0.86, 0.058);
+          doorPivot.add(panelTop);
+
+          const panelBottom = panelTop.clone();
+          panelBottom.scale.y = 1.2;
+          panelBottom.position.y = -0.76;
+          doorPivot.add(panelBottom);
+
+          const plate = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.34, 0.015), brassMaterial);
+          plate.position.set(doorWidth * 0.79, -0.1, 0.065);
+          doorPivot.add(plate);
+
+          const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.17, 14), brassMaterial);
+          handle.rotation.y = Math.PI / 2;
+          handle.position.set(doorWidth * 0.85, -0.1, 0.065);
+          doorPivot.add(handle);
+
+          const signCanvas = document.createElement('canvas');
+          signCanvas.width = 640;
+          signCanvas.height = 256;
+          const signCtx = signCanvas.getContext('2d');
+          const signTexture = new THREE.CanvasTexture(signCanvas);
+          signTexture.encoding = THREE.sRGBEncoding;
+
+          function drawRoundRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width * 0.5, height * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + width, y, x + width, y + height, r);
+            ctx.arcTo(x + width, y + height, x, y + height, r);
+            ctx.arcTo(x, y + height, x, y, r);
+            ctx.arcTo(x, y, x + width, y, r);
+            ctx.closePath();
+          }
+
+          function drawExitSign(variant) {
+            if (!signCtx) return;
+            const w = signCanvas.width;
+            const h = signCanvas.height;
+            signCtx.clearRect(0, 0, w, h);
+
+            if (variant === 0) {
+              signCtx.fillStyle = 'rgba(8, 10, 14, 0.2)';
+              signCtx.fillRect(0, 0, w, h);
+              drawRoundRect(signCtx, 20, 18, w - 40, h - 36, 26);
+              signCtx.fillStyle = 'rgba(210, 222, 255, 0.08)';
+              signCtx.fill();
+              signCtx.lineWidth = 10;
+              signCtx.strokeStyle = 'rgba(240, 246, 255, 0.25)';
+              signCtx.stroke();
+            } else if (variant === 1) {
+              signCtx.fillStyle = 'rgba(8, 10, 14, 0.18)';
+              signCtx.fillRect(0, 0, w, h);
+              drawRoundRect(signCtx, 16, 16, w - 32, h - 32, 20);
+              signCtx.fillStyle = 'rgba(220, 232, 255, 0.07)';
+              signCtx.fill();
+              signCtx.lineWidth = 8;
+              signCtx.setLineDash([16, 10]);
+              signCtx.strokeStyle = 'rgba(244, 248, 255, 0.22)';
+              signCtx.stroke();
+              signCtx.setLineDash([]);
+            } else if (variant === 2) {
+              signCtx.fillStyle = 'rgba(8, 10, 14, 0.17)';
+              signCtx.fillRect(0, 0, w, h);
+              drawRoundRect(signCtx, 14, 14, w - 28, h - 28, 18);
+              signCtx.fillStyle = 'rgba(225, 236, 255, 0.07)';
+              signCtx.fill();
+              signCtx.lineWidth = 6;
+              signCtx.strokeStyle = 'rgba(245, 250, 255, 0.2)';
+              signCtx.stroke();
+              signCtx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+              for (let stripe = 0; stripe < 10; stripe += 1) {
+                signCtx.fillRect(26 + stripe * 62, 24, 22, h - 48);
+              }
+            } else {
+              signCtx.fillStyle = 'rgba(8, 10, 14, 0.2)';
+              signCtx.fillRect(0, 0, w, h);
+              drawRoundRect(signCtx, 18, 18, w - 36, h - 36, 24);
+              signCtx.fillStyle = 'rgba(216, 228, 255, 0.08)';
+              signCtx.fill();
+              signCtx.lineWidth = 12;
+              signCtx.strokeStyle = 'rgba(243, 249, 255, 0.24)';
+              signCtx.stroke();
+            }
+
+            signCtx.font = '700 136px Rajdhani, Orbitron, sans-serif';
+            signCtx.textAlign = 'center';
+            signCtx.textBaseline = 'middle';
+            signCtx.fillStyle = 'rgba(255, 118, 118, 1)';
+            signCtx.shadowColor = 'rgba(255, 18, 18, 1)';
+            signCtx.shadowBlur = 58;
+            signCtx.fillText('EXIT', w / 2, h / 2 + 6);
+            signCtx.lineWidth = 6;
+            signCtx.strokeStyle = 'rgba(255, 238, 238, 1)';
+            signCtx.strokeText('EXIT', w / 2, h / 2 + 6);
+            signCtx.shadowBlur = 0;
+
+            signTexture.needsUpdate = true;
+          }
+
+          const signMaterial = new THREE.MeshBasicMaterial({
+            map: signTexture,
+            transparent: true,
+            opacity: 0.9,
+            depthWrite: false,
+            fog: false,
+            toneMapped: false,
+          });
+
+          const sign = new THREE.Group();
+          sign.position.set(0, openingHeight + 0.86, 0.08);
+          root.add(sign);
+
+          const signWidth = doorWidth * 0.78;
+          const signHeight = 0.62;
+          const signBox = new THREE.Mesh(new THREE.BoxGeometry(signWidth, signHeight, 0.16), signMaterial);
+          sign.add(signBox);
+
+          function createArrowButton(delta, x) {
+            const button = new THREE.Mesh(
+              new THREE.BoxGeometry(0.36, 0.22, 0.1),
+              new THREE.MeshStandardMaterial({
+                color: 0x311616,
+                emissive: 0x5e2020,
+                emissiveIntensity: 0.34,
+                metalness: 0.12,
+                roughness: 0.44,
+              })
+            );
+            button.position.set(x, 0.54, 0.08);
+            button.userData.action = 'cycle-sign';
+            button.userData.delta = delta;
+            button.userData.focusPosition = root.userData.focusPosition;
+            button.userData.lookPosition = root.userData.lookPosition;
+
+            const glyph = new THREE.Mesh(
+              new THREE.ConeGeometry(0.064, 0.16, 3),
+              new THREE.MeshStandardMaterial({
+                color: 0xffd2d2,
+                emissive: 0xff8f8f,
+                emissiveIntensity: 0.45,
+                metalness: 0.08,
+                roughness: 0.36,
+              })
+            );
+            glyph.rotation.z = delta < 0 ? Math.PI / 2 : -Math.PI / 2;
+            glyph.position.z = 0.09;
+            button.add(glyph);
+
+            sign.add(button);
+            return button;
+          }
+
+          const leftArrow = createArrowButton(-1, -0.42);
+          const rightArrow = createArrowButton(1, 0.42);
+          const switchArrows = [leftArrow, rightArrow];
+
+          const sparks = [];
+          const sparkEmitters = [
+            new THREE.Vector3(-signWidth * 0.44, signHeight * 0.18, 0.17),
+            new THREE.Vector3(signWidth * 0.44, signHeight * 0.18, 0.17),
+            new THREE.Vector3(0, signHeight * 0.26, 0.17),
+          ];
+          for (let sparkIndex = 0; sparkIndex < 9; sparkIndex += 1) {
+            const sparkMaterial = new THREE.MeshBasicMaterial({
+              color: 0xffb17c,
+              transparent: true,
+              opacity: 0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            });
+            const spark = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), sparkMaterial);
+            spark.position.copy(sparkEmitters[0]);
+            sign.add(spark);
+            sparks.push({
+              mesh: spark,
+              velocity: new THREE.Vector3(),
+              life: 0,
+              cooldown: Math.random() * 1.4,
+              emitterIndex: 0,
+            });
+          }
+
+          const variantCount = 4;
+          let signVariantIndex = 0;
+          const setSignVariant = (next) => {
+            signVariantIndex = (next + variantCount) % variantCount;
+            drawExitSign(signVariantIndex);
+          };
+
+          setSignVariant(0);
+
+          return {
+            root,
+            signMaterial,
+            roomLight,
+            doorSpot,
+            roomPlaneMaterial,
+            doorPivot,
+            doorClosedRotation: DOOR_CLOSED_ROTATION,
+            portalLight,
+            portalBloom,
+            opening: {
+              active: false,
+              completed: false,
+              progress: 0,
+            },
+            sparks,
+            sparkEmitters,
+            switchArrows,
+            flicker: {
+              timer: 0,
+              target: 0.44,
+              level: 0.44,
+            },
+            cycleSign(delta = 1) {
+              setSignVariant(signVariantIndex + delta);
+            },
+          };
+        }
 
         function applyHoverSelection(cabinet) {
           if (hoverCabinet === cabinet) return;
@@ -836,8 +1078,8 @@
           renderer.domElement.style.cursor = 'default';
         }
 
-        function updateCabinetEmissive() {
-          const pulse = (Math.sin(performance.now() * 0.003) + 1) * 0.35 + 0.4;
+        function updateCabinetEmissive(deltaSeconds, now) {
+          const pulse = (Math.sin(now * 0.003) + 1) * 0.35 + 0.4;
           cabinets.forEach((cabinet) => {
             const screen = cabinet.getObjectByName('screen');
             if (!screen) return;
@@ -848,43 +1090,96 @@
               screen.material.emissive = tempColor;
             }
           });
+
+          const signControlHovered =
+            !!(hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign');
+          const doorActive =
+            hoverCabinet === exitDoor.root ||
+            activeCabinet === exitDoor.root ||
+            approachingCabinet === exitDoor.root ||
+            signControlHovered;
+
+          const flicker = exitDoor.flicker;
+          flicker.timer -= deltaSeconds;
+          if (flicker.timer <= 0) {
+            const roll = Math.random();
+            flicker.target = roll > 0.9 ? 0.14 : roll > 0.75 ? 0.24 : 0.38 + Math.random() * 0.16;
+            flicker.timer = roll > 0.9 ? 0.14 + Math.random() * 0.22 : 0.5 + Math.random() * 1.25;
+          }
+          const chase = Math.min(1, deltaSeconds * 3.1);
+          flicker.level += (flicker.target - flicker.level) * chase;
+          const glassLevel = flicker.level * (0.95 + Math.sin(now * 0.00047) * 0.05);
+          const openEase = 1 - Math.pow(1 - exitDoor.opening.progress, 3);
+
+          exitDoor.signMaterial.opacity = doorActive ? 0.94 : THREE.MathUtils.clamp(glassLevel, 0.62, 0.92);
+          exitDoor.doorPivot.rotation.y = THREE.MathUtils.lerp(exitDoor.doorClosedRotation, EXIT_DOOR_OPEN_ANGLE, openEase);
+          exitDoor.roomLight.intensity = 0.72;
+          exitDoor.doorSpot.intensity = 0;
+          exitDoor.roomPlaneMaterial.opacity = 0.24 + openEase * 0.08;
+          exitDoor.portalLight.material.opacity = openEase * EXIT_PORTAL_LIGHT_MAX_OPACITY;
+          exitDoor.portalBloom.material.opacity = openEase * EXIT_PORTAL_BLOOM_MAX_OPACITY;
+
+          exitDoor.switchArrows.forEach((arrow) => {
+            const hovered = hoverCabinet === arrow;
+            arrow.material.emissiveIntensity = hovered ? 0.82 : 0.34;
+          });
+
+          exitDoor.sparks.forEach((spark) => {
+            if (spark.life <= 0) {
+              spark.cooldown -= deltaSeconds;
+              if (spark.cooldown <= 0 && Math.random() < 0.17) {
+                spark.life = 0.16 + Math.random() * 0.24;
+                spark.cooldown = 0.45 + Math.random() * 1.2;
+                spark.emitterIndex = Math.floor(Math.random() * exitDoor.sparkEmitters.length);
+                spark.mesh.position.copy(exitDoor.sparkEmitters[spark.emitterIndex]);
+                const emitterX = exitDoor.sparkEmitters[spark.emitterIndex].x;
+                const horizontal =
+                  emitterX === 0
+                    ? (Math.random() - 0.5) * 0.45
+                    : Math.sign(emitterX) * (0.45 + Math.random() * 0.7);
+                spark.velocity.set(
+                  horizontal,
+                  0.3 + Math.random() * 0.7,
+                  0.45 + Math.random() * 0.45
+                );
+              }
+            }
+
+            if (spark.life > 0) {
+              spark.life -= deltaSeconds;
+              spark.mesh.position.addScaledVector(spark.velocity, deltaSeconds);
+              spark.velocity.y -= 1.1 * deltaSeconds;
+              spark.velocity.z *= 0.95;
+              spark.mesh.material.opacity = Math.max(0, spark.life / 0.35);
+            } else {
+              spark.mesh.material.opacity = 0;
+            }
+          });
         }
 
-        function createCabinet(game, side, index) {
-          const cabinet = new THREE.Group();
-          cabinet.userData.game = game;
+        function addCabinetScreen(cabinet, game, options = {}) {
 
-          const bodyGeometry = new THREE.BoxGeometry(2.6, 3.8, 2.2);
-          const bodyMaterial = new THREE.MeshStandardMaterial({
-            color: side === 'left' ? 0x09122b : 0x1a0622,
-            metalness: 0.4,
-            roughness: 0.6,
-            emissive: side === 'left' ? 0x053754 : 0x24032f,
-            emissiveIntensity: 0.35,
-          });
-          const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-          body.position.y = 1.7;
-          cabinet.add(body);
+          const width = options.width ?? 1.9;
+          const height = options.height ?? 1.4;
+          const depth = options.depth ?? 0.2;
+          const x = options.x ?? 0;
+          const y = options.y ?? 2.4;
+          const z = options.z ?? 1;
+          const frameColor = options.frameColor ?? 0x05090f;
+          const emissiveColor = options.emissiveColor ?? 0x000000;
+          const emissiveIntensity = options.emissiveIntensity ?? 0.8;
+          const planeWidth = options.planeWidth ?? Math.max(0.4, width - 0.1);
+          const planeHeight = options.planeHeight ?? Math.max(0.3, height - 0.1);
+          const planeOffset = options.planeOffset ?? 0.11;
 
-          const marqueeGeometry = new THREE.BoxGeometry(2.4, 0.6, 0.3);
-          const marqueeMaterial = new THREE.MeshStandardMaterial({
-            color: 0x0ff0fc,
-            emissive: 0x0ff0fc,
-            emissiveIntensity: 0.9,
-          });
-          const marquee = new THREE.Mesh(marqueeGeometry, marqueeMaterial);
-          marquee.position.set(0, 3.5, 0.8);
-          cabinet.add(marquee);
-
-          const screenGeometry = new THREE.BoxGeometry(1.9, 1.4, 0.2);
           const screenMaterial = new THREE.MeshStandardMaterial({
-            color: 0x05090f,
-            emissive: 0x000000,
-            emissiveIntensity: 0.8,
+            color: frameColor,
+            emissive: emissiveColor,
+            emissiveIntensity,
             transparent: true,
           });
-          const screen = new THREE.Mesh(screenGeometry, screenMaterial);
-          screen.position.set(0, 2.4, 1);
+          const screen = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), screenMaterial);
+          screen.position.set(x, y, z);
           screen.name = 'screen';
           cabinet.add(screen);
 
@@ -893,40 +1188,330 @@
             (texture) => {
               texture.encoding = THREE.sRGBEncoding;
               texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
-              const material = new THREE.MeshBasicMaterial({
-                map: texture,
-                toneMapped: false,
-              });
-              const imagePlane = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.25), material);
-              imagePlane.position.set(0, 2.4, 1.11);
+              const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
+              const imagePlane = new THREE.Mesh(new THREE.PlaneGeometry(planeWidth, planeHeight), material);
+              imagePlane.position.set(x, y, z + depth * 0.5 + planeOffset);
               cabinet.add(imagePlane);
             },
             undefined,
             () => {
-              // Texture failed to load; keep the emissive glow only.
+              // Keep emissive-only screen if image fails.
             }
           );
+        }
 
-          const panelGeometry = new THREE.BoxGeometry(2.2, 0.3, 1.2);
-          const panelMaterial = new THREE.MeshStandardMaterial({
-            color: 0x04070f,
-            metalness: 0.3,
-            roughness: 0.7,
-          });
-          const controlPanel = new THREE.Mesh(panelGeometry, panelMaterial);
-          controlPanel.position.set(0, 1.2, 1.2);
-          controlPanel.rotation.x = -Math.PI / 12;
-          cabinet.add(controlPanel);
+        function addControlPanel(cabinet, options = {}) {
+          const panelColor = options.panelColor ?? 0x04070f;
+          const panelEmissive = options.panelEmissive ?? 0x000000;
+          const panelPosition = options.panelPosition ?? [0, 1.2, 1.2];
+          const panelRotationX = options.panelRotationX ?? -Math.PI / 12;
+          const buttonColor = options.buttonColor ?? 0x0ff0fc;
+          const buttonCount = options.buttonCount ?? 3;
 
-          const neonBaseGeometry = new THREE.BoxGeometry(3.2, 0.25, 2.8);
-          const neonBaseMaterial = new THREE.MeshStandardMaterial({
-            color: 0x03060d,
-            emissive: 0x101a2c,
-            emissiveIntensity: 0.4,
+          const panel = new THREE.Mesh(
+            new THREE.BoxGeometry(2.25, 0.32, 1.24),
+            new THREE.MeshStandardMaterial({
+              color: panelColor,
+              metalness: 0.35,
+              roughness: 0.55,
+              emissive: panelEmissive,
+              emissiveIntensity: 0.2,
+            })
+          );
+          panel.position.set(panelPosition[0], panelPosition[1], panelPosition[2]);
+          panel.rotation.x = panelRotationX;
+          cabinet.add(panel);
+
+          const stickBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.09, 0.09, 0.07, 18),
+            new THREE.MeshStandardMaterial({ color: 0x0d121b, metalness: 0.4, roughness: 0.4 })
+          );
+          stickBase.position.set(panelPosition[0] - 0.6, panelPosition[1] + 0.12, panelPosition[2] + 0.06);
+          cabinet.add(stickBase);
+
+          const stick = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.022, 0.022, 0.19, 12),
+            new THREE.MeshStandardMaterial({ color: 0xc5d3e6, metalness: 0.8, roughness: 0.25 })
+          );
+          stick.position.set(panelPosition[0] - 0.6, panelPosition[1] + 0.2, panelPosition[2] + 0.06);
+          cabinet.add(stick);
+
+          const knob = new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 14, 12),
+            new THREE.MeshStandardMaterial({
+              color: buttonColor,
+              emissive: buttonColor,
+              emissiveIntensity: 0.55,
+              metalness: 0.2,
+              roughness: 0.3,
+            })
+          );
+          knob.position.set(panelPosition[0] - 0.6, panelPosition[1] + 0.31, panelPosition[2] + 0.06);
+          cabinet.add(knob);
+
+          const buttonStartX = panelPosition[0] - 0.05;
+          const step = 0.26;
+          for (let buttonIndex = 0; buttonIndex < buttonCount; buttonIndex += 1) {
+            const button = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.085, 0.085, 0.055, 18),
+              new THREE.MeshStandardMaterial({
+                color: buttonColor,
+                emissive: buttonColor,
+                emissiveIntensity: 0.4,
+                metalness: 0.2,
+                roughness: 0.3,
+              })
+            );
+            button.position.set(buttonStartX + buttonIndex * step, panelPosition[1] + 0.14, panelPosition[2] + 0.11);
+            cabinet.add(button);
+          }
+        }
+
+        function buildWorkshopCabinet(cabinet, side, game) {
+          const accent = side === 'left' ? 0xffb248 : 0x6ef3ff;
+
+          const chassis = new THREE.Mesh(
+            new THREE.BoxGeometry(2.95, 3.55, 2.65),
+            new THREE.MeshStandardMaterial({
+              color: 0x1d242c,
+              metalness: 0.5,
+              roughness: 0.62,
+              emissive: 0x131a22,
+              emissiveIntensity: 0.25,
+            })
+          );
+          chassis.position.set(0, 1.75, -0.06);
+          cabinet.add(chassis);
+
+          const upperModule = new THREE.Mesh(
+            new THREE.BoxGeometry(2.45, 1.15, 1.65),
+            new THREE.MeshStandardMaterial({ color: 0x2a333c, metalness: 0.6, roughness: 0.48 })
+          );
+          upperModule.position.set(0, 3.38, 0.36);
+          cabinet.add(upperModule);
+
+          const marquee = new THREE.Mesh(
+            new THREE.BoxGeometry(2.08, 0.36, 0.18),
+            new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.9, metalness: 0.1, roughness: 0.22 })
+          );
+          marquee.position.set(0, 3.9, 0.84);
+          cabinet.add(marquee);
+
+          addCabinetScreen(cabinet, game, {
+            width: 1.72,
+            height: 1.18,
+            depth: 0.2,
+            x: 0,
+            y: 2.36,
+            z: 1.25,
+            frameColor: 0x090d12,
+            emissiveColor: accent,
+            emissiveIntensity: 0.2,
           });
-          const base = new THREE.Mesh(neonBaseGeometry, neonBaseMaterial);
+
+          const bezelTop = new THREE.Mesh(
+            new THREE.BoxGeometry(1.9, 0.12, 0.1),
+            new THREE.MeshStandardMaterial({ color: 0x0d1117, metalness: 0.4, roughness: 0.52 })
+          );
+          bezelTop.position.set(0, 3.0, 1.36);
+          cabinet.add(bezelTop);
+
+          const bezelBottom = bezelTop.clone();
+          bezelBottom.position.set(0, 1.72, 1.36);
+          cabinet.add(bezelBottom);
+
+          const bezelLeft = new THREE.Mesh(
+            new THREE.BoxGeometry(0.1, 1.28, 0.1),
+            new THREE.MeshStandardMaterial({ color: 0x0d1117, metalness: 0.4, roughness: 0.52 })
+          );
+          bezelLeft.position.set(-0.9, 2.36, 1.36);
+          cabinet.add(bezelLeft);
+
+          const bezelRight = bezelLeft.clone();
+          bezelRight.position.x = 0.9;
+          cabinet.add(bezelRight);
+
+          addControlPanel(cabinet, {
+            panelColor: 0x202930,
+            panelEmissive: 0x1e2f3d,
+            panelPosition: [0, 1.08, 1.37],
+            panelRotationX: -Math.PI / 11,
+            buttonColor: accent,
+            buttonCount: 5,
+          });
+
+          for (let stripeIndex = 0; stripeIndex < 6; stripeIndex += 1) {
+            const isAccentStripe = stripeIndex % 2 === 0;
+            const stripe = new THREE.Mesh(
+              new THREE.BoxGeometry(0.22, 0.08, 0.03),
+              new THREE.MeshStandardMaterial({
+                color: isAccentStripe ? accent : 0x20252c,
+                emissive: isAccentStripe ? accent : 0x000000,
+                emissiveIntensity: isAccentStripe ? 0.35 : 0,
+                metalness: 0.25,
+                roughness: 0.42,
+              })
+            );
+            stripe.position.set(-0.66 + stripeIndex * 0.27, 0.72, 1.34);
+            cabinet.add(stripe);
+          }
+
+          const base = new THREE.Mesh(
+            new THREE.BoxGeometry(3.92, 0.36, 3.32),
+            new THREE.MeshStandardMaterial({
+              color: 0x11161b,
+              emissive: 0x243645,
+              emissiveIntensity: 0.3,
+              metalness: 0.45,
+              roughness: 0.58,
+            })
+          );
+          base.position.y = 0.18;
+          cabinet.add(base);
+        }
+
+        function buildSunsetCabinet(cabinet, side, game) {
+          const accent = side === 'left' ? 0x7df7c7 : 0xffcf68;
+          const trim = side === 'left' ? 0x4ef4ff : 0xff86db;
+
+          const body = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.36, 1.5, 3.6, 30),
+            new THREE.MeshStandardMaterial({
+              color: 0x281632,
+              metalness: 0.24,
+              roughness: 0.6,
+              emissive: 0x2d1735,
+              emissiveIntensity: 0.28,
+            })
+          );
+          body.scale.set(1.05, 1, 0.92);
+          body.position.set(0, 1.85, -0.08);
+          cabinet.add(body);
+
+          const shoulderRing = new THREE.Mesh(
+            new THREE.TorusGeometry(1.06, 0.12, 14, 42),
+            new THREE.MeshStandardMaterial({ color: trim, emissive: trim, emissiveIntensity: 0.55, metalness: 0.18, roughness: 0.32 })
+          );
+          shoulderRing.position.set(0, 3.18, 0.68);
+          shoulderRing.rotation.x = Math.PI / 2;
+          cabinet.add(shoulderRing);
+
+          const marquee = new THREE.Mesh(
+            new THREE.BoxGeometry(2.08, 0.5, 0.23),
+            new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.78, metalness: 0.15, roughness: 0.28 })
+          );
+          marquee.position.set(0, 3.56, 0.84);
+          cabinet.add(marquee);
+
+          addCabinetScreen(cabinet, game, {
+            width: 1.62,
+            height: 1.18,
+            depth: 0.18,
+            x: 0,
+            y: 2.45,
+            z: 1.1,
+            frameColor: 0x09050f,
+            emissiveColor: trim,
+            emissiveIntensity: 0.2,
+          });
+
+          addControlPanel(cabinet, {
+            panelColor: 0x3c1f4a,
+            panelEmissive: 0x4a1f58,
+            panelPosition: [0, 1.15, 1.3],
+            panelRotationX: -Math.PI / 9,
+            buttonColor: accent,
+            buttonCount: 4,
+          });
+
+          [-1, 1].forEach((direction) => {
+            const cheek = new THREE.Mesh(
+              new THREE.SphereGeometry(0.22, 14, 12),
+              new THREE.MeshStandardMaterial({ color: trim, emissive: trim, emissiveIntensity: 0.35, metalness: 0.12, roughness: 0.35 })
+            );
+            cheek.position.set(direction * 1.03, 1.2, 1.22);
+            cabinet.add(cheek);
+          });
+
+          const base = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.78, 1.88, 0.3, 30),
+            new THREE.MeshStandardMaterial({
+              color: 0x150d1d,
+              emissive: 0x31183b,
+              emissiveIntensity: 0.38,
+              metalness: 0.2,
+              roughness: 0.58,
+            })
+          );
+          base.scale.set(1.05, 1, 0.9);
+          base.position.y = 0.15;
+          cabinet.add(base);
+        }
+
+        function buildClassicCabinet(cabinet, side, game) {
+          const body = new THREE.Mesh(
+            new THREE.BoxGeometry(2.6, 3.8, 2.2),
+            new THREE.MeshStandardMaterial({
+              color: side === 'left' ? 0x09122b : 0x1a0622,
+              metalness: 0.4,
+              roughness: 0.6,
+              emissive: side === 'left' ? 0x053754 : 0x24032f,
+              emissiveIntensity: 0.35,
+            })
+          );
+          body.position.y = 1.7;
+          cabinet.add(body);
+
+          const marquee = new THREE.Mesh(
+            new THREE.BoxGeometry(2.4, 0.6, 0.3),
+            new THREE.MeshStandardMaterial({ color: 0x0ff0fc, emissive: 0x0ff0fc, emissiveIntensity: 0.9 })
+          );
+          marquee.position.set(0, 3.5, 0.8);
+          cabinet.add(marquee);
+
+          addCabinetScreen(cabinet, game, {
+            width: 1.9,
+            height: 1.4,
+            depth: 0.2,
+            x: 0,
+            y: 2.4,
+            z: 1,
+            frameColor: 0x05090f,
+            emissiveColor: 0x000000,
+            emissiveIntensity: 0.8,
+            planeWidth: 1.8,
+            planeHeight: 1.25,
+          });
+
+          addControlPanel(cabinet, {
+            panelColor: 0x04070f,
+            panelEmissive: 0x000000,
+            panelPosition: [0, 1.2, 1.2],
+            panelRotationX: -Math.PI / 12,
+            buttonColor: 0x0ff0fc,
+            buttonCount: 3,
+          });
+
+          const base = new THREE.Mesh(
+            new THREE.BoxGeometry(3.2, 0.25, 2.8),
+            new THREE.MeshStandardMaterial({ color: 0x03060d, emissive: 0x101a2c, emissiveIntensity: 0.4 })
+          );
           base.position.y = 0.12;
           cabinet.add(base);
+        }
+
+        function createCabinet(game, side, index) {
+          const cabinet = new THREE.Group();
+          cabinet.userData.game = game;
+
+          const styleKey = showcaseCabinetStyles[index] || 'classic';
+          if (styleKey === 'workshop') {
+            buildWorkshopCabinet(cabinet, side, game);
+          } else if (styleKey === 'sunset') {
+            buildSunsetCabinet(cabinet, side, game);
+          } else {
+            buildClassicCabinet(cabinet, side, game);
+          }
 
           return cabinet;
         }
@@ -954,10 +1539,10 @@
             }
             const progress = Math.min(1, elapsed / animation.duration);
             const eased = easeOutCubic(progress);
-            animation.cabinet.position.x = THREE.MathUtils.lerp(animation.fromX, animation.toX, eased);
+            animation.cabinet.position.z = THREE.MathUtils.lerp(animation.fromZ, animation.toZ, eased);
             if (progress >= 1) {
               animation.done = true;
-              animation.cabinet.position.x = animation.toX;
+              animation.cabinet.position.z = animation.toZ;
             } else {
               introActive = true;
             }
@@ -1000,13 +1585,16 @@
               activeCabinet = approachingCabinet;
               hoverCabinet = approachingCabinet;
               approachingCabinet = null;
-              infoPanel.classList.add('visible');
             }
           }
 
           const lookTargetCabinet = activeCabinet ?? hoverCabinet;
           if (lookTargetCabinet) {
-            desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+            if (lookTargetCabinet.userData.lookPosition) {
+              desiredLookTarget.copy(lookTargetCabinet.userData.lookPosition);
+            } else {
+              desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+            }
           } else {
             desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
           }
@@ -1027,7 +1615,9 @@
 
           camera.lookAt(lookTarget);
 
-          updateCabinetEmissive();
+          updateExitDoorOpen(deltaSeconds, now);
+          updateCabinetEmissive(deltaSeconds, now);
+          updateDeepField(deltaSeconds, now);
 
           renderer.render(scene, camera);
         }
@@ -1050,11 +1640,7 @@
           renderer.domElement.removeEventListener('pointermove', onPointerMove);
           renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
           renderer.domElement.removeEventListener('click', onRendererClick);
-          playButton.removeEventListener('click', onPlayButtonClick);
-          closePanelButton.removeEventListener('click', onClosePanelClick);
           renderer.domElement.style.cursor = 'default';
-          infoPanel.classList.remove('visible');
-          infoPrompt.textContent = '';
           if (renderer.domElement.parentElement === sceneContainer) {
             sceneContainer.removeChild(renderer.domElement);
           }
@@ -1087,3 +1673,7 @@
     </script>
   </body>
 </html>
+
+
+
+
