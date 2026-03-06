@@ -436,26 +436,65 @@
         }
 
         function addStarField(targetGroup, options = {}) {
-          const count = options.count ?? 1200;
-          const spreadX = options.spreadX ?? 56;
-          const spreadY = options.spreadY ?? 24;
-          const nearZ = options.nearZ ?? 8;
-          const farZ = options.farZ ?? -220;
-          const centerY = options.centerY ?? CAMERA_START_POSITION.y;
-          const symmetricY = options.symmetricY ?? true;
+          const count = options.count ?? 1400;
           const size = options.size ?? 0.07;
           const color = options.color ?? 0xf2f6ff;
-          const opacity = options.opacity ?? 0.8;
-          const zMin = Math.min(nearZ, farZ);
-          const zMax = Math.max(nearZ, farZ);
+          const opacity = options.opacity ?? 0.82;
+
+          const centerY = options.centerY ?? CAMERA_START_POSITION.y;
+          const outer = options.outerBounds || {
+            minX: -70,
+            maxX: 70,
+            minY: centerY - 48,
+            maxY: centerY + 48,
+            minZ: -260,
+            maxZ: 70,
+          };
+          const inner = options.innerBounds || {
+            minX: -11,
+            maxX: 11,
+            minY: -1.6,
+            maxY: 8,
+            minZ: -48,
+            maxZ: 16,
+          };
+
+          const isInsideBounds = (x, y, z, bounds) =>
+            x >= bounds.minX &&
+            x <= bounds.maxX &&
+            y >= bounds.minY &&
+            y <= bounds.maxY &&
+            z >= bounds.minZ &&
+            z <= bounds.maxZ;
 
           const positions = new Float32Array(count * 3);
           for (let i = 0; i < count; i += 1) {
             const base = i * 3;
-            positions[base] = (Math.random() - 0.5) * spreadX;
-            positions[base + 1] =
-              centerY + (symmetricY ? (Math.random() - 0.5) * spreadY : Math.random() * spreadY);
-            positions[base + 2] = zMin + Math.random() * (zMax - zMin);
+            let x = 0;
+            let y = 0;
+            let z = 0;
+            let attempts = 0;
+            do {
+              x = outer.minX + Math.random() * (outer.maxX - outer.minX);
+              y = outer.minY + Math.random() * (outer.maxY - outer.minY);
+              z = outer.minZ + Math.random() * (outer.maxZ - outer.minZ);
+              attempts += 1;
+            } while (isInsideBounds(x, y, z, inner) && attempts < 20);
+
+            if (isInsideBounds(x, y, z, inner)) {
+              const faceChoice = Math.floor(Math.random() * 3);
+              if (faceChoice === 0) {
+                x = Math.random() < 0.5 ? outer.minX : outer.maxX;
+              } else if (faceChoice === 1) {
+                y = Math.random() < 0.5 ? outer.minY : outer.maxY;
+              } else {
+                z = Math.random() < 0.5 ? outer.minZ : outer.maxZ;
+              }
+            }
+
+            positions[base] = x;
+            positions[base + 1] = y;
+            positions[base + 2] = z;
           }
 
           const geometry = new THREE.BufferGeometry();
@@ -466,6 +505,7 @@
             transparent: true,
             opacity,
             depthWrite: false,
+            depthTest: true,
             blending: THREE.AdditiveBlending,
           });
           const points = new THREE.Points(geometry, material);
@@ -531,13 +571,24 @@
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const doorZ = lastCabinetZ - spacing * 1.15;
         deepStarField = addStarField(deepFieldGroup, {
-          count: 1300,
-          spreadX: 120,
-          spreadY: 60,
+          count: 1800,
           centerY: CAMERA_START_POSITION.y,
-          symmetricY: true,
-          nearZ: doorZ - 3,
-          farZ: doorZ - 230,
+          outerBounds: {
+            minX: -76,
+            maxX: 76,
+            minY: CAMERA_START_POSITION.y - 50,
+            maxY: CAMERA_START_POSITION.y + 50,
+            minZ: doorZ - 240,
+            maxZ: 82,
+          },
+          innerBounds: {
+            minX: -11,
+            maxX: 11,
+            minY: -1.6,
+            maxY: 8,
+            minZ: doorZ - 4,
+            maxZ: 16,
+          },
           size: 0.1,
           color: 0xffffff,
           opacity: 1,
@@ -1766,6 +1817,13 @@
           return cabinet;
         }
 
+        function getLookAnchorTarget(target) {
+          if (!target || !target.userData) return target;
+          if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back') {
+            return target.userData.cabinet || target;
+          }
+          return target;
+        }
         let lastFrameTime = performance.now();
         let animationFrameId = 0;
 
@@ -1855,12 +1913,13 @@
           if (launchSequence) {
             desiredLookTarget.copy(launchSequence.cabinet.position).setY(DEFAULT_LOOK_TARGET.y);
           } else {
-            const lookTargetCabinet = activeCabinet ?? hoverCabinet;
+            const lookTargetCabinet = getLookAnchorTarget(activeCabinet ?? hoverCabinet);
             if (lookTargetCabinet) {
-              if (lookTargetCabinet.userData.lookPosition) {
+              if (lookTargetCabinet.userData && lookTargetCabinet.userData.lookPosition) {
                 desiredLookTarget.copy(lookTargetCabinet.userData.lookPosition);
               } else {
-                desiredLookTarget.copy(lookTargetCabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+                lookTargetCabinet.getWorldPosition(desiredLookTarget);
+                desiredLookTarget.y = DEFAULT_LOOK_TARGET.y;
               }
             } else {
               desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
@@ -1948,6 +2007,7 @@
     </script>
   </body>
 </html>
+
 
 
 
