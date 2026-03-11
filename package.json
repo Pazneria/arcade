@@ -1,0 +1,11 @@
+{
+  "name": "arcade",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local dev server for the Pazneria arcade landing page.",
+  "scripts": {
+    "dev": "start \"\" http://localhost:5510 && python -m http.server 5510",
+    "start": "start \"\" http://localhost:5510 && python -m http.server 5510",
+    "serve": "python -m http.server 5510"
+  }
+}

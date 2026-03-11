@@ -258,31 +258,31 @@
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
           url: 'https://pazneria.github.io/sword-guys',
-          thumbnail: './assets/cabinet-screens/sword-guys-title.png',
+          thumbnail: './assets/cabinet-screens/sword-guys-title.webp',
         },
         {
           name: 'OSRS Clone',
           description: 'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
           url: 'https://pazneria.github.io/osrs-clone/',
-          thumbnail: './assets/cabinet-screens/osrs-clone-title.png',
+          thumbnail: './assets/cabinet-screens/osrs-clone-title.webp',
         },
         {
           name: 'Ghost Signal',
           description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
           url: 'https://example.com/ghost-signal',
-          thumbnail: 'https://images.unsplash.com/photo-1604079628040-94301bb21b11?auto=format&fit=crop&w=600&q=80',
+          thumbnail: './assets/cabinet-screens/ghost-signal-title.webp',
         },
         {
           name: 'Chrome Drift',
           description: 'Thread impossible corners, chain boost drifts, and light up the night circuit.',
           url: 'https://example.com/chrome-drift',
-          thumbnail: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=600&q=80',
+          thumbnail: './assets/cabinet-screens/chrome-drift-title.webp',
         },
         {
           name: 'Night Courier',
           description: 'Slam through midnight streets delivering impossible payloads before dawn.',
           url: 'https://example.com/night-courier',
-          thumbnail: 'https://images.unsplash.com/photo-1518773553398-650c184e0bb3?auto=format&fit=crop&w=600&q=80',
+          thumbnail: './assets/cabinet-screens/night-courier-title.webp',
         },
       ];
 
@@ -348,7 +348,7 @@
 
       function initArcade() {
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         sceneContainer.appendChild(renderer.domElement);
@@ -537,9 +537,32 @@
         const laneOffset = 5.5;
         const startZ = -7;
         const introSpawnOffset = 220;
-        const introHoldMs = 500;
-        const introDurationMs = 760;
+        const STAR_INTRO_DELAY_MS = 120;
+        const STAR_INTRO_DURATION_MS = 620;
+        const CABINET_INTRO_OFFSET_MS = STAR_INTRO_DELAY_MS + STAR_INTRO_DURATION_MS - 240;
+        const CABINET_INTRO_PAIR_STAGGER_MS = 140;
+        const CABINET_INTRO_SIDE_STAGGER_MS = 70;
+        const CABINET_INTRO_DURATION_MS = 760;
+        const DOOR_INTRO_GAP_MS = 120;
+        const DOOR_INTRO_SPEED_FACTOR = 0.75;
+        const DOOR_INTRO_DURATION_MS = CABINET_INTRO_DURATION_MS / DOOR_INTRO_SPEED_FACTOR;
         const showcaseCabinetStyles = ['workshop', 'workshop', 'workshop', 'workshop', 'sunset'];
+
+        const starFromZ = -introSpawnOffset;
+        deepFieldGroup.position.z = starFromZ;
+        introAnimations.push({
+          delay: STAR_INTRO_DELAY_MS,
+          duration: STAR_INTRO_DURATION_MS,
+          done: false,
+          apply: (eased) => {
+            deepFieldGroup.position.z = THREE.MathUtils.lerp(starFromZ, 0, eased);
+          },
+          finalize: () => {
+            deepFieldGroup.position.z = 0;
+          },
+        });
+
+        let cabinetIntroLastStartMs = 0;
 
         games.forEach((game, index) => {
           const side = index % 2 === 0 ? 'left' : 'right';
@@ -554,14 +577,21 @@
           const fromZ = finalPosition.z - introSpawnOffset;
           cabinet.position.z = fromZ;
           const pairIndex = Math.floor(index / 2);
-          const delay = introHoldMs + pairIndex * 140 + (side === 'left' ? 0 : 70);
+          const delay =
+            CABINET_INTRO_OFFSET_MS +
+            pairIndex * CABINET_INTRO_PAIR_STAGGER_MS +
+            (side === 'left' ? 0 : CABINET_INTRO_SIDE_STAGGER_MS);
+          cabinetIntroLastStartMs = Math.max(cabinetIntroLastStartMs, delay);
           introAnimations.push({
-            cabinet,
-            fromZ,
-            toZ: finalPosition.z,
             delay,
-            duration: introDurationMs,
+            duration: CABINET_INTRO_DURATION_MS,
             done: false,
+            apply: (eased) => {
+              cabinet.position.z = THREE.MathUtils.lerp(fromZ, finalPosition.z, eased);
+            },
+            finalize: () => {
+              cabinet.position.z = finalPosition.z;
+            },
           });
 
           cabinetGroup.add(cabinet);
@@ -595,6 +625,20 @@
         });
         const exitDoor = createExitDoor(doorZ);
         scene.add(exitDoor.root);
+        const doorFromZ = doorZ - introSpawnOffset;
+        exitDoor.root.position.z = doorFromZ;
+        const doorIntroDelay = cabinetIntroLastStartMs + CABINET_INTRO_DURATION_MS + DOOR_INTRO_GAP_MS;
+        introAnimations.push({
+          delay: doorIntroDelay,
+          duration: DOOR_INTRO_DURATION_MS,
+          done: false,
+          apply: (eased) => {
+            exitDoor.root.position.z = THREE.MathUtils.lerp(doorFromZ, doorZ, eased);
+          },
+          finalize: () => {
+            exitDoor.root.position.z = doorZ;
+          },
+        });
 
         const cabinetActionButtons = cabinets.flatMap((cabinet) => cabinet.userData.actionButtons || []);
         const interactableTargets = [...cabinets, ...cabinetActionButtons, exitDoor.root, ...exitDoor.switchArrows];
@@ -632,7 +676,9 @@
 
           introAnimations.forEach((animation) => {
             animation.done = true;
-            animation.cabinet.position.z = animation.toZ;
+            if (typeof animation.finalize === 'function') {
+              animation.finalize();
+            }
           });
           introDone = true;
           introClockStart = performance.now();
@@ -1847,10 +1893,14 @@
             }
             const progress = Math.min(1, elapsed / animation.duration);
             const eased = easeOutCubic(progress);
-            animation.cabinet.position.z = THREE.MathUtils.lerp(animation.fromZ, animation.toZ, eased);
+            if (typeof animation.apply === 'function') {
+              animation.apply(eased);
+            }
             if (progress >= 1) {
               animation.done = true;
-              animation.cabinet.position.z = animation.toZ;
+              if (typeof animation.finalize === 'function') {
+                animation.finalize();
+              }
             } else {
               introActive = true;
             }
@@ -2007,6 +2057,11 @@
     </script>
   </body>
 </html>
+
+
+
+
+
 
 
 
