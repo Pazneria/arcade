@@ -145,6 +145,12 @@
         text-decoration: none;
       }
 
+      .fallback-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
       @media (max-width: 768px) {
         body {
           overflow-y: auto;
@@ -184,6 +190,7 @@
       </section>
     </noscript>
 
+    <script src="./wiki-link-contract.js"></script>
     <script type="module">
       import * as THREE from 'https://unpkg.com/three@0.157.0/build/three.module.js';
 
@@ -191,6 +198,7 @@
       const fallbackMessage = document.getElementById('fallback-message');
       const mobileFallback = document.getElementById('mobile-fallback');
       const fallbackGrid = document.getElementById('fallback-grid');
+      const arcadeWikiLinks = window.ArcadeWikiLinks;
 
       const supportsWebGL = (() => {
         try {
@@ -253,7 +261,9 @@
         }
       }
 
-            const games = [
+      const publishedSiteOrigin = 'https://pazneria.github.io';
+
+      const games = [
         {
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
@@ -264,6 +274,23 @@
           name: 'OSRS Clone',
           description: 'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
           url: 'https://pazneria.github.io/osrs-clone/',
+          wikiRepoName: 'osrs-clone-wiki',
+          wikiHomeUrl: arcadeWikiLinks
+            ? arcadeWikiLinks.buildWikiHomeUrl({
+                repoName: 'osrs-clone-wiki',
+                baseUrl: publishedSiteOrigin,
+                from: 'arcade',
+                returnTo: window.location.href,
+              })
+            : `${publishedSiteOrigin}/osrs-clone-wiki/`,
+          wikiWorldUrl: arcadeWikiLinks
+            ? arcadeWikiLinks.buildWikiEntityUrl('world', 'starter_town', {
+                repoName: 'osrs-clone-wiki',
+                baseUrl: publishedSiteOrigin,
+                from: 'arcade',
+                returnTo: window.location.href,
+              })
+            : `${publishedSiteOrigin}/osrs-clone-wiki/world/starter_town`,
           thumbnail: './assets/cabinet-screens/osrs-clone-title.webp',
         },
         {
@@ -291,10 +318,14 @@
         games.forEach((game) => {
           const card = document.createElement('article');
           card.className = 'fallback-card';
+          const actions = [`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`];
+          if (game.wikiHomeUrl) {
+            actions.push(`<a href="${game.wikiHomeUrl}" target="_blank" rel="noopener">Wiki</a>`);
+          }
           card.innerHTML = `
             <h3>${game.name}</h3>
             <p>${game.description}</p>
-            <a href="${game.url}" target="_blank" rel="noopener">Launch</a>
+            <div class="fallback-card-actions">${actions.join('')}</div>
           `;
           fallbackGrid.appendChild(card);
         });
@@ -527,8 +558,11 @@
 
         const cabinetGroup = new THREE.Group();
         scene.add(cabinetGroup);
+        const propGroup = new THREE.Group();
+        scene.add(propGroup);
 
         const cabinets = [];
+        const wikiPedestals = [];
         const introAnimations = [];
         let introClockStart = null;
         let introDone = false;
@@ -596,7 +630,58 @@
 
           cabinetGroup.add(cabinet);
           cabinets.push(cabinet);
+
+          if (game.wikiHomeUrl) {
+            const pedestal = createWikiPedestal(game, side);
+            const pedestalX = x;
+            const pedestalOffsetZ = 3.3;
+            const pedestalZ = z + pedestalOffsetZ;
+            const pedestalTopCenterY = 1.37;
+            const pedestalFocusX = side === 'left' ? -3.05 : 3.05;
+            const pedestalFinalPosition = new THREE.Vector3(pedestalX, 0, pedestalZ);
+            pedestal.position.copy(pedestalFinalPosition);
+            pedestal.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+            pedestal.userData.focusPosition = new THREE.Vector3(
+              pedestalFocusX,
+              CAMERA_START_POSITION.y,
+              pedestalZ
+            );
+            pedestal.userData.lookPosition = new THREE.Vector3(
+              pedestalX,
+              pedestalTopCenterY,
+              pedestalZ
+            );
+            const aisleApproachDistance = Math.abs(pedestalFocusX - pedestalX);
+            const bookFacingPitch = Math.atan2(
+              CAMERA_START_POSITION.y - pedestalTopCenterY,
+              aisleApproachDistance
+            );
+            if (pedestal.userData.bookTiltGroup) {
+              pedestal.userData.bookTiltGroup.rotation.x = bookFacingPitch;
+            }
+            pedestal.userData.restPosition = pedestalFinalPosition.clone();
+            pedestal.userData.returnCabinetIndex = index;
+            pedestal.userData.anchorCabinet = cabinet;
+            pedestal.userData.offsetZ = pedestalOffsetZ;
+            const pedestalFromZ = fromZ + pedestalOffsetZ;
+            pedestal.position.z = pedestalFromZ;
+            introAnimations.push({
+              delay,
+              duration: CABINET_INTRO_DURATION_MS,
+              done: false,
+              apply: () => {
+                pedestal.position.z = cabinet.position.z + pedestalOffsetZ;
+              },
+              finalize: () => {
+                pedestal.position.z = cabinet.position.z + pedestalOffsetZ;
+              },
+            });
+            propGroup.add(pedestal);
+            wikiPedestals.push(pedestal);
+          }
         });
+
+        const cabinetIntroSettleMs = cabinetIntroLastStartMs + CABINET_INTRO_DURATION_MS;
 
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const doorZ = lastCabinetZ - spacing * 1.15;
@@ -641,14 +726,24 @@
         });
 
         const cabinetActionButtons = cabinets.flatMap((cabinet) => cabinet.userData.actionButtons || []);
-        const interactableTargets = [...cabinets, ...cabinetActionButtons, exitDoor.root, ...exitDoor.switchArrows];
+        const wikiBooks = wikiPedestals.flatMap((pedestal) => pedestal.userData.bookTargets || []).filter(Boolean);
+        const interactableTargets = [
+          ...cabinets,
+          ...cabinetActionButtons,
+          ...wikiPedestals,
+          ...wikiBooks,
+          exitDoor.root,
+          ...exitDoor.switchArrows,
+        ];
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         let hoverCabinet = null;
         let pendingHoverCabinet = null;
         let hoverLockState = 'idle';
         let hoverLockUntil = 0;
+        let cabinetIntroDone = false;
         const HOVER_LOCK_HOLD_MS = 200;
+        const WIKI_HOVER_LOCK_HOLD_MS = HOVER_LOCK_HOLD_MS * 2;
         const LOOK_TARGET_SETTLED_EPSILON = 0.05;
         let activeCabinet = null;
         let approachingCabinet = null;
@@ -681,6 +776,7 @@
             }
           });
           introDone = true;
+          cabinetIntroDone = true;
           introClockStart = performance.now();
 
           focusRigTarget.copy(cabinet.userData.focusPosition);
@@ -710,7 +806,7 @@
         applyReturnStateIfPresent();
 
         const onWheel = (event) => {
-          if (!introDone) return;
+          if (!cabinetIntroDone) return;
           if (exitDoor.opening.active || launchSequence) return;
           if (activeCabinet || approachingCabinet) return;
           scrollVelocity += event.deltaY * 0.025;
@@ -759,6 +855,16 @@
         renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
         const isGameCabinet = (target) => !!(target && target.userData && target.userData.game);
+        const isWikiPedestal = (target) => !!(target && target.userData && target.userData.kind === 'wiki-pedestal');
+        const isWikiPedestalBookTarget = (pedestal, target) =>
+          !!(pedestal && target && (pedestal.userData.bookTargets || []).includes(target));
+        function getHoverHoldDurationMs(target) {
+          if (!target || !target.userData) return HOVER_LOCK_HOLD_MS;
+          if (isWikiPedestal(target)) return WIKI_HOVER_LOCK_HOLD_MS;
+          if (target.userData.action === 'wiki-open') return WIKI_HOVER_LOCK_HOLD_MS;
+          if (isWikiPedestal(target.userData.pedestal)) return WIKI_HOVER_LOCK_HOLD_MS;
+          return HOVER_LOCK_HOLD_MS;
+        }
         const CABINET_LAUNCH_DURATION_SECONDS = 0.32;
         let launchSequence = null;
 
@@ -825,9 +931,33 @@
             return;
           }
 
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'wiki-open') {
+            const targetPedestal = hoverCabinet.userData.pedestal;
+            if (activeCabinet === targetPedestal) {
+              const returnCabinetIndex = Number.isFinite(targetPedestal?.userData?.returnCabinetIndex)
+                ? targetPedestal.userData.returnCabinetIndex
+                : -1;
+              if (returnCabinetIndex >= 0) {
+                writeReturnState(returnCabinetIndex);
+              }
+              navigateToTarget(hoverCabinet);
+            } else if (targetPedestal) {
+              focusCabinet(targetPedestal);
+            }
+            return;
+          }
+
           if (activeCabinet) {
             if (isGameCabinet(activeCabinet)) {
               if (hoverCabinet === activeCabinet) {
+                return;
+              }
+              exitCabinetView();
+              return;
+            }
+
+            if (isWikiPedestal(activeCabinet)) {
+              if (hoverCabinet === activeCabinet || isWikiPedestalBookTarget(activeCabinet, hoverCabinet)) {
                 return;
               }
               exitCabinetView();
@@ -1332,6 +1462,26 @@
               tempColor.copy(emissivePulse).multiplyScalar(pulse * 0.6);
               screen.material.emissive = tempColor;
             }
+          });
+
+          wikiPedestals.forEach((pedestal, index) => {
+            const hovered = hoverCabinet === pedestal || isWikiPedestalBookTarget(pedestal, hoverCabinet);
+            const active = activeCabinet === pedestal || approachingCabinet === pedestal;
+            const shimmer = (Math.sin(now * 0.0037 + index * 1.4) + 1) * 0.2 + 0.18;
+            if (pedestal.userData.glowMaterial) {
+              pedestal.userData.glowMaterial.emissiveIntensity = hovered ? 0.95 : active ? 0.74 : 0.34 + shimmer;
+            }
+            if (pedestal.userData.plaqueMaterial) {
+              pedestal.userData.plaqueMaterial.emissiveIntensity = hovered ? 0.82 : active ? 0.6 : 0.26 + shimmer * 0.28;
+            }
+            const pageMaterials = pedestal.userData.bookPageMaterials || [];
+            pageMaterials.forEach((material) => {
+              material.emissiveIntensity = hovered ? 0.34 : active ? 0.22 : 0.1 + shimmer * 0.08;
+            });
+            const coverMaterials = pedestal.userData.bookCoverMaterials || [];
+            coverMaterials.forEach((material) => {
+              material.emissiveIntensity = hovered ? 0.34 : active ? 0.22 : 0.12 + shimmer * 0.08;
+            });
           });
 
           const signControlHovered =
@@ -1847,6 +1997,284 @@
           cabinet.add(base);
         }
 
+        function createPedestalLabelTexture(title, subtitle) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 160;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = 'rgba(8, 11, 18, 0.9)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(194, 246, 255, 0.42)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            ctx.fillStyle = 'rgba(241, 214, 154, 0.95)';
+            ctx.font = '700 28px Orbitron, Rajdhani, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(title, canvas.width / 2, 62);
+            ctx.fillStyle = 'rgba(232, 247, 255, 0.92)';
+            ctx.font = '700 22px Orbitron, Rajdhani, sans-serif';
+            ctx.fillText(subtitle, canvas.width / 2, 108);
+          }
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function createWikiPageTexture(pageSide = 'left') {
+          const canvas = document.createElement('canvas');
+          canvas.width = 384;
+          canvas.height = 512;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const pageGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            pageGradient.addColorStop(0, 'rgba(248, 236, 205, 1)');
+            pageGradient.addColorStop(0.55, 'rgba(239, 223, 183, 1)');
+            pageGradient.addColorStop(1, 'rgba(225, 205, 158, 1)');
+            ctx.fillStyle = pageGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(94, 67, 34, 0.22)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+            const innerEdgeX = pageSide === 'left' ? canvas.width - 34 : 34;
+            const outerEdgeX = pageSide === 'left' ? 42 : canvas.width - 42;
+            ctx.fillStyle = 'rgba(91, 62, 28, 0.12)';
+            ctx.fillRect(innerEdgeX - 8, 30, 16, canvas.height - 60);
+            ctx.fillRect(outerEdgeX - 2, 46, 4, canvas.height - 92);
+
+            ctx.strokeStyle = 'rgba(132, 96, 48, 0.12)';
+            ctx.lineWidth = 2;
+            for (let y = 92; y < canvas.height - 56; y += 34) {
+              ctx.beginPath();
+              ctx.moveTo(48, y);
+              ctx.lineTo(canvas.width - 48, y);
+              ctx.stroke();
+            }
+          }
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function createWikiPedestal(game, side) {
+          const root = new THREE.Group();
+          root.userData.kind = 'wiki-pedestal';
+          root.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+
+          const accent = side === 'left' ? 0xffcf66 : 0x7ef1ff;
+          const pedestalMaterial = new THREE.MeshStandardMaterial({
+            color: 0x171d25,
+            metalness: 0.34,
+            roughness: 0.58,
+            emissive: 0x141a20,
+            emissiveIntensity: 0.18,
+          });
+          const glowMaterial = new THREE.MeshStandardMaterial({
+            color: 0x382510,
+            emissive: accent,
+            emissiveIntensity: 0.36,
+            metalness: 0.18,
+            roughness: 0.32,
+          });
+          const plaqueMaterial = new THREE.MeshStandardMaterial({
+            color: 0x10141b,
+            emissive: accent,
+            emissiveIntensity: 0.32,
+            metalness: 0.22,
+            roughness: 0.36,
+          });
+          const bookStandMaterial = new THREE.MeshStandardMaterial({
+            color: 0x362317,
+            emissive: 0x140d09,
+            emissiveIntensity: 0.14,
+            metalness: 0.12,
+            roughness: 0.72,
+          });
+          const spineMaterial = new THREE.MeshStandardMaterial({
+            color: 0x412719,
+            emissive: 0x180f0a,
+            emissiveIntensity: 0.16,
+            metalness: 0.12,
+            roughness: 0.66,
+          });
+          const coverMaterials = [
+            new THREE.MeshStandardMaterial({
+              color: 0x5d3623,
+              emissive: 0x1b100b,
+              emissiveIntensity: 0.14,
+              metalness: 0.08,
+              roughness: 0.74,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: 0x6a4029,
+              emissive: 0x1d120c,
+              emissiveIntensity: 0.14,
+              metalness: 0.08,
+              roughness: 0.72,
+            }),
+          ];
+          const pageBlockMaterial = new THREE.MeshStandardMaterial({
+            color: 0xe9dcb9,
+            emissive: 0x1f140a,
+            emissiveIntensity: 0.12,
+            metalness: 0.02,
+            roughness: 0.92,
+          });
+          const leftPageSurfaceMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: createWikiPageTexture('left'),
+            emissive: 0x2a1908,
+            emissiveIntensity: 0.1,
+            metalness: 0.01,
+            roughness: 0.96,
+            side: THREE.DoubleSide,
+          });
+          const rightPageSurfaceMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: createWikiPageTexture('right'),
+            emissive: 0x2a1908,
+            emissiveIntensity: 0.1,
+            metalness: 0.01,
+            roughness: 0.96,
+            side: THREE.DoubleSide,
+          });
+          const pageShadowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x2d1b0d,
+            transparent: true,
+            opacity: 0.12,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const entryTargetMaterial = new THREE.MeshBasicMaterial({
+            color: accent,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.92, 0.22, 18), pedestalMaterial);
+          base.position.y = 0.11;
+          root.add(base);
+
+          const column = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.54, 1.05, 18), pedestalMaterial.clone());
+          column.position.y = 0.72;
+          root.add(column);
+
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.68, 0.14, 18), pedestalMaterial.clone());
+          cap.position.y = 1.3;
+          root.add(cap);
+
+          const glowRing = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.05, 12, 28), glowMaterial);
+          glowRing.position.set(0, 1.08, 0);
+          glowRing.rotation.x = Math.PI / 2;
+          root.add(glowRing);
+
+          const plaque = new THREE.Mesh(
+            new THREE.BoxGeometry(0.88, 0.46, 0.05),
+            plaqueMaterial
+          );
+          plaque.position.set(0, 0.9, 0.49);
+          root.add(plaque);
+
+          const plaqueLabel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.78, 0.34),
+            new THREE.MeshBasicMaterial({
+              map: createPedestalLabelTexture('GAME', 'WIKI'),
+              transparent: true,
+              toneMapped: false,
+            })
+          );
+          plaqueLabel.position.set(0, 0, 0.031);
+          plaque.add(plaqueLabel);
+
+          const bookStand = new THREE.Mesh(
+            new THREE.BoxGeometry(1.04, 0.08, 0.76),
+            bookStandMaterial
+          );
+          bookStand.position.set(0, 1.41, 0.04);
+          bookStand.rotation.x = Math.PI / 16;
+          root.add(bookStand);
+
+          const book = new THREE.Group();
+          book.position.set(0, 1.41, 0.04);
+          book.userData.action = 'wiki-open';
+          book.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+          book.userData.pedestal = root;
+
+          const bookTiltGroup = new THREE.Group();
+          bookTiltGroup.position.set(0, 0.03, 0);
+          book.add(bookTiltGroup);
+
+          const leftCover = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.03, 0.69), coverMaterials[0]);
+          leftCover.position.set(-0.25, 0, 0);
+          bookTiltGroup.add(leftCover);
+
+          const rightCover = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.03, 0.69), coverMaterials[1]);
+          rightCover.position.set(0.25, 0, 0);
+          bookTiltGroup.add(rightCover);
+
+          const leftPageBlock = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.61), pageBlockMaterial.clone());
+          leftPageBlock.position.set(-0.24, 0.032, 0);
+          bookTiltGroup.add(leftPageBlock);
+
+          const rightPageBlock = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.61), pageBlockMaterial.clone());
+          rightPageBlock.position.set(0.24, 0.032, 0);
+          bookTiltGroup.add(rightPageBlock);
+
+          const spine = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.71), spineMaterial);
+          spine.position.set(0, 0.02, 0);
+          bookTiltGroup.add(spine);
+
+          const leftPageSurface = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.56), leftPageSurfaceMaterial);
+          leftPageSurface.position.set(-0.24, 0.057, 0);
+          leftPageSurface.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(leftPageSurface);
+
+          const rightPageSurface = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.56), rightPageSurfaceMaterial);
+          rightPageSurface.position.set(0.24, 0.057, 0);
+          rightPageSurface.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(rightPageSurface);
+
+          const gutterShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.56), pageShadowMaterial);
+          gutterShadow.position.set(0, 0.058, 0);
+          gutterShadow.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(gutterShadow);
+
+          const entryTarget = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.14), entryTargetMaterial);
+          entryTarget.position.set(0.24, 0.059, 0.12);
+          entryTarget.rotation.x = -Math.PI / 2;
+          entryTarget.userData.action = 'wiki-open';
+          entryTarget.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+          entryTarget.userData.pedestal = root;
+          bookTiltGroup.add(entryTarget);
+
+          root.add(book);
+
+          const bookTargets = [book, entryTarget];
+          const bookPageMaterials = [
+            leftPageBlock.material,
+            rightPageBlock.material,
+            leftPageSurfaceMaterial,
+            rightPageSurfaceMaterial,
+          ];
+          root.userData.book = book;
+          root.userData.bookTargets = bookTargets;
+          root.userData.bookEntryTarget = entryTarget;
+          root.userData.bookTiltGroup = bookTiltGroup;
+          root.userData.backButtonAnchor = plaque;
+          root.userData.glowMaterial = glowMaterial;
+          root.userData.plaqueMaterial = plaqueMaterial;
+          root.userData.bookPageMaterials = bookPageMaterials;
+          root.userData.bookCoverMaterials = [bookStandMaterial, spineMaterial, ...coverMaterials];
+
+          return root;
+        }
+
         function createCabinet(game, side, index) {
           const cabinet = new THREE.Group();
           cabinet.userData.game = game;
@@ -1867,6 +2295,9 @@
           if (!target || !target.userData) return target;
           if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back') {
             return target.userData.cabinet || target;
+          }
+          if (target.userData.action === 'wiki-open') {
+            return target.userData.pedestal || target;
           }
           return target;
         }
@@ -1908,6 +2339,9 @@
 
           if (!introActive && !introDone) {
             introDone = true;
+          }
+          if (!cabinetIntroDone && now - introClockStart >= cabinetIntroSettleMs) {
+            cabinetIntroDone = true;
           }
 
           const launching = !!launchSequence;
@@ -1982,7 +2416,7 @@
             const lookDelta = lookTarget.distanceTo(desiredLookTarget);
             if (lookDelta < LOOK_TARGET_SETTLED_EPSILON) {
               hoverLockState = 'hold';
-              hoverLockUntil = now + HOVER_LOCK_HOLD_MS;
+              hoverLockUntil = now + getHoverHoldDurationMs(hoverCabinet);
             }
           } else if (hoverLockState === 'hold' && now >= hoverLockUntil) {
             hoverLockState = 'idle';

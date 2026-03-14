@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "description": "Local dev server for the Pazneria arcade landing page.",
   "scripts": {
-    "dev": "start \"\" http://localhost:5510 && python -m http.server 5510",
-    "start": "start \"\" http://localhost:5510 && python -m http.server 5510",
-    "serve": "python -m http.server 5510"
+    "dev": "node scripts/dev-server.js --open",
+    "start": "node scripts/dev-server.js --open",
+    "serve": "node scripts/dev-server.js",
+    "test": "node scripts/test-wiki-link-contract.js"
   }
 }

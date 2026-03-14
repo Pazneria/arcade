@@ -12,7 +12,8 @@ From this folder, run:
 npm.cmd run dev
 ```
 
-This opens your browser to `http://localhost:5510` and starts the local server.
+This opens your browser to `http://localhost:5510`, starts the local dev server, and auto-reloads the page whenever tracked project files change.
+If `5510` is already in use, the server automatically falls forward to the next available port and opens that URL instead.
 
 Optional (server only, no auto-open):
 

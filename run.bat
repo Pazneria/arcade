@@ -2,8 +2,6 @@
 setlocal
 
 cd /d "%~dp0"
-set PORT=5510
 
-echo Starting arcade at http://localhost:%PORT% ...
-start "" http://localhost:%PORT%
-python -m http.server %PORT%
+echo Starting arcade dev server with live reload (prefers http://localhost:5510 and falls forward if busy) ...
+node scripts\dev-server.js --open
