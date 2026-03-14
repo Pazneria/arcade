@@ -190,7 +190,7 @@
       </section>
     </noscript>
 
-    <script src="./wiki-link-contract.js"></script>
+    <script src="./codex-link-contract.js"></script>
     <script type="module">
       import * as THREE from 'https://unpkg.com/three@0.157.0/build/three.module.js';
 
@@ -198,7 +198,7 @@
       const fallbackMessage = document.getElementById('fallback-message');
       const mobileFallback = document.getElementById('mobile-fallback');
       const fallbackGrid = document.getElementById('fallback-grid');
-      const arcadeWikiLinks = window.ArcadeWikiLinks;
+      const arcadeCodexLinks = window.ArcadeCodexLinks;
 
       const supportsWebGL = (() => {
         try {
@@ -274,23 +274,23 @@
           name: 'OSRS Clone',
           description: 'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
           url: 'https://pazneria.github.io/osrs-clone/',
-          wikiRepoName: 'osrs-clone-wiki',
-          wikiHomeUrl: arcadeWikiLinks
-            ? arcadeWikiLinks.buildWikiHomeUrl({
-                repoName: 'osrs-clone-wiki',
+          codexRepoName: 'osrs-clone-codex',
+          codexHomeUrl: arcadeCodexLinks
+            ? arcadeCodexLinks.buildCodexHomeUrl({
+                repoName: 'osrs-clone-codex',
                 baseUrl: publishedSiteOrigin,
                 from: 'arcade',
                 returnTo: window.location.href,
               })
-            : `${publishedSiteOrigin}/osrs-clone-wiki/`,
-          wikiWorldUrl: arcadeWikiLinks
-            ? arcadeWikiLinks.buildWikiEntityUrl('world', 'starter_town', {
-                repoName: 'osrs-clone-wiki',
+            : `${publishedSiteOrigin}/osrs-clone-codex/`,
+          codexWorldUrl: arcadeCodexLinks
+            ? arcadeCodexLinks.buildCodexEntityUrl('world', 'starter_town', {
+                repoName: 'osrs-clone-codex',
                 baseUrl: publishedSiteOrigin,
                 from: 'arcade',
                 returnTo: window.location.href,
               })
-            : `${publishedSiteOrigin}/osrs-clone-wiki/world/starter_town`,
+            : `${publishedSiteOrigin}/osrs-clone-codex/world/starter_town`,
           thumbnail: './assets/cabinet-screens/osrs-clone-title.webp',
         },
         {
@@ -319,8 +319,8 @@
           const card = document.createElement('article');
           card.className = 'fallback-card';
           const actions = [`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`];
-          if (game.wikiHomeUrl) {
-            actions.push(`<a href="${game.wikiHomeUrl}" target="_blank" rel="noopener">Wiki</a>`);
+          if (game.codexHomeUrl) {
+            actions.push(`<a href="${game.codexHomeUrl}" target="_blank" rel="noopener">Codex</a>`);
           }
           card.innerHTML = `
             <h3>${game.name}</h3>
@@ -562,7 +562,7 @@
         scene.add(propGroup);
 
         const cabinets = [];
-        const wikiPedestals = [];
+        const codexPedestals = [];
         const introAnimations = [];
         let introClockStart = null;
         let introDone = false;
@@ -631,8 +631,8 @@
           cabinetGroup.add(cabinet);
           cabinets.push(cabinet);
 
-          if (game.wikiHomeUrl) {
-            const pedestal = createWikiPedestal(game, side);
+          if (game.codexHomeUrl) {
+            const pedestal = createCodexPedestal(game, side);
             const pedestalX = x;
             const pedestalOffsetZ = 3.3;
             const pedestalZ = z + pedestalOffsetZ;
@@ -677,7 +677,7 @@
               },
             });
             propGroup.add(pedestal);
-            wikiPedestals.push(pedestal);
+            codexPedestals.push(pedestal);
           }
         });
 
@@ -726,12 +726,12 @@
         });
 
         const cabinetActionButtons = cabinets.flatMap((cabinet) => cabinet.userData.actionButtons || []);
-        const wikiBooks = wikiPedestals.flatMap((pedestal) => pedestal.userData.bookTargets || []).filter(Boolean);
+        const codexBooks = codexPedestals.flatMap((pedestal) => pedestal.userData.bookTargets || []).filter(Boolean);
         const interactableTargets = [
           ...cabinets,
           ...cabinetActionButtons,
-          ...wikiPedestals,
-          ...wikiBooks,
+          ...codexPedestals,
+          ...codexBooks,
           exitDoor.root,
           ...exitDoor.switchArrows,
         ];
@@ -743,7 +743,7 @@
         let hoverLockUntil = 0;
         let cabinetIntroDone = false;
         const HOVER_LOCK_HOLD_MS = 200;
-        const WIKI_HOVER_LOCK_HOLD_MS = HOVER_LOCK_HOLD_MS * 2;
+        const CODEX_HOVER_LOCK_HOLD_MS = HOVER_LOCK_HOLD_MS * 2;
         const LOOK_TARGET_SETTLED_EPSILON = 0.05;
         let activeCabinet = null;
         let approachingCabinet = null;
@@ -855,14 +855,14 @@
         renderer.domElement.addEventListener('pointerleave', onPointerLeave);
 
         const isGameCabinet = (target) => !!(target && target.userData && target.userData.game);
-        const isWikiPedestal = (target) => !!(target && target.userData && target.userData.kind === 'wiki-pedestal');
-        const isWikiPedestalBookTarget = (pedestal, target) =>
+        const isCodexPedestal = (target) => !!(target && target.userData && target.userData.kind === 'codex-pedestal');
+        const isCodexPedestalBookTarget = (pedestal, target) =>
           !!(pedestal && target && (pedestal.userData.bookTargets || []).includes(target));
         function getHoverHoldDurationMs(target) {
           if (!target || !target.userData) return HOVER_LOCK_HOLD_MS;
-          if (isWikiPedestal(target)) return WIKI_HOVER_LOCK_HOLD_MS;
-          if (target.userData.action === 'wiki-open') return WIKI_HOVER_LOCK_HOLD_MS;
-          if (isWikiPedestal(target.userData.pedestal)) return WIKI_HOVER_LOCK_HOLD_MS;
+          if (isCodexPedestal(target)) return CODEX_HOVER_LOCK_HOLD_MS;
+          if (target.userData.action === 'codex-open') return CODEX_HOVER_LOCK_HOLD_MS;
+          if (isCodexPedestal(target.userData.pedestal)) return CODEX_HOVER_LOCK_HOLD_MS;
           return HOVER_LOCK_HOLD_MS;
         }
         const CABINET_LAUNCH_DURATION_SECONDS = 0.32;
@@ -931,7 +931,7 @@
             return;
           }
 
-          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'wiki-open') {
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'codex-open') {
             const targetPedestal = hoverCabinet.userData.pedestal;
             if (activeCabinet === targetPedestal) {
               const returnCabinetIndex = Number.isFinite(targetPedestal?.userData?.returnCabinetIndex)
@@ -956,8 +956,8 @@
               return;
             }
 
-            if (isWikiPedestal(activeCabinet)) {
-              if (hoverCabinet === activeCabinet || isWikiPedestalBookTarget(activeCabinet, hoverCabinet)) {
+            if (isCodexPedestal(activeCabinet)) {
+              if (hoverCabinet === activeCabinet || isCodexPedestalBookTarget(activeCabinet, hoverCabinet)) {
                 return;
               }
               exitCabinetView();
@@ -1464,8 +1464,8 @@
             }
           });
 
-          wikiPedestals.forEach((pedestal, index) => {
-            const hovered = hoverCabinet === pedestal || isWikiPedestalBookTarget(pedestal, hoverCabinet);
+          codexPedestals.forEach((pedestal, index) => {
+            const hovered = hoverCabinet === pedestal || isCodexPedestalBookTarget(pedestal, hoverCabinet);
             const active = activeCabinet === pedestal || approachingCabinet === pedestal;
             const shimmer = (Math.sin(now * 0.0037 + index * 1.4) + 1) * 0.2 + 0.18;
             if (pedestal.userData.glowMaterial) {
@@ -2023,7 +2023,7 @@
           return texture;
         }
 
-        function createWikiPageTexture(pageSide = 'left') {
+        function createCodexPageTexture(pageSide = 'left') {
           const canvas = document.createElement('canvas');
           canvas.width = 384;
           canvas.height = 512;
@@ -2061,10 +2061,10 @@
           return texture;
         }
 
-        function createWikiPedestal(game, side) {
+        function createCodexPedestal(game, side) {
           const root = new THREE.Group();
-          root.userData.kind = 'wiki-pedestal';
-          root.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+          root.userData.kind = 'codex-pedestal';
+          root.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
 
           const accent = side === 'left' ? 0xffcf66 : 0x7ef1ff;
           const pedestalMaterial = new THREE.MeshStandardMaterial({
@@ -2127,7 +2127,7 @@
           });
           const leftPageSurfaceMaterial = new THREE.MeshStandardMaterial({
             color: 0xffffff,
-            map: createWikiPageTexture('left'),
+            map: createCodexPageTexture('left'),
             emissive: 0x2a1908,
             emissiveIntensity: 0.1,
             metalness: 0.01,
@@ -2136,7 +2136,7 @@
           });
           const rightPageSurfaceMaterial = new THREE.MeshStandardMaterial({
             color: 0xffffff,
-            map: createWikiPageTexture('right'),
+            map: createCodexPageTexture('right'),
             emissive: 0x2a1908,
             emissiveIntensity: 0.1,
             metalness: 0.01,
@@ -2184,7 +2184,7 @@
           const plaqueLabel = new THREE.Mesh(
             new THREE.PlaneGeometry(0.78, 0.34),
             new THREE.MeshBasicMaterial({
-              map: createPedestalLabelTexture('GAME', 'WIKI'),
+              map: createPedestalLabelTexture('GAME', 'CODEX'),
               transparent: true,
               toneMapped: false,
             })
@@ -2202,8 +2202,8 @@
 
           const book = new THREE.Group();
           book.position.set(0, 1.41, 0.04);
-          book.userData.action = 'wiki-open';
-          book.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+          book.userData.action = 'codex-open';
+          book.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
           book.userData.pedestal = root;
 
           const bookTiltGroup = new THREE.Group();
@@ -2248,8 +2248,8 @@
           const entryTarget = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.14), entryTargetMaterial);
           entryTarget.position.set(0.24, 0.059, 0.12);
           entryTarget.rotation.x = -Math.PI / 2;
-          entryTarget.userData.action = 'wiki-open';
-          entryTarget.userData.url = game.wikiHomeUrl || game.wikiWorldUrl || null;
+          entryTarget.userData.action = 'codex-open';
+          entryTarget.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
           entryTarget.userData.pedestal = root;
           bookTiltGroup.add(entryTarget);
 
@@ -2296,7 +2296,7 @@
           if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back') {
             return target.userData.cabinet || target;
           }
-          if (target.userData.action === 'wiki-open') {
+          if (target.userData.action === 'codex-open') {
             return target.userData.pedestal || target;
           }
           return target;

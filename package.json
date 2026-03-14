@@ -7,6 +7,6 @@
     "dev": "node scripts/dev-server.js --open",
     "start": "node scripts/dev-server.js --open",
     "serve": "node scripts/dev-server.js",
-    "test": "node scripts/test-wiki-link-contract.js"
+    "test": "node scripts/test-codex-link-contract.js"
   }
 }
