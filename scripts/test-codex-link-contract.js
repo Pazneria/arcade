@@ -52,11 +52,11 @@ function run() {
     "arcade codex links should target the published site origin"
   );
   assert(
-    arcadeIndex.includes("const localSwordGuysDevUrl = 'http://localhost:5179/';"),
+    arcadeIndex.includes("function getLocalSwordGuysDevUrl()"),
     "arcade local Sword Guys cabinet should target the sibling dev server"
   );
   assert(
-    arcadeIndex.includes("url: resolveArcadeGameUrl(localSwordGuysDevUrl, `${publishedSiteOrigin}/sword-guys/`)"),
+    arcadeIndex.includes("url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`)"),
     "arcade Sword Guys cabinet should resolve local and published URLs from one cabinet entry"
   );
   assert(arcadeIndex.includes("createCodexPedestal"), "arcade index should define a codex pedestal builder");
