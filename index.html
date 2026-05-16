@@ -262,12 +262,21 @@
       }
 
       const publishedSiteOrigin = 'https://pazneria.github.io';
+      const localSwordGuysDevUrl = 'http://localhost:5179/';
+
+      function isLocalArcadeOrigin() {
+        return ['localhost', '127.0.0.1', '::1', ''].includes(window.location.hostname);
+      }
+
+      function resolveArcadeGameUrl(localUrl, publishedUrl) {
+        return isLocalArcadeOrigin() ? localUrl : publishedUrl;
+      }
 
       const games = [
         {
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
-          url: 'https://pazneria.github.io/sword-guys',
+          url: resolveArcadeGameUrl(localSwordGuysDevUrl, `${publishedSiteOrigin}/sword-guys/`),
           thumbnail: './assets/cabinet-screens/sword-guys-title.webp',
         },
         {

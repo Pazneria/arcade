@@ -51,6 +51,14 @@ function run() {
     arcadeIndex.includes("const publishedSiteOrigin = 'https://pazneria.github.io';"),
     "arcade codex links should target the published site origin"
   );
+  assert(
+    arcadeIndex.includes("const localSwordGuysDevUrl = 'http://localhost:5179/';"),
+    "arcade local Sword Guys cabinet should target the sibling dev server"
+  );
+  assert(
+    arcadeIndex.includes("url: resolveArcadeGameUrl(localSwordGuysDevUrl, `${publishedSiteOrigin}/sword-guys/`)"),
+    "arcade Sword Guys cabinet should resolve local and published URLs from one cabinet entry"
+  );
   assert(arcadeIndex.includes("createCodexPedestal"), "arcade index should define a codex pedestal builder");
   assert(arcadeIndex.includes("codex-open"), "arcade index should expose a codex-open interaction");
   assert(arcadeIndex.includes("fallback-card-actions"), "arcade mobile fallback should expose grouped launch/codex actions");

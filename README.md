@@ -15,6 +15,12 @@ npm.cmd run dev
 This opens your browser to `http://localhost:5510`, starts the local dev server, and auto-reloads the page whenever tracked project files change.
 If `5510` is already in use, the server automatically falls forward to the next available port and opens that URL instead.
 
+The Sword Guys cabinet launches the sibling local dev server while the arcade is running locally. Start Sword Guys separately from `..\sword-guys`:
+
+```powershell
+npm.cmd run dev -- --port 5179
+```
+
 Optional (server only, no auto-open):
 
 ```powershell
