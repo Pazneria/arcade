@@ -62,6 +62,17 @@ function run() {
   assert(arcadeIndex.includes("createCodexPedestal"), "arcade index should define a codex pedestal builder");
   assert(arcadeIndex.includes("codex-open"), "arcade index should expose a codex-open interaction");
   assert(arcadeIndex.includes("fallback-card-actions"), "arcade mobile fallback should expose grouped launch/codex actions");
+  assert(!arcadeIndex.includes("example.com"), "arcade index should not ship placeholder launch links");
+  assert(!arcadeIndex.includes("href=\"/\""), "arcade index should not ship root-relative placeholder hrefs");
+
+  const localAssetReferences = [...arcadeIndex.matchAll(/['"](\.\/assets\/[^'"]+)['"]/g)].map((match) => match[1]);
+  assert(localAssetReferences.length > 0, "arcade index should reference local cabinet assets");
+  for (const assetRef of localAssetReferences) {
+    assert(
+      fs.existsSync(path.join(__dirname, "..", assetRef)),
+      `arcade index references missing local asset: ${assetRef}`
+    );
+  }
 
   console.log("Arcade codex link contract checks passed.");
 }

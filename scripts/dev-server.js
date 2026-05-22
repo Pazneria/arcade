@@ -37,13 +37,19 @@ function openBrowser(url) {
 
 function normalizeUrlPath(urlPath) {
   if (!urlPath || urlPath === "/") return "/index.html";
-  return decodeURIComponent(urlPath.split("?")[0]);
+  try {
+    return decodeURIComponent(urlPath.split("?")[0]);
+  } catch (error) {
+    return null;
+  }
 }
 
 function getAbsoluteRequestPath(urlPath) {
   const normalized = normalizeUrlPath(urlPath);
+  if (!normalized) return null;
   const candidate = path.resolve(ROOT_DIR, `.${normalized}`);
-  if (!candidate.startsWith(ROOT_DIR)) return null;
+  const relativePath = path.relative(ROOT_DIR, candidate);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) return null;
 
   if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
     return path.join(candidate, "index.html");

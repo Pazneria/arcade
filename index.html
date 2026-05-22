@@ -133,7 +133,8 @@
         font-size: 0.95rem;
       }
 
-      .fallback-card a {
+      .fallback-card a,
+      .fallback-card-status {
         align-self: flex-start;
         font-family: "Orbitron", system-ui, sans-serif;
         font-size: 0.8rem;
@@ -143,6 +144,11 @@
         border-radius: 999px;
         border: 1px solid rgba(15, 240, 252, 0.6);
         text-decoration: none;
+      }
+
+      .fallback-card-status {
+        color: rgba(226, 232, 255, 0.62);
+        border-color: rgba(226, 232, 255, 0.28);
       }
 
       .fallback-card-actions {
@@ -177,7 +183,7 @@
         mobile.
       </p>
       <div class="fallback-grid" id="fallback-grid"></div>
-      <a class="neon-button" href="/">Exit Arcade</a>
+      <a class="neon-button" href="https://pazneria.github.io/">Exit Arcade</a>
     </section>
 
     <noscript>
@@ -309,19 +315,22 @@
         {
           name: 'Ghost Signal',
           description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
-          url: 'https://example.com/ghost-signal',
+          url: null,
+          status: 'Coming soon',
           thumbnail: './assets/cabinet-screens/ghost-signal-title.webp',
         },
         {
           name: 'Chrome Drift',
           description: 'Thread impossible corners, chain boost drifts, and light up the night circuit.',
-          url: 'https://example.com/chrome-drift',
+          url: null,
+          status: 'Coming soon',
           thumbnail: './assets/cabinet-screens/chrome-drift-title.webp',
         },
         {
           name: 'Night Courier',
           description: 'Slam through midnight streets delivering impossible payloads before dawn.',
-          url: 'https://example.com/night-courier',
+          url: null,
+          status: 'Coming soon',
           thumbnail: './assets/cabinet-screens/night-courier-title.webp',
         },
       ];
@@ -331,7 +340,9 @@
         games.forEach((game) => {
           const card = document.createElement('article');
           card.className = 'fallback-card';
-          const actions = [`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`];
+          const actions = game.url
+            ? [`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`]
+            : [`<span class="fallback-card-status">${game.status || 'Coming soon'}</span>`];
           if (game.codexHomeUrl) {
             actions.push(`<a href="${game.codexHomeUrl}" target="_blank" rel="noopener">Codex</a>`);
           }
@@ -1660,6 +1671,7 @@
             metalness: 0.22,
             roughness: 0.42,
           });
+          const launchLabel = cabinet.userData.game?.url ? 'PLAY' : 'SOON';
 
           const playButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
           playButton.position.set(-0.48, panelY, panelZ + 0.08);
@@ -1670,7 +1682,7 @@
 
           const playLabel = new THREE.Mesh(
             new THREE.PlaneGeometry(0.72, 0.16),
-            new THREE.MeshBasicMaterial({ map: createLabelTexture('PLAY'), toneMapped: false, transparent: true })
+            new THREE.MeshBasicMaterial({ map: createLabelTexture(launchLabel), toneMapped: false, transparent: true })
           );
           playLabel.position.set(0, 0, 0.055);
           playButton.add(playLabel);
