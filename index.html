@@ -268,6 +268,11 @@
         return `http://${hostname}:5179/`;
       }
 
+      function getLocalChromeDriftDevUrl() {
+        const hostname = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
+        return `http://${hostname}:5178/`;
+      }
+
       function isLocalArcadeOrigin() {
         return ['localhost', '127.0.0.1', '::1', ''].includes(window.location.hostname);
       }
@@ -307,16 +312,16 @@
           thumbnail: './assets/cabinet-screens/osrs-clone-title.webp',
         },
         {
+          name: 'Chrome Drift',
+          description: 'Run a clean test-track time attack, carry speed through the bank, and chase your best ghost.',
+          url: resolveArcadeGameUrl(getLocalChromeDriftDevUrl(), `${publishedSiteOrigin}/chrome-drift/`),
+          thumbnail: './assets/cabinet-screens/chrome-drift-title.webp',
+        },
+        {
           name: 'Ghost Signal',
           description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
           url: 'https://example.com/ghost-signal',
           thumbnail: './assets/cabinet-screens/ghost-signal-title.webp',
-        },
-        {
-          name: 'Chrome Drift',
-          description: 'Thread impossible corners, chain boost drifts, and light up the night circuit.',
-          url: 'https://example.com/chrome-drift',
-          thumbnail: './assets/cabinet-screens/chrome-drift-title.webp',
         },
         {
           name: 'Night Courier',
