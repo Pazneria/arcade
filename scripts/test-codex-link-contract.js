@@ -59,6 +59,22 @@ function run() {
     arcadeIndex.includes("url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`)"),
     "arcade Sword Guys cabinet should resolve local and published URLs from one cabinet entry"
   );
+  assert(
+    arcadeIndex.includes("function getLocalRaceGptDevUrl()"),
+    "arcade local RaceGPT cabinet should target the sibling dev server"
+  );
+  assert(
+    arcadeIndex.includes("return `http://${hostname}:5178/`;"),
+    "arcade local RaceGPT cabinet should use the RaceGPT dev server port"
+  );
+  assert(
+    arcadeIndex.includes("url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`)"),
+    "arcade RaceGPT cabinet should resolve local and published URLs from one cabinet entry"
+  );
+  assert(
+    !arcadeIndex.includes("url: 'https://example.com/racegpt'"),
+    "arcade RaceGPT cabinet should not point at the placeholder URL"
+  );
   assert(arcadeIndex.includes("createCodexPedestal"), "arcade index should define a codex pedestal builder");
   assert(arcadeIndex.includes("codex-open"), "arcade index should expose a codex-open interaction");
   assert(arcadeIndex.includes("fallback-card-actions"), "arcade mobile fallback should expose grouped launch/codex actions");

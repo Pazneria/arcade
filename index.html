@@ -268,7 +268,7 @@
         return `http://${hostname}:5179/`;
       }
 
-      function getLocalChromeDriftDevUrl() {
+      function getLocalRaceGptDevUrl() {
         const hostname = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
         return `http://${hostname}:5178/`;
       }
@@ -285,8 +285,8 @@
         {
           name: 'RaceGPT',
           description: 'Run clean test-track time attacks, chase model ghosts, and try to beat the benchmark board.',
-          url: resolveArcadeGameUrl(getLocalChromeDriftDevUrl(), `${publishedSiteOrigin}/chrome-drift/`),
-          thumbnail: './assets/cabinet-screens/chrome-drift-title.webp',
+          url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`),
+          thumbnail: './assets/cabinet-screens/racegpt-title.webp',
         },
         {
           name: 'OSRS Clone',
