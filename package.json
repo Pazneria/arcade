@@ -7,8 +7,12 @@
     "dev": "node scripts/dev-server.js --open",
     "start": "node scripts/dev-server.js --open",
     "serve": "node scripts/dev-server.js",
-    "test": "node scripts/test-codex-link-contract.js",
-    "test:browser": "node scripts/test-directory-browser.js"
+    "test": "node scripts/test-codex-link-contract.js && node scripts/test-3d-asset-contract.js",
+    "test:browser": "node scripts/test-directory-browser.js",
+    "asset:generate-cabinet": ".venv\\Scripts\\python.exe scripts/generate-cabinet-source.py",
+    "asset:clean-cabinet": "node scripts/clean-cabinet-asset.mjs classic-cabinet-depth-prototype",
+    "asset:promote-cabinet": "node scripts/promote-cabinet-asset.mjs classic-cabinet-depth-prototype",
+    "asset:test": "node scripts/test-3d-asset-contract.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"
