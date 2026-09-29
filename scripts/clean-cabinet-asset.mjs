@@ -457,9 +457,7 @@ function writeGlb(outputPath, positions, normals, groups) {
       bufferView: indexView,
       componentType: 5125,
       count: group.indices.length,
-      type: "SCALAR",
-      min: [0],
-      max: [positions.length / 3 - 1]
+      type: "SCALAR"
     });
     primitives.push({
       attributes: { POSITION: 0, NORMAL: 1 },
@@ -541,7 +539,9 @@ function updateSourceMetadata(summary) {
     }
   };
   metadata.cleanup = {
-    ...(metadata.cleanup || {}),
+    kind: "vertex_cluster_cleanup",
+    tool: "scripts/clean-cabinet-asset.mjs",
+    notes: "Normalizes scale and pivot, clusters vertices, removes duplicate and collapsed triangles, and assigns cabinet material regions.",
     lastRun: summary
   };
   fs.writeFileSync(sourceJsonPath, JSON.stringify(metadata, null, 2) + "\n", "utf8");

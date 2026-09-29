@@ -46,18 +46,18 @@
         "total": 6.453471422195435
       }
     },
-    "returnedSeed": 24
+    "returnedSeed": 551029
   },
   "cleanup": {
-    "kind": "validated_raw_glb_promotion",
-    "tool": "scripts/promote-cabinet-asset.mjs",
-    "notes": "The first cleanup pass was too destructive for cabinets. This candidate preserves the generated mesh/materials for visual review, while the runtime normalizes scale and pivot.",
+    "kind": "vertex_cluster_cleanup",
+    "tool": "scripts/clean-cabinet-asset.mjs",
+    "notes": "Normalizes scale and pivot, clusters vertices, removes duplicate and collapsed triangles, and assigns cabinet material regions.",
     "lastRun": {
       "sourceVertices": 151548,
       "sourceFaces": 566260,
       "runtimeVertices": 59801,
       "runtimeFaces": 119610,
-      "runtimeBytes": 2875436,
+      "runtimeBytes": 2875244,
       "groups": [
         {
           "material": "cabinet_shell_dark",

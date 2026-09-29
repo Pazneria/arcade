@@ -17,7 +17,31 @@ When this arcade asks for 3D models or assets, the default expectation is an AI-
 tencent/Hunyuan3D-2/hunyuan3d-dit-v2-0
 ```
 
-If Hunyuan3D is not callable locally, use `scripts/generate-cabinet-source.py` after installing its Python deps, or place an externally generated GLB at `assets/3d/source/ai-cabinet-prototype/raw.glb` and run the cleanup script.
+The generator calls the hosted Hunyuan3D Space. Create and activate a Python virtual environment first:
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+macOS/Linux:
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+```
+
+Then, on either platform:
+
+```sh
+python -m pip install gradio_client pillow
+npm run asset:generate-cabinet
+npm run asset:clean-cabinet
+```
+
+Alternatively, place an externally generated GLB at `assets/3d/source/classic-cabinet-depth-prototype/raw.glb` and run `npm run asset:clean-cabinet`. Use `npm run asset:promote-cabinet` only to copy the raw model unchanged for visual review; it overwrites the cleaned runtime asset.
 
 ## Folder Contract
 

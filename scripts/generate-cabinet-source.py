@@ -130,12 +130,11 @@ def find_stats(value):
 
 
 def find_seed(value):
-    if isinstance(value, int):
-        return value
     if isinstance(value, dict):
         for key, item in value.items():
-            if "seed" in str(key).lower() and isinstance(item, int):
+            if str(key).lower() in {"seed", "returned_seed", "returnedseed"} and type(item) is int:
                 return item
+        for item in value.values():
             found = find_seed(item)
             if found is not None:
                 return found
@@ -148,6 +147,7 @@ def find_seed(value):
 
 
 def write_metadata(asset_id, prompt, seed, result, paths):
+    returned_seed = find_seed(result)
     metadata = {
         "id": asset_id,
         "kind": "ai_image_to_3d_glb",
@@ -177,15 +177,7 @@ def write_metadata(asset_id, prompt, seed, result, paths):
         },
         "rawResult": {
             "meshStats": find_stats(result),
-            "returnedSeed": find_seed(result) or seed,
-        },
-        "cleanup": {
-            "kind": "validated_raw_glb_promotion",
-            "tool": "scripts/promote-cabinet-asset.mjs",
-            "notes": (
-                "The first cleanup pass was too destructive for cabinets. This candidate preserves "
-                "the generated mesh/materials for visual review, while the runtime normalizes scale and pivot."
-            ),
+            "returnedSeed": seed if returned_seed is None else returned_seed,
         },
     }
     paths["metadata"].write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")

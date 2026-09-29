@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { validateBytes } = require("gltf-validator");
 
 const ROOT = path.resolve(__dirname, "..");
 const ASSET_ID = "classic-cabinet-depth-prototype";
@@ -30,7 +31,7 @@ function readGlbJson(filePath) {
   return JSON.parse(buffer.subarray(20, 20 + jsonLength).toString("utf8").trim());
 }
 
-function run() {
+async function run() {
   const docs = readText("docs/3d-asset-workflow.md");
   assert(docs.includes("tencent/Hunyuan3D-2/hunyuan3d-dit-v2-0"), "workflow should record the preferred Hunyuan3D model");
   assert(docs.includes("assets/3d/source/<asset-name>/"), "workflow should document source provenance folders");
@@ -46,6 +47,8 @@ function run() {
   assert(metadata.generator.model === "tencent/Hunyuan3D-2/hunyuan3d-dit-v2-0", "source metadata should record Hunyuan3D model id");
   assert(metadata.sourceGlb === `assets/3d/source/${ASSET_ID}/raw.glb`, "source metadata should point at raw GLB provenance");
   assert(metadata.runtimeGlb === `assets/3d/runtime/${ASSET_ID}.glb`, "source metadata should point at runtime GLB");
+  assert(metadata.rawResult.returnedSeed === metadata.rawResult.meshStats.params.seed, "returned seed should match recorded generation parameters");
+  assert(metadata.cleanup.tool === "scripts/clean-cabinet-asset.mjs", "cleaned asset should record the cleaner as its provenance");
 
   const generator = readText("scripts/generate-cabinet-source.py");
   assert(generator.includes("Client(\"tencent/Hunyuan3D-2\")"), "generator should call the Hunyuan3D Space");
@@ -57,6 +60,7 @@ function run() {
   assert(promoter.includes("runtime_promoted"), "promoter should update source metadata after promotion");
 
   const packageJson = JSON.parse(readText("package.json"));
+  assert(packageJson.scripts["asset:generate-cabinet"] === "python scripts/generate-cabinet-source.py", "generation should use the active Python environment on every platform");
   assert(
     packageJson.scripts["asset:clean-cabinet"].endsWith(` ${ASSET_ID}`),
     "asset clean script should target the cabinet asset used by the sixth slot"
@@ -72,43 +76,36 @@ function run() {
   assert(arcadeIndex.includes("buildModelCabinet"), "arcade should define a model-cabinet builder");
   assert(arcadeIndex.includes("modelAsset"), "arcade game data should expose model asset metadata");
   assert(
-    arcadeIndex.includes("if (game.url)") && arcadeIndex.includes("if (game.inspectOnly)"),
-    "mobile fallback should only render launch links for playable games and a status for inspect-only assets"
-  );
-  assert(
-    arcadeIndex.includes("actions.push('<span class=\"fallback-status\">3D model slot</span>')"),
-    "mobile fallback should label inspect-only 3D asset cards instead of launching them"
+    arcadeIndex.includes("else if (game.url)") && arcadeIndex.includes("if (game.inspectOnly)") &&
+      arcadeIndex.includes("status.textContent = '3D model slot'"),
+    "directory should label inspect-only assets while preserving safe DOM rendering"
   );
   assert(
     arcadeIndex.includes("const includePlay = options.includePlay ?? true") &&
-      arcadeIndex.includes("const includeBack = options.includeBack ?? true"),
-    "cabinet action panels should support selectively hiding play/back buttons"
-  );
-  assert(
-    arcadeIndex.includes("includePlay: false"),
-    "model cabinet should expose a back-only action panel because it is not playable"
+      arcadeIndex.includes("const includeBack = options.includeBack ?? true") &&
+      arcadeIndex.includes("includePlay: false"),
+    "model cabinet should expose a back-only action panel"
   );
 
-  const rawExists = fs.existsSync(RAW_GLB);
-  const runtimeExists = fs.existsSync(RUNTIME_GLB);
-  if (rawExists) {
+  assert(fs.existsSync(RAW_GLB), "raw GLB provenance is required");
+  assert(fs.existsSync(RUNTIME_GLB), "runtime GLB is required for the sixth cabinet");
+  {
     const rawJson = readGlbJson(RAW_GLB);
     assert(Array.isArray(rawJson.meshes) && rawJson.meshes.length >= 1, "raw GLB should include a mesh");
-    assert(runtimeExists, "runtime GLB should be promoted after raw GLB generation");
   }
 
-  if (runtimeExists) {
+  {
     const runtimeJson = readGlbJson(RUNTIME_GLB);
     assert(Array.isArray(runtimeJson.meshes) && runtimeJson.meshes.length >= 1, "runtime GLB should include a mesh");
     assert(Array.isArray(runtimeJson.nodes) && runtimeJson.nodes.length >= 1, "runtime GLB should include a node hierarchy");
   }
+  const report = await validateBytes(new Uint8Array(fs.readFileSync(RUNTIME_GLB)));
+  assert(report.issues.numErrors === 0, `runtime GLB validation failed: ${JSON.stringify(report.issues.messages)}`);
 
   console.log("Arcade 3D asset contract checks passed.");
 }
 
-try {
-  run();
-} catch (error) {
+run().catch((error) => {
   console.error(error.message);
   process.exit(1);
-}
+});

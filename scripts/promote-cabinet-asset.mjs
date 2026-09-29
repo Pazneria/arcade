@@ -57,7 +57,9 @@ function updateMetadata(summary) {
     pivot: "fit at runtime by sixth-slot loader",
   };
   metadata.cleanup = {
-    ...(metadata.cleanup || {}),
+    kind: "validated_raw_glb_promotion",
+    tool: "scripts/promote-cabinet-asset.mjs",
+    notes: "Preserves the raw generated mesh and materials for visual review; the runtime loader fits scale and pivot.",
     lastRun: summary,
   };
   fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2) + "\n", "utf8");

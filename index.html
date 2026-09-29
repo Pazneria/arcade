@@ -363,8 +363,6 @@
         return texture;
       }
 
-
-
       const sceneContainer = document.getElementById('scene-container');
       const directoryMessage = document.getElementById('directory-message');
       const mobileFallback = document.getElementById('mobile-fallback');
@@ -1653,7 +1651,7 @@
           const inspecting = !!target;
           const title = game?.name || (guideGame ? `${guideGame.name} guide` : inspecting ? 'Arcade exit' : 'Explore the arcade');
           forwardButton.hidden = backwardButton.hidden = inspecting;
-          playButton.hidden = deskPlayButton.hidden = !game && target !== exitDoor.root;
+          playButton.hidden = deskPlayButton.hidden = !!game?.inspectOnly || (!game && target !== exitDoor.root);
           backButton.hidden = deskBackButton.hidden = !inspecting;
           [touchGuideLink, deskGuideLink].forEach((link) => {
             link.hidden = !guideGame?.guideUrl;
