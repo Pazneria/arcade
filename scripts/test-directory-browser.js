@@ -8,19 +8,60 @@ const root = path.resolve(__dirname, '..');
 const engineUrl = 'https://unpkg.com/three@0.157.0/build/three.module.js';
 // Expose state only in the HTML served by this test, never in the shipped page.
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/\r\n/g, '\n').replace(
-  '        return () => {\n          cancelAnimationFrame(animationFrameId);',
+  '        return () => {\n          touchBindings.forEach((remove) => remove());',
   `        window.arcadeTest = {
           cabinets, focusCabinet, startCabinetLaunch,
           restoreCabinet(index) { writeReturnState(index); applyReturnStateIfPresent(); },
           get active() { return cabinets.indexOf(activeCabinet); },
           get launching() { return !!launchSequence; },
+          actionPoint(index, action) {
+            const button=cabinets[index].userData.actionButtons.find(button=>button.userData.action===action);
+            const position=new THREE.Vector3();
+            button.getWorldPosition(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
+          get renderStats() { return {...renderer.info.render}; },
+          focusExit() { focusCabinet(exitDoor.root); },
+          get exitActive() { return activeCabinet === exitDoor.root; },
+          get signImage() { return exitDoor.signMaterial.map.image.toDataURL(); },
+          signBounds() {
+            let mesh;
+            exitDoor.root.traverse(object => { if (object.material === exitDoor.signMaterial) mesh=object; });
+            const box=new THREE.Box3().setFromObject(mesh);
+            return [box.min,box.max].map(point => {
+              point.project(camera);
+              return {x:(point.x+1)*window.innerWidth/2,y:(1-point.y)*window.innerHeight/2};
+            });
+          },
+          arrowPoint(index) {
+            const position=new THREE.Vector3();
+            exitDoor.switchArrows[index].getWorldPosition(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
+          exitPoint() {
+            const position = new THREE.Vector3(0, 2.1, 0);
+            exitDoor.root.localToWorld(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
+          get state() { return {targetZ, touchMove, touchYaw, introDone, look:lookTarget.toArray(), lookError:lookTarget.distanceTo(desiredLookTarget), frames:renderer.info.render.frame}; },
+          loseContext() { renderer.forceContextLoss(); },
+          cabinetPoint(index) {
+            const position = new THREE.Vector3();
+            cabinets[index].getWorldPosition(position);
+            position.y = 2.4;
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
           clickAction(index, action) {
             hoverCabinet = cabinets[index].userData.actionButtons.find(button => button.userData.action === action);
             onRendererClick();
           }
         };
         return () => {
-          cancelAnimationFrame(animationFrameId);`
+          touchBindings.forEach((remove) => remove());`
 );
 assert(html.includes('window.arcadeTest ='), 'Test instrumentation must match the cleanup boundary');
 for (const [, asset] of html.matchAll(/thumbnail: '(\.\/assets\/[^']+)'/g)) {
@@ -64,9 +105,11 @@ async function assertDirectory(page, failed) {
     headless: true, args: ['--enable-unsafe-swiftshader'],
   });
   try {
-    for (const mode of ['no-webgl', 'renderer-failure', 'import-failure', 'mobile', 'normal']) {
-      const context = await browser.newContext({viewport:{width:mode === 'mobile' ? 390 : 1280, height:800}});
+    for (const mode of (process.env.TEST_MODE ? [process.env.TEST_MODE] : ['no-webgl', 'no-webgl-mobile', 'renderer-failure', 'import-failure', 'mobile', 'normal'])) {
+      const mobile = mode.includes('mobile');
+      const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
       await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
+      await context.route('https://pazneria.github.io/', route => route.fulfill({contentType:'text/html',body:'<h1>Exit destination test</h1>'}));
       const page = await context.newPage();
       const capture = async name => {
         if (!process.env.ARTIFACT_DIR) return;
@@ -74,7 +117,7 @@ async function assertDirectory(page, failed) {
         await page.screenshot({path:path.join(process.env.ARTIFACT_DIR, `${name}.png`)});
       };
       const errors = [];
-      page.on('pageerror', error => errors.push(error.message));
+      page.on('pageerror', error => { errors.push(error.message); console.error(`${mode}: ${error.stack}`); });
       await page.route('https://fonts.googleapis.com/**', route => route.abort());
       await page.route('https://fonts.gstatic.com/**', route => route.abort());
       await page.route(engineUrl, route => {
@@ -82,7 +125,7 @@ async function assertDirectory(page, failed) {
         if (process.env.THREE_MODULE_PATH) return route.fulfill({path:process.env.THREE_MODULE_PATH, contentType:'application/javascript'});
         return route.continue();
       });
-      if (mode === 'no-webgl') {
+      if (mode.startsWith('no-webgl')) {
         await page.addInitScript(() => { window.WebGLRenderingContext = undefined; });
       }
       if (mode === 'renderer-failure') {
@@ -104,12 +147,16 @@ async function assertDirectory(page, failed) {
         await page.waitForFunction(() => !!window.arcadeTest);
         assert.equal(await page.locator('#scene-container canvas').count(), 1);
         assert.equal(await page.locator('#mobile-fallback').isVisible(), false);
-        // Repeated layout cleanup/reinitialization must leave one renderer and five cards.
+        await page.waitForFunction(() => window.arcadeTest.state.introDone);
+        console.log('Desktop aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
+        await capture('desktop-room');
+        // Resizing must preserve one renderer; opening and closing Games keeps its state.
         for (let i = 0; i < 3; i++) {
           await page.setViewportSize({width:390,height:800});
-          await page.waitForFunction(() => document.querySelector('#mobile-fallback').classList.contains('visible'));
+          await page.getByRole('button',{name:'Games',exact:true}).click();
           await assertDirectory(page, false);
-          assert.equal(await page.locator('#scene-container canvas').count(), 0);
+          assert.equal(await page.locator('#scene-container canvas').count(), 1);
+          await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
           await page.setViewportSize({width:1280,height:800});
           await page.waitForFunction(() => !document.querySelector('#mobile-fallback').classList.contains('visible'));
           assert.equal(await page.locator('#scene-container canvas').count(), 1);
@@ -134,10 +181,12 @@ async function assertDirectory(page, failed) {
         }
         // Available cabinet launch and return state still work across navigation.
         for (let i = 0; i < 2; i++) {
+          const previousFrames=await page.evaluate(() => window.arcadeTest.state.frames);
           await page.evaluate(() => window.arcadeTest.restoreCabinet(0));
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          await page.waitForFunction(frames => window.arcadeTest.active === 0 && window.arcadeTest.state.frames>frames,previousFrames);
+          const playPoint=await page.evaluate(() => window.arcadeTest.actionPoint(0,'cabinet-play'));
+          await page.mouse.click(playPoint.x,playPoint.y);
           const returnIndex = await page.evaluate(() => {
-            window.arcadeTest.clickAction(0, 'cabinet-play');
             return JSON.parse(sessionStorage.getItem('arcade:return-state:v1')).cabinetIndex;
           });
           assert.equal(returnIndex, 0);
@@ -146,7 +195,127 @@ async function assertDirectory(page, failed) {
           await page.waitForFunction(() => !!window.arcadeTest && window.arcadeTest.active === 0);
           assert.equal(await page.locator('#scene-container canvas').count(), 1);
         }
+        for (const index of [0,1,2]) {
+          await page.evaluate(index => window.arcadeTest.restoreCabinet(index),index);
+          await page.waitForFunction(index => window.arcadeTest.active === index && window.arcadeTest.state.lookError < 0.05,index);
+          await page.waitForTimeout(100);
+          await capture(`desktop-cabinet-${index}`);
+        }
+        await page.keyboard.press('Escape');
+        await page.evaluate(() => window.arcadeTest.focusExit());
+        await page.waitForFunction(() => window.arcadeTest.exitActive && window.arcadeTest.state.lookError < 0.05);
+        await page.waitForTimeout(100);
+        await capture('desktop-exit');
+        const signBounds=await page.evaluate(() => window.arcadeTest.signBounds());
+        assert(signBounds.every(point => point.x>0&&point.x<1280&&point.y>0&&point.y<800),'Exit sign must fit completely in the door view');
+        for (let i=0;i<4;i++) {
+          const previousSign=await page.evaluate(() => window.arcadeTest.signImage);
+          const arrowPoint=await page.evaluate(() => window.arcadeTest.arrowPoint(1));
+          await page.mouse.move(arrowPoint.x,arrowPoint.y);
+          await page.mouse.click(arrowPoint.x,arrowPoint.y);
+          assert.notEqual(await page.evaluate(() => window.arcadeTest.signImage),previousSign,'Sign arrow must cycle its design');
+          assert.equal(page.url(),url,'Cycling the sign must not exit');
+        }
+        console.log('Desktop scene budget',await page.evaluate(() => window.arcadeTest.renderStats));
+        const exitPoint=await page.evaluate(() => window.arcadeTest.exitPoint());
+        await page.mouse.move(exitPoint.x,exitPoint.y);
+        await page.mouse.click(exitPoint.x,exitPoint.y);
+        await page.waitForURL('https://pazneria.github.io/');
       } else {
+        if (mode === 'mobile') {
+          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
+          assert.equal(await page.locator('#scene-container canvas').count(),1);
+          assert(await page.locator('#touch-controls').isVisible());
+          console.log('Mobile aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
+          const cdp = await context.newCDPSession(page);
+          const forward = await page.getByRole('button',{name:'Move forward',exact:true}).boundingBox();
+          const point = {x:forward.x+forward.width/2,y:forward.y+forward.height/2};
+          const startZ = await page.evaluate(() => window.arcadeTest.state.targetZ);
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+          await page.waitForTimeout(400);
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+          assert((await page.evaluate(() => window.arcadeTest.state.targetZ)) < startZ);
+          assert.equal(await page.evaluate(() => window.arcadeTest.state.touchMove),0);
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+          assert.equal(await page.evaluate(() => window.arcadeTest.state.touchMove),0,'Cancelled movement must stop');
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:160,y:260}]});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:260,y:280}]});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+          assert((await page.evaluate(() => window.arcadeTest.state.touchYaw)) < 0);
+          assert.equal(await page.evaluate(() => window.arcadeTest.active),-1,'Dragging must not inspect or launch');
+          await capture('mobile-aisle');
+          await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
+          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
+          await capture('mobile-racegpt');
+          await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:140,y:250}]});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:300,y:250}]});
+          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+          await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
+          const cabinetPoint=await page.evaluate(() => window.arcadeTest.cabinetPoint(0));
+          assert(cabinetPoint.x>0&&cabinetPoint.x<390&&cabinetPoint.y>44&&cabinetPoint.y<600);
+          await page.touchscreen.tap(cabinetPoint.x,cabinetPoint.y);
+          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          for (let i=0;i<4;i++) {
+            await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
+            await page.waitForFunction(index => window.arcadeTest.active === index,i+1);
+            await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
+            if(i===0) {
+              assert(await page.getByRole('button',{name:'Codex',exact:true}).isVisible());
+              await capture('mobile-osrs');
+            }
+          }
+          assert(await page.getByRole('button',{name:'Coming soon',exact:true}).isDisabled());
+          await capture('mobile-coming-soon');
+          for (const size of [{width:800,height:390},{width:390,height:800}]) {
+            const previousFrames=await page.evaluate(() => window.arcadeTest.state.frames);
+            await page.setViewportSize(size);
+            await page.waitForFunction(frames => window.arcadeTest.state.frames > frames+1,previousFrames);
+            assert.equal(await page.locator('#scene-container canvas').count(),1);
+            assert(await page.locator('#touch-controls').isVisible());
+            assert.equal(await page.evaluate(() => window.arcadeTest.active),4);
+            await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
+            const pixels=await page.locator('#scene-container canvas').evaluate(canvas=>canvas.width*canvas.height);
+            assert(pixels<=900000);
+            assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),'Controls must fit without horizontal overflow');
+            const panel=await page.locator('.touch-panel').boundingBox();
+            assert(panel.y>=44&&panel.y+panel.height<=size.height);
+            await capture(size.width>size.height?'mobile-landscape':'mobile-portrait');
+          }
+          await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
+          assert.equal(await page.evaluate(() => window.arcadeTest.active),-1);
+          await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
+          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          for(let i=0;i<2;i++) {
+            await page.getByRole('button',{name:'Games',exact:true}).tap();
+            await assertDirectory(page,false);
+            const frames=await page.evaluate(() => window.arcadeTest.state.frames);
+            await page.waitForTimeout(100);
+            assert.equal(await page.evaluate(() => window.arcadeTest.state.frames),frames,'Directory must pause rendering');
+            await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).tap();
+            assert.equal(await page.evaluate(() => window.arcadeTest.active),0);
+          }
+          for(let i=0;i<2;i++) {
+            await page.getByRole('button',{name:'Launch',exact:true}).tap();
+            await page.waitForURL('http://127.0.0.1:5178/');
+            await page.goBack({waitUntil:'domcontentloaded'});
+            await page.waitForFunction(() => window.arcadeTest?.active === 0);
+            assert.equal(await page.locator('#scene-container canvas').count(),1);
+          }
+          await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.getByRole('link',{name:'Home / Exit',exact:true}).tap()]);
+          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
+          await page.evaluate(() => window.arcadeTest.loseContext());
+          await page.waitForFunction(() => document.querySelector('#directory-message').textContent.includes('unavailable'));
+          await assertDirectory(page,true);
+          assert.equal(await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).isVisible(),false);
+          await capture('mobile-context-lost');
+          // Reload restores the capable device after the simulated context loss.
+          await page.reload({waitUntil:'domcontentloaded'});
+          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
+          await page.getByRole('button',{name:'Games',exact:true}).tap();
+        }
         await page.waitForFunction(failed => document.querySelector('#mobile-fallback').classList.contains('visible') && (!failed || document.querySelector('#directory-message').textContent.includes('unavailable')), mode !== 'mobile');
         await assertDirectory(page, mode !== 'mobile');
         await capture(mode);
