@@ -45,7 +45,7 @@ function run() {
   );
 
   const arcadeIndex = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert(arcadeIndex.includes("codexHomeUrl"), "arcade index should expose codex metadata for OSRS Clone");
+  assert(arcadeIndex.includes("guideUrl"), "arcade index should expose optional guide metadata for OSRS Clone");
   assert(arcadeIndex.includes("codexRepoName"), "arcade index should expose codex repo metadata for OSRS Clone");
   assert(
     arcadeIndex.includes("const publishedSiteOrigin = 'https://pazneria.github.io';"),

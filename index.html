@@ -133,6 +133,9 @@
 
       .fallback-card a {
         align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
         font-family: "Orbitron", system-ui, sans-serif;
         font-size: 0.8rem;
         text-transform: uppercase;
@@ -169,7 +172,8 @@
         gap: 12px;
       }
 
-      #touch-controls[hidden], #return-to-3d[hidden], #touch-codex[hidden] { display: none; }
+      #touch-controls[hidden], #return-to-3d[hidden], #touch-guide[hidden] { display: none; }
+      .guide-icon { color: #d8b06a; flex: none; }
       .touch-toolbar, .touch-actions, .touch-browse { display: flex; gap: 8px; }
       .touch-toolbar { justify-content: space-between; }
       #touch-controls button, #touch-controls a {
@@ -191,7 +195,7 @@
         outline: 2px solid var(--accent-primary);
         outline-offset: 3px;
       }
-      #touch-controls button:disabled { opacity: 0.55; cursor: default; }
+      #touch-controls button:disabled, #touch-controls a:not([href]) { opacity: 0.55; cursor: default; }
       #touch-controls button:active { background: #4a321e; }
       .touch-panel {
         max-width: 480px;
@@ -205,7 +209,8 @@
       }
       #touch-title { margin: 0 0 4px; font-size: 20px; }
       #touch-hint { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
-      .touch-actions button { flex: 1; }
+      .touch-actions button, .touch-actions a { flex: 1; }
+      .touch-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
       .touch-browse { margin-top: 8px; }
       .touch-browse button { flex: 1; }
       .touch-mode #scene-container canvas { touch-action: none; }
@@ -216,6 +221,56 @@
         .touch-browse { margin-top: 4px; }
         #touch-controls button { padding: 6px 10px; }
       }
+
+      /* Desktop cabinet strip: shown while inspecting, or when keyboard focus enters it. */
+      #cabinet-actions {
+        position: fixed;
+        left: 50%;
+        bottom: 1.25rem;
+        transform: translateX(-50%);
+        z-index: 12;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        max-width: min(92vw, 560px);
+        padding: 10px 12px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 14px;
+        background: rgba(26, 18, 12, 0.94);
+      }
+      #cabinet-actions[hidden], #cabinet-actions [hidden] { display: none; }
+      #cabinet-actions:not(.is-inspecting):not(:focus-within) {
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      #cabinet-actions-title { margin: 0; font-size: 18px; font-weight: 700; }
+      .cabinet-actions-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+      #cabinet-actions button, #cabinet-actions a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 16px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 10px;
+        background: rgba(42, 26, 16, 0.96);
+        color: #f1e2c2;
+        font: 600 16px "Rajdhani", system-ui, sans-serif;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #cabinet-actions button:hover:not(:disabled), #cabinet-actions a[href]:hover { background: #4a321e; }
+      #cabinet-actions button:focus-visible, #cabinet-actions a:focus-visible {
+        outline: 2px solid #f0d9a8;
+        outline-offset: 3px;
+      }
+      #cabinet-actions button:disabled, #cabinet-actions a:not([href]) { opacity: 0.55; cursor: default; }
+      #cabinet-actions .cabinet-browse button { min-height: 32px; padding: 4px 12px; font-size: 14px; }
 
       @media (max-width: 768px) {
         body {
@@ -240,13 +295,26 @@
           <button id="touch-forward" type="button" aria-label="Move forward">↑ Forward</button>
           <button id="touch-backward" type="button" aria-label="Move backward">↓ Backward</button>
           <button id="touch-play" type="button" hidden>Launch</button>
-          <button id="touch-codex" type="button" hidden>Codex</button>
+          <a id="touch-guide" hidden aria-disabled="true"><svg class="guide-icon" aria-hidden="true" width="18" height="18" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 4.8 3 2 3v9c2.8 0 4.8.4 6 1.5 1.2-1.1 3.2-1.5 6-1.5V3c-2.8 0-4.8.4-6 1.5zm0 0v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Guide</a>
           <button id="touch-back" type="button" hidden>Back to aisle</button>
         </div>
         <div class="touch-browse">
           <button id="touch-previous" type="button">‹ Previous</button>
           <button id="touch-next" type="button">Next cabinet ›</button>
         </div>
+      </div>
+    </section>
+
+    <section id="cabinet-actions" aria-label="Cabinet actions" hidden>
+      <p id="cabinet-actions-title" aria-live="polite">Explore the arcade</p>
+      <div class="cabinet-actions-row">
+        <button id="cabinet-play" type="button" hidden>Play</button>
+        <a id="cabinet-guide" hidden aria-disabled="true"><svg class="guide-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 4.8 3 2 3v9c2.8 0 4.8.4 6 1.5 1.2-1.1 3.2-1.5 6-1.5V3c-2.8 0-4.8.4-6 1.5zm0 0v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Guide</a>
+        <button id="cabinet-back" type="button" aria-label="Back to aisle" hidden>Back</button>
+      </div>
+      <div class="cabinet-actions-row cabinet-browse">
+        <button id="cabinet-previous" type="button">‹ Previous cabinet</button>
+        <button id="cabinet-next" type="button">Next cabinet ›</button>
       </div>
     </section>
 
@@ -283,6 +351,7 @@
       const fallbackGrid = document.getElementById('fallback-grid');
       const touchControls = document.getElementById('touch-controls');
       const returnTo3d = document.getElementById('return-to-3d');
+      const cabinetActions = document.getElementById('cabinet-actions');
       const arcadeCodexLinks = window.ArcadeCodexLinks;
 
       const supportsWebGL = (() => {
@@ -368,11 +437,15 @@
         return isLocalArcadeOrigin() ? localUrl : publishedUrl;
       }
 
+      // Optional `guideUrl` drives every Guide action: the 3D cabinet button, the
+      // guide lectern, the touch/desktop action strips, and the HTML directory.
+      // Only set it for a confirmed, published wiki; games without one show no Guide.
       const games = [
         {
           name: 'RaceGPT',
           description: 'Run clean test-track time attacks, chase model ghosts, and try to beat the benchmark board.',
           url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`),
+          // guideUrl: not configured until a RaceGPT wiki is confirmed.
           thumbnail: './assets/cabinet-screens/racegpt-title.webp',
         },
         {
@@ -380,7 +453,7 @@
           description: 'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
           url: 'https://pazneria.github.io/osrs-clone/',
           codexRepoName: 'osrs-clone-codex',
-          codexHomeUrl: arcadeCodexLinks
+          guideUrl: arcadeCodexLinks
             ? arcadeCodexLinks.buildCodexHomeUrl({
                 repoName: 'osrs-clone-codex',
                 baseUrl: publishedSiteOrigin,
@@ -402,6 +475,7 @@
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
           url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`),
+          // guideUrl: not configured until a Sword Guys wiki is confirmed.
           thumbnail: './assets/cabinet-screens/sword-guys-title.webp',
         },
         {
@@ -418,6 +492,19 @@
         },
       ];
 
+      // Guides are public HTTPS destinations, never script URLs or credentialed links.
+      // The registry is authored locally; keep a safe boundary for future entries.
+      games.forEach((game) => {
+        if (!game.guideUrl) return;
+        try {
+          const url = new URL(game.guideUrl);
+          game.guideUrl = url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+        } catch {
+          game.guideUrl = null;
+        }
+      });
+      const guideIcon = document.querySelector('#touch-guide .guide-icon');
+
       function buildMobileDirectory() {
         // Keep the same links across resize events so keyboard focus is preserved.
         if (fallbackGrid.childElementCount) {
@@ -427,20 +514,38 @@
         games.forEach((game) => {
           const card = document.createElement('article');
           card.className = 'fallback-card';
-          const actions = [];
+          const title = document.createElement('h2');
+          title.textContent = game.name;
+          const description = document.createElement('p');
+          description.textContent = game.description;
+          const actions = document.createElement('div');
+          actions.className = 'fallback-card-actions';
+          const addLink = (url, label) => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = label;
+            actions.appendChild(link);
+            return link;
+          };
           if (game.comingSoon) {
-            actions.push('<span>Coming soon</span>');
+            const availability = document.createElement('span');
+            availability.textContent = 'Coming soon';
+            actions.appendChild(availability);
           } else if (game.url) {
-            actions.push(`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`);
+            addLink(game.url, 'Launch');
           }
-          if (game.codexHomeUrl) {
-            actions.push(`<a href="${game.codexHomeUrl}" target="_blank" rel="noopener">Codex</a>`);
+          if (game.guideUrl) {
+            const link = addLink(game.guideUrl, 'Guide ');
+            link.setAttribute('aria-label', `Open ${game.name} guide (opens in new tab)`);
+            link.prepend(guideIcon.cloneNode(true));
+            const arrow = document.createElement('span');
+            arrow.setAttribute('aria-hidden', 'true');
+            arrow.textContent = '↗';
+            link.appendChild(arrow);
           }
-          card.innerHTML = `
-            <h2>${game.name}</h2>
-            <p>${game.description}</p>
-            <div class="fallback-card-actions">${actions.join('')}</div>
-          `;
+          card.append(title, description, actions);
           fallbackGrid.appendChild(card);
         });
         mobileFallback.classList.add('visible');
@@ -453,6 +558,7 @@
           directoryMessage.textContent = 'The 3D arcade is unavailable. You can still launch available games below.';
           layoutMode = 'directory';
           touchControls.hidden = true;
+          cabinetActions.hidden = true;
           returnTo3d.hidden = true;
           return;
         }
@@ -460,6 +566,7 @@
           buildMobileDirectory();
           directoryMessage.textContent = 'Launch a game below, or return to explore the 3D arcade.';
           touchControls.hidden = true;
+          cabinetActions.hidden = true;
           returnTo3d.hidden = !arcadeHasInitialized;
           layoutMode = 'directory';
           return;
@@ -485,6 +592,7 @@
         }
         mobileFallback.classList.remove('visible');
         touchControls.hidden = !usesTouchControls();
+        cabinetActions.hidden = usesTouchControls();
         returnTo3d.hidden = false;
       }
 
@@ -955,7 +1063,7 @@
           cabinetGroup.add(cabinet);
           cabinets.push(cabinet);
 
-          if (game.codexHomeUrl) {
+          if (game.guideUrl) {
             const pedestal = createCodexPedestal(game, side);
             const pedestalX = x;
             const pedestalOffsetZ = 3.3;
@@ -1062,6 +1170,27 @@
         ];
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
+
+        // Raycasts ignore visibility, so skip hidden action buttons and resolve
+        // child meshes (labels, glyphs) to their owning interactable target.
+        function isRenderedObject(object) {
+          for (let node = object; node; node = node.parent) {
+            if (!node.visible) return false;
+          }
+          return true;
+        }
+        function pickInteractable(clientX, clientY) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+          raycaster.setFromCamera(pointer, camera);
+          for (const hit of raycaster.intersectObjects(interactableTargets, true)) {
+            if (!isRenderedObject(hit.object)) continue;
+            let candidate = hit.object;
+            while (candidate && !interactableTargets.includes(candidate)) candidate = candidate.parent;
+            if (candidate) return candidate;
+          }
+          return null;
+        }
         let hoverCabinet = null;
         let pendingHoverCabinet = null;
         let hoverLockState = 'idle';
@@ -1147,17 +1276,8 @@
           if (event.pointerType === 'touch' || touchGesture) return;
           if (!introDone) return;
           if (exitDoor.opening.active || launchSequence) return;
-          const rect = renderer.domElement.getBoundingClientRect();
-          pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-          pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
           if (approachingCabinet) return;
-          raycaster.setFromCamera(pointer, camera);
-          const intersects = raycaster.intersectObjects(interactableTargets, true);
-          let candidate = intersects.length ? intersects[0].object : null;
-          while (candidate && !interactableTargets.includes(candidate)) {
-            candidate = candidate.parent;
-          }
-          pendingHoverCabinet = candidate && interactableTargets.includes(candidate) ? candidate : null;
+          pendingHoverCabinet = pickInteractable(event.clientX, event.clientY);
           const now = performance.now();
           if (hoverLockState === 'idle') {
             applyHoverSelection(pendingHoverCabinet);
@@ -1249,13 +1369,7 @@
           // Hover has a short camera-pan hold. A click must use its actual target,
           // including a door click immediately after changing the sign.
           if (event) {
-            const rect = renderer.domElement.getBoundingClientRect();
-            pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1,
-              -((event.clientY - rect.top) / rect.height) * 2 + 1);
-            raycaster.setFromCamera(pointer, camera);
-            let candidate = raycaster.intersectObjects(interactableTargets, true)[0]?.object;
-            while (candidate && !interactableTargets.includes(candidate)) candidate = candidate.parent;
-            hoverCabinet = candidate || null;
+            hoverCabinet = pickInteractable(event.clientX, event.clientY);
           }
 
           if (hoverCabinet?.userData.action === 'cabinet-coming-soon') return;
@@ -1273,6 +1387,14 @@
             return;
           }
 
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-guide') {
+            const targetCabinet = hoverCabinet.userData.cabinet;
+            if (activeCabinet === targetCabinet) {
+              openGuide(targetCabinet);
+            }
+            return;
+          }
+
           if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-back') {
             exitCabinetView();
             return;
@@ -1281,13 +1403,7 @@
           if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'codex-open') {
             const targetPedestal = hoverCabinet.userData.pedestal;
             if (activeCabinet === targetPedestal) {
-              const returnCabinetIndex = Number.isFinite(targetPedestal?.userData?.returnCabinetIndex)
-                ? targetPedestal.userData.returnCabinetIndex
-                : -1;
-              if (returnCabinetIndex >= 0) {
-                writeReturnState(returnCabinetIndex);
-              }
-              navigateToTarget(hoverCabinet);
+              openGuide(targetPedestal);
             } else if (targetPedestal) {
               focusCabinet(targetPedestal);
             }
@@ -1330,9 +1446,15 @@
         renderer.domElement.addEventListener('click', onRendererClick);
 
         const onKeyDown = (event) => {
+          // Preserve Escape-to-aisle from action links/buttons; leave editors and
+          // the flat directory's native keyboard interactions alone.
+          if (event.defaultPrevented || layoutMode !== 'arcade') return;
+          if (event.target instanceof Element &&
+              event.target.closest('input, select, textarea, [contenteditable]:not([contenteditable="false"])')) return;
           if (exitDoor.opening.active || launchSequence) return;
           if (event.key === 'Escape') {
             exitCabinetView();
+            if (cabinetActions.contains(document.activeElement)) deskButton('next').focus();
           }
         };
 
@@ -1354,11 +1476,47 @@
           renderer.domElement.style.cursor = 'default';
         }
 
-        function navigateToTarget(target) {
-          if (!target) return;
-          const url = target.userData.url || (target.userData.game ? target.userData.game.url : null);
+        // Guides: a game cabinet and its lectern share the game's registry guideUrl.
+        function getGuideCabinet(target) {
+          if (isGameCabinet(target)) return target;
+          if (isCodexPedestal(target)) return target.userData.anchorCabinet || null;
+          return null;
+        }
+
+        function getGuideUrl(target) {
+          return getGuideCabinet(target)?.userData.game.guideUrl || null;
+        }
+
+        function inspectActionsReady() {
+          return introDone && !launchSequence && !exitDoor.opening.active;
+        }
+
+        // Same-tab navigation from the 3D scene; the return state restores the cabinet.
+        function openGuide(target) {
+          if (!inspectActionsReady() || !target || activeCabinet !== target) return;
+          const url = getGuideUrl(target);
           if (!url) return;
+          const cabinetIndex = cabinets.indexOf(getGuideCabinet(target));
+          if (cabinetIndex >= 0) writeReturnState(cabinetIndex);
           window.location.href = url;
+        }
+
+        // DOM Guide anchors navigate natively; this only blocks early activation
+        // and records the selected cabinet for a same-tab visit.
+        function onGuideLinkClick(event) {
+          if (!inspectActionsReady() || !activeCabinet || !getGuideUrl(activeCabinet)) {
+            event.preventDefault();
+            return;
+          }
+          const newContext = event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+          const cabinetIndex = cabinets.indexOf(getGuideCabinet(activeCabinet));
+          if (!newContext && cabinetIndex >= 0) writeReturnState(cabinetIndex);
+        }
+
+        function playActiveTarget() {
+          if (!inspectActionsReady() || !activeCabinet) return;
+          if (activeCabinet === exitDoor.root) triggerExitDoorOpen();
+          else startCabinetLaunch(activeCabinet);
         }
 
         function exitCabinetView() {
@@ -1408,26 +1566,59 @@
         const backwardButton = touchButton('backward');
         const playButton = touchButton('play');
         const backButton = touchButton('back');
-        const codexButton = touchButton('codex');
-        let touchUiTarget = undefined;
-        function syncTouchControls() {
+        const touchGuideLink = touchButton('guide');
+        const deskButton = (id) => document.getElementById(`cabinet-${id}`);
+        const deskPlayButton = deskButton('play');
+        const deskGuideLink = deskButton('guide');
+        const deskBackButton = deskButton('back');
+        let inspectUiTarget = undefined;
+
+        // Guide anchors only carry an href once the focused cabinet has settled.
+        function syncGuideLinkHref(link, url) {
+          if (url) {
+            if (link.getAttribute('href') !== url) link.setAttribute('href', url);
+            link.removeAttribute('aria-disabled');
+          } else if (link.hasAttribute('href')) {
+            link.removeAttribute('href');
+            link.setAttribute('aria-disabled', 'true');
+          }
+        }
+
+        // One model drives the touch strip and the desktop strip.
+        function syncInspectControls() {
           const target = activeCabinet || approachingCabinet;
-          const ready = introDone && !launchSequence && !exitDoor.opening.active;
+          const ready = inspectActionsReady();
+          const settled = ready && !!activeCabinet;
+          const playable = target === exitDoor.root || (!!target?.userData.game?.url && !target.userData.game.comingSoon);
           forwardButton.disabled = backwardButton.disabled = !ready || !!target;
           touchButton('previous').disabled = touchButton('next').disabled = !ready;
-          playButton.disabled = !activeCabinet || !ready || (target !== exitDoor.root && (!target?.userData.game?.url || !!target?.userData.game?.comingSoon));
-          codexButton.disabled = !activeCabinet || !ready;
-          if (touchUiTarget === target) return;
-          touchUiTarget = target;
+          deskButton('previous').disabled = deskButton('next').disabled = !ready;
+          playButton.disabled = deskPlayButton.disabled = !settled || !playable;
+          const guideHref = settled ? getGuideUrl(activeCabinet) : null;
+          syncGuideLinkHref(touchGuideLink, guideHref);
+          syncGuideLinkHref(deskGuideLink, guideHref);
+          if (inspectUiTarget === target) return;
+          inspectUiTarget = target;
           const game = target?.userData.game;
+          const guideGame = getGuideCabinet(target)?.userData.game;
           const inspecting = !!target;
+          const title = game?.name || (guideGame ? `${guideGame.name} guide` : inspecting ? 'Arcade exit' : 'Explore the arcade');
           forwardButton.hidden = backwardButton.hidden = inspecting;
-          playButton.hidden = !game && target !== exitDoor.root;
-          backButton.hidden = !inspecting;
-          codexButton.hidden = !game?.codexHomeUrl && !isCodexPedestal(target);
-          touchButton('title').textContent = game?.name || (isCodexPedestal(target) ? 'OSRS Clone Codex' : inspecting ? 'Arcade exit' : 'Explore the arcade');
+          playButton.hidden = deskPlayButton.hidden = !game && target !== exitDoor.root;
+          backButton.hidden = deskBackButton.hidden = !inspecting;
+          [touchGuideLink, deskGuideLink].forEach((link) => {
+            link.hidden = !guideGame?.guideUrl;
+            if (guideGame?.guideUrl) link.setAttribute('aria-label', `Open ${guideGame.name} guide`);
+            else link.removeAttribute('aria-label');
+          });
+          touchButton('title').textContent = title;
           touchButton('hint').textContent = game?.comingSoon ? 'Coming soon · explore another cabinet' : inspecting ? 'Choose an action, or return to the aisle' : 'Hold to move · drag to look · tap a cabinet';
           playButton.textContent = game?.comingSoon ? 'Coming soon' : target === exitDoor.root ? 'Exit Arcade' : 'Launch';
+          cabinetActions.classList.toggle('is-inspecting', inspecting);
+          deskButton('actions-title').textContent = title;
+          deskPlayButton.textContent = game?.comingSoon ? 'Coming soon' : target === exitDoor.root ? 'Exit Arcade' : 'Play';
+          if (game && !game.comingSoon) deskPlayButton.setAttribute('aria-label', `Play ${game.name}`);
+          else deskPlayButton.removeAttribute('aria-label');
           if (game) touchCabinetIndex = cabinets.indexOf(target);
         }
         function stopTouchInput() {
@@ -1444,18 +1635,19 @@
         bindTouchAction(touchButton('next'), () => browseCabinet(1));
         bindTouchAction(touchButton('previous'), () => browseCabinet(-1));
         bindTouchAction(backButton, exitCabinetView);
-        bindTouchAction(playButton, () => {
-          if (activeCabinet === exitDoor.root) triggerExitDoorOpen();
-          else startCabinetLaunch(activeCabinet);
+        bindTouchAction(playButton, playActiveTarget);
+        // Guide links stay native anchors: one tap/click/Enter is one navigation.
+        bindTouch(touchGuideLink, 'click', onGuideLinkClick);
+        bindTouch(deskGuideLink, 'click', onGuideLinkClick);
+        bindTouch(deskPlayButton, 'click', playActiveTarget);
+        bindTouch(deskBackButton, 'click', () => {
+          const keyboardFocus = deskBackButton.matches(':focus-visible');
+          exitCabinetView();
+          // Keep keyboard focus inside the strip once Back hides itself.
+          if (keyboardFocus) deskButton('next').focus();
         });
-        bindTouchAction(codexButton, () => {
-          if (!activeCabinet) return;
-          const game = activeCabinet.userData.game;
-          const index = game ? cabinets.indexOf(activeCabinet) : activeCabinet.userData.returnCabinetIndex;
-          if (index >= 0) writeReturnState(index);
-          const url = game?.codexHomeUrl || activeCabinet.userData.url;
-          if (url) window.location.href = url;
-        });
+        bindTouch(deskButton('previous'), 'click', () => browseCabinet(-1));
+        bindTouch(deskButton('next'), 'click', () => browseCabinet(1));
         bindTouchAction(touchButton('directory'), () => {
           stopTouchInput();
           directoryRequested = true;
@@ -1467,7 +1659,7 @@
           maybeToggleLayout();
           touchButton('directory').focus();
         });
-        const touchHomeLink = touchControls.querySelector('a');
+        const touchHomeLink = touchControls.querySelector('.touch-toolbar a');
         bindTouchAction(touchHomeLink, () => { window.location.href = touchHomeLink.href; });
         [forwardButton, backwardButton].forEach((button, index) => {
           bindTouch(button, 'pointerdown', (event) => {
@@ -1507,11 +1699,7 @@
           const wasDragged = touchGesture.dragged;
           touchGesture = null;
           if (wasDragged) return;
-          const rect = renderer.domElement.getBoundingClientRect();
-          pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
-          raycaster.setFromCamera(pointer, camera);
-          let candidate = raycaster.intersectObjects(interactableTargets, true)[0]?.object;
-          while (candidate && !interactableTargets.includes(candidate)) candidate = candidate.parent;
+          const candidate = pickInteractable(event.clientX, event.clientY);
           if (!candidate) return;
           hoverCabinet = candidate;
           onRendererClick();
@@ -2007,6 +2195,11 @@
             screen.material.emissive.copy(accent).multiplyScalar(level);
           });
 
+          cabinetActionButtons.forEach((button) => {
+            const base = button.userData.baseEmissive ?? 0.3;
+            button.material.emissiveIntensity = hoverCabinet === button ? base + 0.4 : base;
+          });
+
           codexPedestals.forEach((pedestal, index) => {
             const hovered = hoverCabinet === pedestal || isCodexPedestalBookTarget(pedestal, hoverCabinet);
             const active = activeCabinet === pedestal || approachingCabinet === pedestal;
@@ -2155,9 +2348,10 @@
             cabinet.userData.actionButtons = [];
           }
 
-          function createLabelTexture(text) {
+          // Canvas aspect matches the label plane so lettering is not stretched.
+          function createLabelTexture(text, planeWidth, withBook = false) {
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
+            canvas.width = Math.round((88 * planeWidth) / 0.16);
             canvas.height = 88;
             const ctx = canvas.getContext('2d');
             if (ctx) {
@@ -2166,11 +2360,34 @@
               ctx.strokeStyle = '#c9a15f';
               ctx.lineWidth = 4;
               ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-              ctx.fillStyle = '#f1e2c2';
-              ctx.font = '700 34px Rajdhani, sans-serif';
-              ctx.textAlign = 'center';
+              ctx.font = '700 38px Rajdhani, sans-serif';
               ctx.textBaseline = 'middle';
-              ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
+              const bookWidth = withBook ? 40 : 0;
+              const left = (canvas.width - ctx.measureText(text).width - bookWidth) / 2;
+              if (withBook) {
+                // Open brass book glyph.
+                const cx = left + 16;
+                const cy = canvas.height / 2;
+                ctx.fillStyle = '#d8b06a';
+                [-1, 1].forEach((s) => {
+                  ctx.beginPath();
+                  ctx.moveTo(cx, cy - 11);
+                  ctx.quadraticCurveTo(cx + s * 8, cy - 16, cx + s * 16, cy - 14);
+                  ctx.lineTo(cx + s * 16, cy + 14);
+                  ctx.quadraticCurveTo(cx + s * 8, cy + 12, cx, cy + 17);
+                  ctx.closePath();
+                  ctx.fill();
+                });
+                ctx.strokeStyle = '#2a1a10';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 11);
+                ctx.lineTo(cx, cy + 17);
+                ctx.stroke();
+              }
+              ctx.fillStyle = '#f1e2c2';
+              ctx.textAlign = 'left';
+              ctx.fillText(text, left + bookWidth, canvas.height / 2 + 2);
             }
             const texture = new THREE.CanvasTexture(canvas);
             texture.encoding = THREE.sRGBEncoding;
@@ -2186,35 +2403,49 @@
             roughness: 0.42,
           });
 
-          const playButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
-          playButton.position.set(-0.48, panelY, panelZ + 0.08);
-          playButton.userData.action = cabinet.userData.game.comingSoon ? 'cabinet-coming-soon' : 'cabinet-play';
-          playButton.userData.cabinet = cabinet;
-          playButton.visible = false;
-          cabinet.add(playButton);
+          const game = cabinet.userData.game;
+          // Cabinets with a registry guideUrl get PLAY | GUIDE | BACK; others keep PLAY | BACK.
+          const hasGuide = !!game.guideUrl;
+          const buttonWidth = hasGuide ? 0.56 : 0.82;
+          const labelWidth = buttonWidth - 0.1;
 
-          const playLabel = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.72, 0.16),
-            new THREE.MeshBasicMaterial({ map: createLabelTexture(cabinet.userData.game.comingSoon ? 'COMING SOON' : 'PLAY'), toneMapped: false, transparent: true })
+          function createActionButton(action, text, x, options = {}) {
+            const material = options.material || actionMaterial.clone();
+            const button = new THREE.Mesh(new THREE.BoxGeometry(buttonWidth, 0.23, 0.1), material);
+            button.position.set(x, panelY, panelZ + 0.08);
+            button.userData.action = action;
+            button.userData.cabinet = cabinet;
+            button.userData.baseEmissive = material.emissiveIntensity;
+            button.visible = false;
+            cabinet.add(button);
+            const label = new THREE.Mesh(
+              new THREE.PlaneGeometry(labelWidth, 0.16),
+              new THREE.MeshBasicMaterial({ map: createLabelTexture(text, labelWidth, options.withBook), toneMapped: false, transparent: true })
+            );
+            label.position.set(0, 0, 0.055);
+            button.add(label);
+            cabinet.userData.actionButtons.push(button);
+            return button;
+          }
+
+          createActionButton(
+            game.comingSoon ? 'cabinet-coming-soon' : 'cabinet-play',
+            game.comingSoon ? 'COMING SOON' : 'PLAY',
+            hasGuide ? -0.62 : -0.48
           );
-          playLabel.position.set(0, 0, 0.055);
-          playButton.add(playLabel);
-
-          const backButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
-          backButton.position.set(0.48, panelY, panelZ + 0.08);
-          backButton.userData.action = 'cabinet-back';
-          backButton.userData.cabinet = cabinet;
-          backButton.visible = false;
-          cabinet.add(backButton);
-
-          const backLabel = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.72, 0.16),
-            new THREE.MeshBasicMaterial({ map: createLabelTexture('BACK'), toneMapped: false, transparent: true })
-          );
-          backLabel.position.set(0, 0, 0.055);
-          backButton.add(backLabel);
-
-          cabinet.userData.actionButtons.push(playButton, backButton);
+          if (hasGuide) {
+            createActionButton('cabinet-guide', 'GUIDE', 0, {
+              withBook: true,
+              material: new THREE.MeshStandardMaterial({
+                color: 0x8a6432,
+                emissive: 0x4a2a10,
+                emissiveIntensity: 0.34,
+                metalness: 0.7,
+                roughness: 0.38,
+              }),
+            });
+          }
+          createActionButton('cabinet-back', 'BACK', hasGuide ? 0.62 : 0.48);
         }
 
         function createPedestalLabelTexture(title, subtitle) {
@@ -2284,7 +2515,7 @@
         function createCodexPedestal(game, side) {
           const root = new THREE.Group();
           root.userData.kind = 'codex-pedestal';
-          root.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
+          root.userData.url = game.guideUrl;
 
           const accent = side === 'left' ? 0xffcf66 : 0x7ef1ff;
           const pedestalMaterial = new THREE.MeshStandardMaterial({
@@ -2404,7 +2635,7 @@
           const plaqueLabel = new THREE.Mesh(
             new THREE.PlaneGeometry(0.78, 0.34),
             new THREE.MeshBasicMaterial({
-              map: createPedestalLabelTexture('GAME', 'CODEX'),
+              map: createPedestalLabelTexture('GAME', 'GUIDE'),
               transparent: true,
               toneMapped: false,
             })
@@ -2423,7 +2654,7 @@
           const book = new THREE.Group();
           book.position.set(0, 1.41, 0.04);
           book.userData.action = 'codex-open';
-          book.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
+          book.userData.url = game.guideUrl;
           book.userData.pedestal = root;
 
           const bookTiltGroup = new THREE.Group();
@@ -2469,7 +2700,7 @@
           entryTarget.position.set(0.24, 0.059, 0.12);
           entryTarget.rotation.x = -Math.PI / 2;
           entryTarget.userData.action = 'codex-open';
-          entryTarget.userData.url = game.codexHomeUrl || game.codexWorldUrl || null;
+          entryTarget.userData.url = game.guideUrl;
           entryTarget.userData.pedestal = root;
           bookTiltGroup.add(entryTarget);
 
@@ -2799,7 +3030,7 @@
 
         function getLookAnchorTarget(target) {
           if (!target || !target.userData) return target;
-          if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back' || target.userData.action === 'cabinet-coming-soon') {
+          if (['cabinet-play', 'cabinet-guide', 'cabinet-back', 'cabinet-coming-soon'].includes(target.userData.action)) {
             return target.userData.cabinet || target;
           }
           if (target.userData.action === 'codex-open') {
@@ -2948,7 +3179,7 @@
           updateCabinetEmissive(deltaSeconds, now);
           updateDeepField(deltaSeconds, now);
           syncCabinetActionButtons();
-          syncTouchControls();
+          syncInspectControls();
 
           renderer.render(scene, camera);
         }
@@ -2962,7 +3193,7 @@
           updateRenderSize();
         };
         onResize();
-        syncTouchControls();
+        syncInspectControls();
 
         const onPageShow = (event) => {
           if (event.persisted) {
