@@ -86,7 +86,6 @@
         outline: none;
       }
 
-      #fallback-message,
       #mobile-fallback {
         position: fixed;
         inset: 0;
@@ -100,7 +99,6 @@
         z-index: 20;
       }
 
-      #fallback-message.visible,
       #mobile-fallback.visible {
         display: flex;
       }
@@ -121,7 +119,7 @@
         gap: 0.75rem;
       }
 
-      .fallback-card h3 {
+      .fallback-card h2 {
         margin: 0;
         font-family: "Orbitron", system-ui, sans-serif;
         font-size: 1.1rem;
@@ -151,6 +149,12 @@
         gap: 0.6rem;
       }
 
+      #mobile-fallback nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
       @media (max-width: 768px) {
         body {
           overflow-y: auto;
@@ -162,22 +166,17 @@
     <div id="scene-container"></div>
     <div id="overlay"></div>
 
-    <section id="fallback-message">
-      <h1>Neon Arcade Requires WebGL</h1>
-      <p>
-        Your browser does not support WebGL, which powers the immersive arcade experience. Consider
-        updating your browser or enabling hardware acceleration to step inside the grid.
-      </p>
-    </section>
-
     <section id="mobile-fallback">
       <h1>Arcade Cabinet Directory</h1>
-      <p>
+      <p id="directory-message" role="status">
         The full 3D arcade is best experienced on desktop. Use this directory to jump into games on
         mobile.
       </p>
       <div class="fallback-grid" id="fallback-grid"></div>
-      <a class="neon-button" href="/">Exit Arcade</a>
+      <nav aria-label="Site navigation">
+        <a class="neon-button" href="/">Home</a>
+        <a class="neon-button" href="/">Exit Arcade</a>
+      </nav>
     </section>
 
     <noscript>
@@ -192,10 +191,10 @@
 
     <script src="./codex-link-contract.js"></script>
     <script type="module">
-      import * as THREE from 'https://unpkg.com/three@0.157.0/build/three.module.js';
+      let THREE;
 
       const sceneContainer = document.getElementById('scene-container');
-      const fallbackMessage = document.getElementById('fallback-message');
+      const directoryMessage = document.getElementById('directory-message');
       const mobileFallback = document.getElementById('mobile-fallback');
       const fallbackGrid = document.getElementById('fallback-grid');
       const arcadeCodexLinks = window.ArcadeCodexLinks;
@@ -221,6 +220,7 @@
       let layoutMode = null;
       let arcadeHasInitialized = false;
       let arcadeCleanup = null;
+      let engineFailed = !supportsWebGL;
       const RETURN_STATE_KEY = 'arcade:return-state:v1';
       const RETURN_STATE_MAX_AGE_MS = 1000 * 60 * 60;
 
@@ -320,28 +320,37 @@
         {
           name: 'Ghost Signal',
           description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
-          url: 'https://example.com/ghost-signal',
+          comingSoon: true,
           thumbnail: './assets/cabinet-screens/ghost-signal-title.webp',
         },
         {
           name: 'Night Courier',
           description: 'Slam through midnight streets delivering impossible payloads before dawn.',
-          url: 'https://example.com/night-courier',
+          comingSoon: true,
           thumbnail: './assets/cabinet-screens/night-courier-title.webp',
         },
       ];
 
       function buildMobileDirectory() {
-        fallbackGrid.innerHTML = '';
+        // Keep the same links across resize events so keyboard focus is preserved.
+        if (fallbackGrid.childElementCount) {
+          mobileFallback.classList.add('visible');
+          return;
+        }
         games.forEach((game) => {
           const card = document.createElement('article');
           card.className = 'fallback-card';
-          const actions = [`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`];
+          const actions = [];
+          if (game.comingSoon) {
+            actions.push('<span>Coming soon</span>');
+          } else if (game.url) {
+            actions.push(`<a href="${game.url}" target="_blank" rel="noopener">Launch</a>`);
+          }
           if (game.codexHomeUrl) {
             actions.push(`<a href="${game.codexHomeUrl}" target="_blank" rel="noopener">Codex</a>`);
           }
           card.innerHTML = `
-            <h3>${game.name}</h3>
+            <h2>${game.name}</h2>
             <p>${game.description}</p>
             <div class="fallback-card-actions">${actions.join('')}</div>
           `;
@@ -351,9 +360,12 @@
       }
 
       function maybeToggleLayout() {
-        if (!supportsWebGL) return;
-
-        fallbackMessage.classList.remove('visible');
+        if (engineFailed) {
+          buildMobileDirectory();
+          directoryMessage.textContent = 'The 3D arcade is unavailable. You can still launch available games below.';
+          layoutMode = 'directory';
+          return;
+        }
 
         const useMobileLayout = shouldUseMobileLayout();
 
@@ -363,36 +375,58 @@
             arcadeCleanup = null;
           }
           buildMobileDirectory();
+          directoryMessage.textContent = 'The full 3D arcade is best experienced on desktop. Use this directory to jump into games on mobile.';
           mobileFallback.classList.add('visible');
           layoutMode = 'mobile';
           return;
         }
 
-        mobileFallback.classList.remove('visible');
+        // Keep the directory usable while the engine loads.
+        if (!THREE) return;
 
         if (layoutMode !== 'arcade' || !sceneContainer.firstChild) {
           if (!arcadeHasInitialized || !sceneContainer.firstChild) {
-            arcadeCleanup = initArcade();
-            arcadeHasInitialized = true;
+            try {
+              arcadeCleanup = initArcade();
+              arcadeHasInitialized = true;
+            } catch (error) {
+              console.warn('Unable to initialize the 3D arcade.', error);
+              sceneContainer.replaceChildren();
+              engineFailed = true;
+              maybeToggleLayout();
+              return;
+            }
           }
           layoutMode = 'arcade';
         }
+        mobileFallback.classList.remove('visible');
       }
 
       const handlePointerPreferenceChange = () => maybeToggleLayout();
 
-      if (!supportsWebGL) {
-        fallbackMessage.classList.add('visible');
-      } else {
-        maybeToggleLayout();
+      buildMobileDirectory();
+      maybeToggleLayout();
 
-        if (typeof coarsePointerQuery.addEventListener === 'function') {
-          coarsePointerQuery.addEventListener('change', handlePointerPreferenceChange);
-        } else if (typeof coarsePointerQuery.addListener === 'function') {
-          coarsePointerQuery.addListener(handlePointerPreferenceChange);
-        }
+      if (typeof coarsePointerQuery.addEventListener === 'function') {
+        coarsePointerQuery.addEventListener('change', handlePointerPreferenceChange);
+      } else if (typeof coarsePointerQuery.addListener === 'function') {
+        coarsePointerQuery.addListener(handlePointerPreferenceChange);
+      }
 
-        window.addEventListener('resize', maybeToggleLayout);
+      window.addEventListener('resize', maybeToggleLayout);
+
+      if (supportsWebGL) {
+        import('https://unpkg.com/three@0.157.0/build/three.module.js').then(
+          (engine) => {
+            THREE = engine;
+            maybeToggleLayout();
+          },
+          (error) => {
+            console.warn('Unable to load the 3D arcade engine.', error);
+            engineFailed = true;
+            maybeToggleLayout();
+          }
+        );
       }
 
       function initArcade() {
@@ -888,6 +922,7 @@
 
         function startCabinetLaunch(cabinet) {
           if (!isGameCabinet(cabinet) || launchSequence) return;
+          if (cabinet.userData.game.comingSoon) return;
           const url = cabinet.userData.game?.url || cabinet.userData.url;
           if (!url) return;
           const cabinetIndex = cabinets.indexOf(cabinet);
@@ -930,6 +965,8 @@
           if (!introDone) return;
           if (exitDoor.opening.active || launchSequence) return;
           if (approachingCabinet) return;
+
+          if (hoverCabinet?.userData.action === 'cabinet-coming-soon') return;
 
           if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign') {
             exitDoor.cycleSign(hoverCabinet.userData.delta ?? 1);
@@ -1668,14 +1705,14 @@
 
           const playButton = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.23, 0.1), actionMaterial.clone());
           playButton.position.set(-0.48, panelY, panelZ + 0.08);
-          playButton.userData.action = 'cabinet-play';
+          playButton.userData.action = cabinet.userData.game.comingSoon ? 'cabinet-coming-soon' : 'cabinet-play';
           playButton.userData.cabinet = cabinet;
           playButton.visible = false;
           cabinet.add(playButton);
 
           const playLabel = new THREE.Mesh(
             new THREE.PlaneGeometry(0.72, 0.16),
-            new THREE.MeshBasicMaterial({ map: createLabelTexture('PLAY'), toneMapped: false, transparent: true })
+            new THREE.MeshBasicMaterial({ map: createLabelTexture(cabinet.userData.game.comingSoon ? 'COMING SOON' : 'PLAY'), toneMapped: false, transparent: true })
           );
           playLabel.position.set(0, 0, 0.055);
           playButton.add(playLabel);
@@ -2311,7 +2348,7 @@
 
         function getLookAnchorTarget(target) {
           if (!target || !target.userData) return target;
-          if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back') {
+          if (target.userData.action === 'cabinet-play' || target.userData.action === 'cabinet-back' || target.userData.action === 'cabinet-coming-soon') {
             return target.userData.cabinet || target;
           }
           if (target.userData.action === 'codex-open') {

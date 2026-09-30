@@ -34,3 +34,20 @@ Legacy option:
 ```
 
 More games coming soon!
+
+## Navigation checks
+
+Ghost Signal and Night Courier are coming-soon cabinets. They can be inspected in 3D, but do not launch a game. The HTML directory is also available when WebGL or the Three.js engine cannot initialize.
+
+Run the existing link contract and the browser regression checks:
+
+```powershell
+npm.cmd ci
+npm.cmd test
+npx.cmd playwright install chromium
+npm.cmd run test:browser
+```
+
+The browser checks cover unavailable WebGL, renderer startup failure, engine download failure, the mobile directory, repeated desktop/mobile transitions, cabinet availability, and launch/back navigation. They serve a test-only instrumented copy of the page and stub game destinations; they do not contact or launch the real games.
+
+To use an installed Chrome instead of downloading Chromium, set `$env:BROWSER_CHANNEL='chrome'`. The checks use the page's pinned Three.js CDN build; for offline checks, set `$env:THREE_MODULE_PATH` to a local copy of `three@0.157.0/build/three.module.js`.
