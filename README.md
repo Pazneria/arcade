@@ -45,6 +45,8 @@ Touch rendering is capped at 30 fps with a 900,000-pixel budget, fewer backgroun
 
 ## Navigation checks
 
+The 3D hall uses warm plaster, walnut wall panels, oak flooring, and brass lighting. Each game has its own printed marquee and cabinet artwork; the framed EXIT sign stays readable without sparks or strong bloom. The room and artwork are procedural, with no additional dependencies or downloads. Repeated room parts share geometry, touch devices use fewer real lights, and the enclosed hall skips the old star field.
+
 Ghost Signal and Night Courier are coming-soon cabinets. They can be inspected in 3D, but do not launch a game. The HTML directory is also available when WebGL or the Three.js engine cannot initialize.
 
 Run the existing link contract and the browser regression checks:
@@ -56,6 +58,6 @@ npx.cmd playwright install chromium
 npm.cmd run test:browser
 ```
 
-The browser checks cover unavailable WebGL on desktop and mobile, renderer startup failure, engine download failure, lost contexts, held and cancelled touch movement, drag look, cabinet browsing, portrait/landscape resizing, directory pause/resume, and repeated launch/back navigation. They serve a test-only instrumented copy of the page and stub game destinations; they do not contact or launch the real games.
+The browser checks cover unavailable WebGL on desktop and mobile, renderer startup failure, engine download failure, lost contexts, held and cancelled touch movement, drag look, cabinet browsing, portrait/landscape resizing, directory pause/resume, and repeated launch/back navigation. They also check that the EXIT sign fits its inspection view, its design arrows cycle correctly, and clicking the actual 3D door navigates Home. They serve a test-only instrumented copy of the page and stub game destinations; they do not contact or launch the real games.
 
 To use an installed Chrome instead of downloading Chromium, set `$env:BROWSER_CHANNEL='chrome'`. The checks use the page's pinned Three.js CDN build; for offline checks, set `$env:THREE_MODULE_PATH` to a local copy of `three@0.157.0/build/three.module.js`.

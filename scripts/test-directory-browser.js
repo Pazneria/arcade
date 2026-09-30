@@ -14,6 +14,38 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/\r\
           restoreCabinet(index) { writeReturnState(index); applyReturnStateIfPresent(); },
           get active() { return cabinets.indexOf(activeCabinet); },
           get launching() { return !!launchSequence; },
+          actionPoint(index, action) {
+            const button=cabinets[index].userData.actionButtons.find(button=>button.userData.action===action);
+            const position=new THREE.Vector3();
+            button.getWorldPosition(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
+          get renderStats() { return {...renderer.info.render}; },
+          focusExit() { focusCabinet(exitDoor.root); },
+          get exitActive() { return activeCabinet === exitDoor.root; },
+          get signImage() { return exitDoor.signMaterial.map.image.toDataURL(); },
+          signBounds() {
+            let mesh;
+            exitDoor.root.traverse(object => { if (object.material === exitDoor.signMaterial) mesh=object; });
+            const box=new THREE.Box3().setFromObject(mesh);
+            return [box.min,box.max].map(point => {
+              point.project(camera);
+              return {x:(point.x+1)*window.innerWidth/2,y:(1-point.y)*window.innerHeight/2};
+            });
+          },
+          arrowPoint(index) {
+            const position=new THREE.Vector3();
+            exitDoor.switchArrows[index].getWorldPosition(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
+          exitPoint() {
+            const position = new THREE.Vector3(0, 2.1, 0);
+            exitDoor.root.localToWorld(position);
+            position.project(camera);
+            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
+          },
           get state() { return {targetZ, touchMove, touchYaw, introDone, look:lookTarget.toArray(), lookError:lookTarget.distanceTo(desiredLookTarget), frames:renderer.info.render.frame}; },
           loseContext() { renderer.forceContextLoss(); },
           cabinetPoint(index) {
@@ -77,6 +109,7 @@ async function assertDirectory(page, failed) {
       const mobile = mode.includes('mobile');
       const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
       await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
+      await context.route('https://pazneria.github.io/', route => route.fulfill({contentType:'text/html',body:'<h1>Exit destination test</h1>'}));
       const page = await context.newPage();
       const capture = async name => {
         if (!process.env.ARTIFACT_DIR) return;
@@ -114,6 +147,9 @@ async function assertDirectory(page, failed) {
         await page.waitForFunction(() => !!window.arcadeTest);
         assert.equal(await page.locator('#scene-container canvas').count(), 1);
         assert.equal(await page.locator('#mobile-fallback').isVisible(), false);
+        await page.waitForFunction(() => window.arcadeTest.state.introDone);
+        console.log('Desktop aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
+        await capture('desktop-room');
         // Resizing must preserve one renderer; opening and closing Games keeps its state.
         for (let i = 0; i < 3; i++) {
           await page.setViewportSize({width:390,height:800});
@@ -145,10 +181,12 @@ async function assertDirectory(page, failed) {
         }
         // Available cabinet launch and return state still work across navigation.
         for (let i = 0; i < 2; i++) {
+          const previousFrames=await page.evaluate(() => window.arcadeTest.state.frames);
           await page.evaluate(() => window.arcadeTest.restoreCabinet(0));
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          await page.waitForFunction(frames => window.arcadeTest.active === 0 && window.arcadeTest.state.frames>frames,previousFrames);
+          const playPoint=await page.evaluate(() => window.arcadeTest.actionPoint(0,'cabinet-play'));
+          await page.mouse.click(playPoint.x,playPoint.y);
           const returnIndex = await page.evaluate(() => {
-            window.arcadeTest.clickAction(0, 'cabinet-play');
             return JSON.parse(sessionStorage.getItem('arcade:return-state:v1')).cabinetIndex;
           });
           assert.equal(returnIndex, 0);
@@ -157,11 +195,38 @@ async function assertDirectory(page, failed) {
           await page.waitForFunction(() => !!window.arcadeTest && window.arcadeTest.active === 0);
           assert.equal(await page.locator('#scene-container canvas').count(), 1);
         }
+        for (const index of [0,1,2]) {
+          await page.evaluate(index => window.arcadeTest.restoreCabinet(index),index);
+          await page.waitForFunction(index => window.arcadeTest.active === index && window.arcadeTest.state.lookError < 0.05,index);
+          await page.waitForTimeout(100);
+          await capture(`desktop-cabinet-${index}`);
+        }
+        await page.keyboard.press('Escape');
+        await page.evaluate(() => window.arcadeTest.focusExit());
+        await page.waitForFunction(() => window.arcadeTest.exitActive && window.arcadeTest.state.lookError < 0.05);
+        await page.waitForTimeout(100);
+        await capture('desktop-exit');
+        const signBounds=await page.evaluate(() => window.arcadeTest.signBounds());
+        assert(signBounds.every(point => point.x>0&&point.x<1280&&point.y>0&&point.y<800),'Exit sign must fit completely in the door view');
+        for (let i=0;i<4;i++) {
+          const previousSign=await page.evaluate(() => window.arcadeTest.signImage);
+          const arrowPoint=await page.evaluate(() => window.arcadeTest.arrowPoint(1));
+          await page.mouse.move(arrowPoint.x,arrowPoint.y);
+          await page.mouse.click(arrowPoint.x,arrowPoint.y);
+          assert.notEqual(await page.evaluate(() => window.arcadeTest.signImage),previousSign,'Sign arrow must cycle its design');
+          assert.equal(page.url(),url,'Cycling the sign must not exit');
+        }
+        console.log('Desktop scene budget',await page.evaluate(() => window.arcadeTest.renderStats));
+        const exitPoint=await page.evaluate(() => window.arcadeTest.exitPoint());
+        await page.mouse.move(exitPoint.x,exitPoint.y);
+        await page.mouse.click(exitPoint.x,exitPoint.y);
+        await page.waitForURL('https://pazneria.github.io/');
       } else {
         if (mode === 'mobile') {
           await page.waitForFunction(() => window.arcadeTest?.state.introDone);
           assert.equal(await page.locator('#scene-container canvas').count(),1);
           assert(await page.locator('#touch-controls').isVisible());
+          console.log('Mobile aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
           const cdp = await context.newCDPSession(page);
           const forward = await page.getByRole('button',{name:'Move forward',exact:true}).boundingBox();
           const point = {x:forward.x+forward.width/2,y:forward.y+forward.height/2};
