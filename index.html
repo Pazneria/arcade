@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Arcade Matrix</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -155,6 +155,67 @@
         gap: 1rem;
       }
 
+      #touch-controls {
+        position: fixed;
+        inset: 0;
+        z-index: 12;
+        pointer-events: none;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+          max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      #touch-controls[hidden], #return-to-3d[hidden], #touch-codex[hidden] { display: none; }
+      .touch-toolbar, .touch-actions, .touch-browse { display: flex; gap: 8px; }
+      .touch-toolbar { justify-content: space-between; }
+      #touch-controls button, #touch-controls a {
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        min-height: 44px;
+        min-width: 44px;
+        border: 1px solid rgba(15, 240, 252, 0.45);
+        border-radius: 12px;
+        background: rgba(5, 12, 22, 0.92);
+        color: var(--text);
+        font: 600 16px "Rajdhani", system-ui, sans-serif;
+        padding: 10px 16px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #touch-controls button:focus-visible, #touch-controls a:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 3px;
+      }
+      #touch-controls button:disabled { opacity: 0.55; cursor: default; }
+      #touch-controls button:active { background: #123244; }
+      .touch-panel {
+        max-width: 480px;
+        width: 100%;
+        align-self: center;
+        pointer-events: auto;
+        padding: 12px;
+        border: 1px solid var(--panel-border);
+        border-radius: 16px;
+        background: rgba(5, 12, 22, 0.94);
+      }
+      #touch-title { margin: 0 0 4px; font-size: 20px; }
+      #touch-hint { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+      .touch-actions button { flex: 1; }
+      .touch-browse { margin-top: 8px; }
+      .touch-browse button { flex: 1; }
+      .touch-mode #scene-container canvas { touch-action: none; }
+      @media (max-height: 500px) {
+        .touch-panel { max-width: 560px; padding: 8px; }
+        #touch-title { font-size: 17px; }
+        #touch-hint { margin-bottom: 4px; }
+        .touch-browse { margin-top: 4px; }
+        #touch-controls button { padding: 6px 10px; }
+      }
+
       @media (max-width: 768px) {
         body {
           overflow-y: auto;
@@ -166,14 +227,36 @@
     <div id="scene-container"></div>
     <div id="overlay"></div>
 
+    <section id="touch-controls" aria-label="Arcade touch controls" hidden>
+      <nav class="touch-toolbar" aria-label="Arcade navigation">
+        <button id="touch-directory" type="button">Games</button>
+        <a href="/">Home / Exit</a>
+      </nav>
+      <div class="touch-panel">
+        <h2 id="touch-title" role="status">Explore the arcade</h2>
+        <p id="touch-hint">Hold to move · drag to look · tap a cabinet</p>
+        <div class="touch-actions">
+          <button id="touch-forward" type="button" aria-label="Move forward">↑ Forward</button>
+          <button id="touch-backward" type="button" aria-label="Move backward">↓ Backward</button>
+          <button id="touch-play" type="button" hidden>Launch</button>
+          <button id="touch-codex" type="button" hidden>Codex</button>
+          <button id="touch-back" type="button" hidden>Back to aisle</button>
+        </div>
+        <div class="touch-browse">
+          <button id="touch-previous" type="button">‹ Previous</button>
+          <button id="touch-next" type="button">Next cabinet ›</button>
+        </div>
+      </div>
+    </section>
+
     <section id="mobile-fallback">
       <h1>Arcade Cabinet Directory</h1>
       <p id="directory-message" role="status">
-        The full 3D arcade is best experienced on desktop. Use this directory to jump into games on
-        mobile.
+        Loading the 3D arcade. You can also launch available games below.
       </p>
       <div class="fallback-grid" id="fallback-grid"></div>
       <nav aria-label="Site navigation">
+        <button id="return-to-3d" class="neon-button" type="button" hidden>Return to 3D arcade</button>
         <a class="neon-button" href="/">Home</a>
         <a class="neon-button" href="/">Exit Arcade</a>
       </nav>
@@ -197,6 +280,8 @@
       const directoryMessage = document.getElementById('directory-message');
       const mobileFallback = document.getElementById('mobile-fallback');
       const fallbackGrid = document.getElementById('fallback-grid');
+      const touchControls = document.getElementById('touch-controls');
+      const returnTo3d = document.getElementById('return-to-3d');
       const arcadeCodexLinks = window.ArcadeCodexLinks;
 
       const supportsWebGL = (() => {
@@ -213,7 +298,7 @@
 
       const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
 
-      function shouldUseMobileLayout() {
+      function usesTouchControls() {
         return coarsePointerQuery.matches || window.innerWidth < 768;
       }
 
@@ -221,6 +306,7 @@
       let arcadeHasInitialized = false;
       let arcadeCleanup = null;
       let engineFailed = !supportsWebGL;
+      let directoryRequested = false;
       const RETURN_STATE_KEY = 'arcade:return-state:v1';
       const RETURN_STATE_MAX_AGE_MS = 1000 * 60 * 60;
 
@@ -360,24 +446,21 @@
       }
 
       function maybeToggleLayout() {
+        document.body.classList.toggle('touch-mode', usesTouchControls());
         if (engineFailed) {
           buildMobileDirectory();
           directoryMessage.textContent = 'The 3D arcade is unavailable. You can still launch available games below.';
           layoutMode = 'directory';
+          touchControls.hidden = true;
+          returnTo3d.hidden = true;
           return;
         }
-
-        const useMobileLayout = shouldUseMobileLayout();
-
-        if (useMobileLayout) {
-          if (layoutMode === 'arcade' && typeof arcadeCleanup === 'function') {
-            arcadeCleanup();
-            arcadeCleanup = null;
-          }
+        if (directoryRequested) {
           buildMobileDirectory();
-          directoryMessage.textContent = 'The full 3D arcade is best experienced on desktop. Use this directory to jump into games on mobile.';
-          mobileFallback.classList.add('visible');
-          layoutMode = 'mobile';
+          directoryMessage.textContent = 'Launch a game below, or return to explore the 3D arcade.';
+          touchControls.hidden = true;
+          returnTo3d.hidden = !arcadeHasInitialized;
+          layoutMode = 'directory';
           return;
         }
 
@@ -400,6 +483,8 @@
           layoutMode = 'arcade';
         }
         mobileFallback.classList.remove('visible');
+        touchControls.hidden = !usesTouchControls();
+        returnTo3d.hidden = false;
       }
 
       const handlePointerPreferenceChange = () => maybeToggleLayout();
@@ -430,8 +515,14 @@
       }
 
       function initArcade() {
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+        const renderer = new THREE.WebGLRenderer({ antialias: !usesTouchControls(), alpha: true });
+        function updateRenderSize() {
+          const pixelBudget = usesTouchControls() ? 900000 : 2200000;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, usesTouchControls() ? 1.25 : 1.5,
+            Math.sqrt(pixelBudget / (window.innerWidth * window.innerHeight))));
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        updateRenderSize();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputEncoding = THREE.sRGBEncoding;
         sceneContainer.appendChild(renderer.domElement);
@@ -738,7 +829,7 @@
         const lastCabinetZ = startZ - (games.length - 1) * spacing;
         const doorZ = lastCabinetZ - spacing * 1.15;
         deepStarField = addStarField(deepFieldGroup, {
-          count: 1800,
+          count: usesTouchControls() ? 450 : 1800,
           centerY: CAMERA_START_POSITION.y,
           outerBounds: {
             minX: -76,
@@ -808,6 +899,11 @@
         const focusRigTarget = new THREE.Vector3();
         const rigGoal = new THREE.Vector3();
         const APPROACH_ALIGNMENT_EPSILON = 0.12;
+        let touchMove = 0;
+        let touchYaw = 0;
+        let touchPitch = 0;
+        let touchGesture = null;
+        let touchCabinetIndex = -1;
 
         const emissivePulse = new THREE.Color(0x0ff0fc);
         const tempColor = new THREE.Color();
@@ -867,6 +963,7 @@
         window.addEventListener('wheel', onWheel, { passive: true });
 
         const onPointerMove = (event) => {
+          if (event.pointerType === 'touch' || touchGesture) return;
           if (!introDone) return;
           if (exitDoor.opening.active || launchSequence) return;
           const rect = renderer.domElement.getBoundingClientRect();
@@ -961,7 +1058,9 @@
           });
         }
 
-        const onRendererClick = () => {
+        const onRendererClick = (event) => {
+          // Taps are resolved once by pointerup, without relying on mouse hover.
+          if (event && usesTouchControls()) return;
           if (!introDone) return;
           if (exitDoor.opening.active || launchSequence) return;
           if (approachingCabinet) return;
@@ -1056,6 +1155,9 @@
           targetZ = focusRigTarget.z;
           scrollVelocity = 0;
           activeCabinet = null;
+          touchMove = 0;
+          touchYaw = 0;
+          touchPitch = 0;
           renderer.domElement.style.cursor = 'default';
         }
 
@@ -1073,6 +1175,162 @@
           resetHoverState();
           targetZ = walkwayReturnPosition.z;
         }
+
+        const touchBindings = [];
+        function bindTouch(element, type, handler) {
+          element.addEventListener(type, handler);
+          touchBindings.push(() => element.removeEventListener(type, handler));
+        }
+        function bindTouchAction(element, action) {
+          let press = null;
+          let lastTap = -Infinity;
+          bindTouch(element, 'pointerdown', (event) => {
+            if (event.pointerType === 'mouse' || element.disabled) return;
+            press = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            element.setPointerCapture(event.pointerId);
+          });
+          bindTouch(element, 'pointerup', (event) => {
+            if (!press || press.id !== event.pointerId) return;
+            const tapped = Math.hypot(event.clientX - press.x, event.clientY - press.y) < 12;
+            press = null;
+            if (!tapped || element.disabled) return;
+            lastTap = performance.now();
+            action();
+          });
+          bindTouch(element, 'pointercancel', () => { press = null; });
+          bindTouch(element, 'lostpointercapture', () => { press = null; });
+          bindTouch(element, 'click', (event) => {
+            // A touch release already handled this action; keyboard clicks have detail 0.
+            if (event.pointerType === 'touch' || event.pointerType === 'pen' ||
+                (event.detail > 0 && performance.now() - lastTap < 700)) {
+              event.preventDefault();
+              return;
+            }
+            event.preventDefault();
+            action();
+          });
+        }
+        const touchButton = (id) => document.getElementById(`touch-${id}`);
+        const forwardButton = touchButton('forward');
+        const backwardButton = touchButton('backward');
+        const playButton = touchButton('play');
+        const backButton = touchButton('back');
+        const codexButton = touchButton('codex');
+        let touchUiTarget = undefined;
+        function syncTouchControls() {
+          const target = activeCabinet || approachingCabinet;
+          const ready = introDone && !launchSequence && !exitDoor.opening.active;
+          forwardButton.disabled = backwardButton.disabled = !ready || !!target;
+          touchButton('previous').disabled = touchButton('next').disabled = !ready;
+          playButton.disabled = !activeCabinet || !ready || (target !== exitDoor.root && (!target?.userData.game?.url || !!target?.userData.game?.comingSoon));
+          codexButton.disabled = !activeCabinet || !ready;
+          if (touchUiTarget === target) return;
+          touchUiTarget = target;
+          const game = target?.userData.game;
+          const inspecting = !!target;
+          forwardButton.hidden = backwardButton.hidden = inspecting;
+          playButton.hidden = !game && target !== exitDoor.root;
+          backButton.hidden = !inspecting;
+          codexButton.hidden = !game?.codexHomeUrl && !isCodexPedestal(target);
+          touchButton('title').textContent = game?.name || (isCodexPedestal(target) ? 'OSRS Clone Codex' : inspecting ? 'Arcade exit' : 'Explore the arcade');
+          touchButton('hint').textContent = game?.comingSoon ? 'Coming soon · explore another cabinet' : inspecting ? 'Choose an action, or return to the aisle' : 'Hold to move · drag to look · tap a cabinet';
+          playButton.textContent = game?.comingSoon ? 'Coming soon' : target === exitDoor.root ? 'Exit Arcade' : 'Launch';
+          if (game) touchCabinetIndex = cabinets.indexOf(target);
+        }
+        function stopTouchInput() {
+          touchMove = 0;
+          touchGesture = null;
+        }
+        function browseCabinet(delta) {
+          if (!introDone || launchSequence || exitDoor.opening.active) return;
+          const index = touchCabinetIndex < 0 ? (delta > 0 ? 0 : cabinets.length - 1)
+            : (touchCabinetIndex + delta + cabinets.length) % cabinets.length;
+          touchCabinetIndex = index;
+          focusCabinet(cabinets[index]);
+        }
+        bindTouchAction(touchButton('next'), () => browseCabinet(1));
+        bindTouchAction(touchButton('previous'), () => browseCabinet(-1));
+        bindTouchAction(backButton, exitCabinetView);
+        bindTouchAction(playButton, () => {
+          if (activeCabinet === exitDoor.root) triggerExitDoorOpen();
+          else startCabinetLaunch(activeCabinet);
+        });
+        bindTouchAction(codexButton, () => {
+          if (!activeCabinet) return;
+          const game = activeCabinet.userData.game;
+          const index = game ? cabinets.indexOf(activeCabinet) : activeCabinet.userData.returnCabinetIndex;
+          if (index >= 0) writeReturnState(index);
+          const url = game?.codexHomeUrl || activeCabinet.userData.url;
+          if (url) window.location.href = url;
+        });
+        bindTouchAction(touchButton('directory'), () => {
+          stopTouchInput();
+          directoryRequested = true;
+          maybeToggleLayout();
+          returnTo3d.focus();
+        });
+        bindTouchAction(returnTo3d, () => {
+          directoryRequested = false;
+          maybeToggleLayout();
+          touchButton('directory').focus();
+        });
+        const touchHomeLink = touchControls.querySelector('a');
+        bindTouchAction(touchHomeLink, () => { window.location.href = touchHomeLink.href; });
+        [forwardButton, backwardButton].forEach((button, index) => {
+          bindTouch(button, 'pointerdown', (event) => {
+            if (button.disabled) return;
+            button.setPointerCapture(event.pointerId);
+            touchMove = index === 0 ? -1 : 1;
+          });
+          ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((type) => bindTouch(button, type, () => { touchMove = 0; }));
+          bindTouch(button, 'keydown', (event) => {
+            if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); touchMove = index === 0 ? -1 : 1; }
+          });
+          bindTouch(button, 'keyup', () => { touchMove = 0; });
+          bindTouch(button, 'blur', () => { touchMove = 0; });
+        });
+        bindTouch(window, 'blur', stopTouchInput);
+        bindTouch(document, 'visibilitychange', stopTouchInput);
+        bindTouch(renderer.domElement, 'pointerdown', (event) => {
+          if (!usesTouchControls() || !introDone || touchGesture || launchSequence || approachingCabinet) return;
+          renderer.domElement.setPointerCapture(event.pointerId);
+          touchGesture = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, dragged: false };
+        });
+        bindTouch(renderer.domElement, 'pointermove', (event) => {
+          if (!touchGesture || event.pointerId !== touchGesture.id) return;
+          const dx = event.clientX - touchGesture.x;
+          const dy = event.clientY - touchGesture.y;
+          if (Math.hypot(event.clientX - touchGesture.startX, event.clientY - touchGesture.startY) > 8) touchGesture.dragged = true;
+          if (touchGesture.dragged && !activeCabinet) {
+            resetHoverState();
+            touchYaw = THREE.MathUtils.clamp(touchYaw - dx * 0.006, -1.25, 1.25);
+            touchPitch = THREE.MathUtils.clamp(touchPitch + dy * 0.004, -0.4, 0.4);
+          }
+          touchGesture.x = event.clientX;
+          touchGesture.y = event.clientY;
+        });
+        bindTouch(renderer.domElement, 'pointerup', (event) => {
+          if (!touchGesture || event.pointerId !== touchGesture.id) return;
+          const wasDragged = touchGesture.dragged;
+          touchGesture = null;
+          if (wasDragged) return;
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+          raycaster.setFromCamera(pointer, camera);
+          let candidate = raycaster.intersectObjects(interactableTargets, true)[0]?.object;
+          while (candidate && !interactableTargets.includes(candidate)) candidate = candidate.parent;
+          if (!candidate) return;
+          hoverCabinet = candidate;
+          onRendererClick();
+        });
+        bindTouch(renderer.domElement, 'pointercancel', () => { touchGesture = null; });
+        bindTouch(renderer.domElement, 'lostpointercapture', () => { touchGesture = null; });
+        bindTouch(renderer.domElement, 'webglcontextlost', (event) => {
+          event.preventDefault();
+          stopTouchInput();
+          engineFailed = true;
+          maybeToggleLayout();
+        });
 
         const arcadeEntryUrl = document.referrer && document.referrer !== window.location.href ? document.referrer : '/';
         const exitTransition = {
@@ -2357,11 +2615,23 @@
           return target;
         }
         let lastFrameTime = performance.now();
+        let lastRenderedAt = 0;
         let animationFrameId = 0;
 
         function animate() {
           animationFrameId = requestAnimationFrame(animate);
           const now = performance.now();
+          if (!engineFailed && renderer.getContext().isContextLost()) {
+            stopTouchInput();
+            engineFailed = true;
+            maybeToggleLayout();
+          }
+          if (document.hidden || layoutMode === 'directory' || engineFailed) {
+            lastFrameTime = now;
+            return;
+          }
+          if (usesTouchControls() && now - lastRenderedAt < 1000 / 30) return;
+          lastRenderedAt = now;
           const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
           lastFrameTime = now;
 
@@ -2421,7 +2691,7 @@
             if (Math.abs(scrollVelocity) < 0.00001) {
               scrollVelocity = 0;
             }
-            targetZ += scrollVelocity * deltaSeconds;
+            targetZ += (scrollVelocity + touchMove * 9) * deltaSeconds;
             if (targetZ < minZ) {
               targetZ = minZ;
               scrollVelocity = Math.max(0, scrollVelocity);
@@ -2434,7 +2704,7 @@
             rigGoal.copy(focusRigTarget);
             rigGoal.y = CAMERA_START_POSITION.y;
           }
-          cameraRig.position.lerp(rigGoal, 0.05);
+          cameraRig.position.lerp(rigGoal, 1 - Math.exp(-(usesTouchControls() ? 7 : 3.2) * deltaSeconds));
           cameraRig.position.y = CAMERA_START_POSITION.y;
           if (!cameraLocked) {
             walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
@@ -2461,7 +2731,8 @@
                 desiredLookTarget.y = DEFAULT_LOOK_TARGET.y;
               }
             } else {
-              desiredLookTarget.set(0, DEFAULT_LOOK_TARGET.y, cameraRig.position.z - 10);
+              desiredLookTarget.set(Math.sin(touchYaw) * 10, DEFAULT_LOOK_TARGET.y + Math.sin(touchPitch) * 10,
+                cameraRig.position.z - Math.cos(touchYaw) * 10);
             }
           }
           const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
@@ -2484,16 +2755,21 @@
           updateCabinetEmissive(deltaSeconds, now);
           updateDeepField(deltaSeconds, now);
           syncCabinetActionButtons();
+          syncTouchControls();
 
           renderer.render(scene, camera);
         }
 
         animationFrameId = requestAnimationFrame(animate);
         const onResize = () => {
+          stopTouchInput();
           camera.aspect = window.innerWidth / window.innerHeight;
+          camera.fov = usesTouchControls() && camera.aspect < 1 ? 80 : 60;
           camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
+          updateRenderSize();
         };
+        onResize();
+        syncTouchControls();
 
         const onPageShow = (event) => {
           if (event.persisted) {
@@ -2505,6 +2781,7 @@
         window.addEventListener('pageshow', onPageShow);
 
         return () => {
+          touchBindings.forEach((remove) => remove());
           cancelAnimationFrame(animationFrameId);
           window.removeEventListener('wheel', onWheel);
           window.removeEventListener('keydown', onKeyDown);

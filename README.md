@@ -35,6 +35,14 @@ Legacy option:
 
 More games coming soon!
 
+## Mobile 3D controls
+
+Phones and tablets with WebGL now enter the 3D arcade. Hold Forward or Backward to move down the aisle, drag the scene to look around, and tap a cabinet to inspect it. Previous and Next also browse cabinets directly. Use the large Launch, Codex, and Back to aisle buttons while inspecting.
+
+Games opens the HTML directory without resetting your position; Return to 3D arcade resumes it. Home / Exit returns to the main site. Coming-soon cabinets remain inspectable without launch links.
+
+Touch rendering is capped at 30 fps with a 900,000-pixel budget, fewer background stars, and a capped pixel ratio. Rendering pauses while the directory is open or the page is hidden. Interrupted touches stop movement. Engine failure or a lost WebGL context falls back to the HTML directory; reload to retry 3D.
+
 ## Navigation checks
 
 Ghost Signal and Night Courier are coming-soon cabinets. They can be inspected in 3D, but do not launch a game. The HTML directory is also available when WebGL or the Three.js engine cannot initialize.
@@ -48,6 +56,6 @@ npx.cmd playwright install chromium
 npm.cmd run test:browser
 ```
 
-The browser checks cover unavailable WebGL, renderer startup failure, engine download failure, the mobile directory, repeated desktop/mobile transitions, cabinet availability, and launch/back navigation. They serve a test-only instrumented copy of the page and stub game destinations; they do not contact or launch the real games.
+The browser checks cover unavailable WebGL on desktop and mobile, renderer startup failure, engine download failure, lost contexts, held and cancelled touch movement, drag look, cabinet browsing, portrait/landscape resizing, directory pause/resume, and repeated launch/back navigation. They serve a test-only instrumented copy of the page and stub game destinations; they do not contact or launch the real games.
 
 To use an installed Chrome instead of downloading Chromium, set `$env:BROWSER_CHANNEL='chrome'`. The checks use the page's pinned Three.js CDN build; for offline checks, set `$env:THREE_MODULE_PATH` to a local copy of `three@0.157.0/build/three.module.js`.
