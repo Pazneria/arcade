@@ -342,8 +342,26 @@
     </noscript>
 
     <script src="./codex-link-contract.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"
+        }
+      }
+    </script>
     <script type="module">
       let THREE;
+
+      function markTextureSrgb(texture) {
+        if (!texture) return texture;
+        if ('colorSpace' in texture && THREE.SRGBColorSpace) {
+          texture.colorSpace = THREE.SRGBColorSpace;
+        } else if ('encoding' in texture && THREE.sRGBEncoding) {
+          texture.encoding = THREE.sRGBEncoding;
+        }
+        return texture;
+      }
 
       const sceneContainer = document.getElementById('scene-container');
       const directoryMessage = document.getElementById('directory-message');
@@ -490,6 +508,18 @@
           comingSoon: true,
           thumbnail: './assets/cabinet-screens/night-courier-title.webp',
         },
+        {
+          name: 'Classic Cabinet Depth Prototype',
+          description: 'Sixth-slot test stand for a Hunyuan3D classic arcade cabinet GLB without replacing the existing cabinets.',
+          thumbnail: null,
+          inspectOnly: true,
+          modelAsset: {
+            id: 'classic-cabinet-depth-prototype',
+            sourceGlb: './assets/3d/source/classic-cabinet-depth-prototype/raw.glb',
+            runtimeGlb: './assets/3d/runtime/classic-cabinet-depth-prototype.glb',
+            sourceMetadata: './assets/3d/source/classic-cabinet-depth-prototype/source.json',
+          },
+        },
       ];
 
       // Guides are public HTTPS destinations, never script URLs or credentialed links.
@@ -535,6 +565,12 @@
             actions.appendChild(availability);
           } else if (game.url) {
             addLink(game.url, 'Launch');
+          }
+          if (game.inspectOnly) {
+            const status = document.createElement('span');
+            status.className = 'fallback-status';
+            status.textContent = '3D model slot';
+            actions.appendChild(status);
           }
           if (game.guideUrl) {
             const link = addLink(game.guideUrl, 'Guide ');
@@ -1320,7 +1356,7 @@
 
         function startCabinetLaunch(cabinet) {
           if (!isGameCabinet(cabinet) || launchSequence) return;
-          if (cabinet.userData.game.comingSoon) return;
+          if (cabinet.userData.game.comingSoon || cabinet.userData.game.inspectOnly) return;
           const url = cabinet.userData.game?.url || cabinet.userData.url;
           if (!url) return;
           const cabinetIndex = cabinets.indexOf(cabinet);
@@ -1615,7 +1651,7 @@
           const inspecting = !!target;
           const title = game?.name || (guideGame ? `${guideGame.name} guide` : inspecting ? 'Arcade exit' : 'Explore the arcade');
           forwardButton.hidden = backwardButton.hidden = inspecting;
-          playButton.hidden = deskPlayButton.hidden = !game && target !== exitDoor.root;
+          playButton.hidden = deskPlayButton.hidden = !!game?.inspectOnly || (!game && target !== exitDoor.root);
           backButton.hidden = deskBackButton.hidden = !inspecting;
           [touchGuideLink, deskGuideLink].forEach((link) => {
             link.hidden = !guideGame?.guideUrl;
@@ -2343,6 +2379,8 @@
 
 
         function addCabinetActionPanel(cabinet, options = {}) {
+          const includePlay = options.includePlay ?? true;
+          const includeBack = options.includeBack ?? true;
           const panelY = options.panelY ?? 1.52;
           const panelZ = options.panelZ ?? 1.5;
           const panelWidth = options.panelWidth ?? 1.9;
@@ -2439,10 +2477,10 @@
             return button;
           }
 
-          createActionButton(
+          if (includePlay) createActionButton(
             game.comingSoon ? 'cabinet-coming-soon' : 'cabinet-play',
             game.comingSoon ? 'COMING SOON' : 'PLAY',
-            hasGuide ? -0.62 : -0.48
+            includeBack ? (hasGuide ? -0.62 : -0.48) : 0
           );
           if (hasGuide) {
             createActionButton('cabinet-guide', 'GUIDE', 0, {
@@ -2456,7 +2494,181 @@
               }),
             });
           }
-          createActionButton('cabinet-back', 'BACK', hasGuide ? 0.62 : 0.48);
+          if (includeBack) createActionButton('cabinet-back', 'BACK', includePlay ? (hasGuide ? 0.62 : 0.48) : 0);
+        }
+
+        function createModelStatusTexture(title, subtitle) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 512;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = 'rgba(6, 10, 18, 0.94)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(101, 234, 255, 0.72)';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+            ctx.fillStyle = 'rgba(255, 178, 72, 0.92)';
+            ctx.font = '700 28px Orbitron, Rajdhani, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('AI 3D ASSET', canvas.width / 2, 58);
+            ctx.fillStyle = 'rgba(238, 250, 255, 0.98)';
+            ctx.font = '700 48px Orbitron, Rajdhani, sans-serif';
+            ctx.fillText(title, canvas.width / 2, 128);
+            ctx.fillStyle = 'rgba(188, 235, 244, 0.86)';
+            ctx.font = '700 24px Rajdhani, sans-serif';
+            ctx.fillText(subtitle, canvas.width / 2, 190);
+          }
+          const texture = new THREE.CanvasTexture(canvas);
+          markTextureSrgb(texture);
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function disposeObjectTree(root) {
+          root.traverse((child) => {
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+              child.geometry.dispose();
+            }
+            const materials = Array.isArray(child.material)
+              ? child.material
+              : child.material
+              ? [child.material]
+              : [];
+            materials.forEach((material) => {
+              if (material.map && typeof material.map.dispose === 'function') {
+                material.map.dispose();
+              }
+              if (typeof material.dispose === 'function') {
+                material.dispose();
+              }
+            });
+          });
+        }
+
+        function setModelAssetStatus(cabinet, title, subtitle) {
+          if (cabinet.userData.modelStatusGroup) {
+            const oldStatus = cabinet.userData.modelStatusGroup;
+            if (oldStatus.parent) oldStatus.parent.remove(oldStatus);
+            disposeObjectTree(oldStatus);
+          }
+
+          const statusGroup = new THREE.Group();
+          statusGroup.name = 'model-asset-status';
+
+          const backing = new THREE.Mesh(
+            new THREE.BoxGeometry(2.16, 1.08, 0.08),
+            new THREE.MeshStandardMaterial({
+              color: 0x07101a,
+              emissive: 0x0d2733,
+              emissiveIntensity: 0.45,
+              metalness: 0.18,
+              roughness: 0.48,
+            })
+          );
+          backing.position.set(0, 2.24, 1.1);
+          statusGroup.add(backing);
+
+          const label = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.9, 0.95),
+            new THREE.MeshBasicMaterial({
+              map: createModelStatusTexture(title, subtitle),
+              toneMapped: false,
+              transparent: true,
+            })
+          );
+          label.position.set(0, 2.24, 1.155);
+          statusGroup.add(label);
+
+          cabinet.userData.modelStatusGroup = statusGroup;
+          cabinet.add(statusGroup);
+        }
+
+        function clearModelAssetStatus(cabinet) {
+          const statusGroup = cabinet.userData.modelStatusGroup;
+          if (!statusGroup) return;
+          if (statusGroup.parent) statusGroup.parent.remove(statusGroup);
+          disposeObjectTree(statusGroup);
+          cabinet.userData.modelStatusGroup = null;
+        }
+
+        function fitObjectToCabinetBounds(root) {
+          const maxSize = new THREE.Vector3(3.05, 4.2, 2.75);
+          root.updateMatrixWorld(true);
+          const box = new THREE.Box3().setFromObject(root);
+          const size = box.getSize(new THREE.Vector3());
+          if (size.x <= 0 || size.y <= 0 || size.z <= 0) return;
+
+          const scale = Math.min(maxSize.x / size.x, maxSize.y / size.y, maxSize.z / size.z);
+          root.scale.multiplyScalar(scale);
+          root.updateMatrixWorld(true);
+
+          const fittedBox = new THREE.Box3().setFromObject(root);
+          const center = fittedBox.getCenter(new THREE.Vector3());
+          root.position.x -= center.x;
+          root.position.y -= fittedBox.min.y;
+          root.position.z -= center.z;
+        }
+
+        function tuneRuntimeModel(root) {
+          root.traverse((child) => {
+            if (!child.isMesh) return;
+            child.receiveShadow = true;
+            const materials = Array.isArray(child.material)
+              ? child.material
+              : child.material
+              ? [child.material]
+              : [];
+            materials.forEach((material) => {
+              if (material.name && /neon|screen|marquee/i.test(material.name)) {
+                material.toneMapped = false;
+                if ('emissiveIntensity' in material) {
+                  material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, 0.8);
+                }
+              }
+            });
+          });
+        }
+
+        function buildModelCabinet(cabinet, side, game) {
+          cabinet.userData.modelAsset = game.modelAsset;
+          cabinet.userData.inspectOnly = true;
+
+          const modelRoot = new THREE.Group();
+          modelRoot.name = `${game.modelAsset.id}-runtime-root`;
+          cabinet.add(modelRoot);
+
+          addCabinetActionPanel(cabinet, {
+            panelY: 0.88,
+            panelZ: 1.72,
+            panelWidth: 1.12,
+            includePlay: false,
+          });
+
+          setModelAssetStatus(cabinet, 'LOADING GLB', game.modelAsset.id);
+
+          import('three/addons/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().load(
+            game.modelAsset.runtimeGlb,
+            (gltf) => {
+              clearModelAssetStatus(cabinet);
+              const root = gltf.scene;
+              root.name = `runtime-${game.modelAsset.id}`;
+              root.rotation.y = game.modelAsset.rotationY || 0;
+              fitObjectToCabinetBounds(root);
+              tuneRuntimeModel(root);
+              modelRoot.add(root);
+              cabinet.userData.modelAssetLoaded = true;
+            },
+            undefined,
+            () => {
+              setModelAssetStatus(cabinet, 'GLB MISSING', 'generate then clean');
+              cabinet.userData.modelAssetLoaded = false;
+            }
+          )).catch(() => {
+            setModelAssetStatus(cabinet, 'GLB MISSING', 'asset loader unavailable');
+            cabinet.userData.modelAssetLoaded = false;
+          });
         }
 
         function createPedestalLabelTexture(title, subtitle) {
@@ -2741,7 +2953,11 @@
           const cabinet = new THREE.Group();
           cabinet.userData.game = game;
 
-          buildHallCabinet(cabinet, game, getCabinetIdentity(game, index));
+          if (game.modelAsset) {
+            buildModelCabinet(cabinet, side, game);
+          } else {
+            buildHallCabinet(cabinet, game, getCabinetIdentity(game, index));
+          }
           return cabinet;
         }
 

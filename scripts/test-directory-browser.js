@@ -89,13 +89,16 @@ const server = http.createServer((req, res) => {
 
 async function assertDirectory(page, failed) {
   assert(await page.locator('#mobile-fallback').isVisible());
-  assert.equal(await page.locator('.fallback-card').count(), 5);
+  assert.equal(await page.locator('.fallback-card').count(), 6);
   assert.equal(await page.getByRole('link', {name: 'Launch', exact: true}).count(), 3);
   for (const name of ['Ghost Signal', 'Night Courier']) {
     const card = page.locator('.fallback-card').filter({has: page.getByRole('heading', {name, exact: true})});
     assert.match(await card.innerText(), /Coming soon/);
     assert.equal(await card.locator('a').count(), 0);
   }
+  const model = page.locator('.fallback-card').filter({has: page.getByRole('heading', {name: 'Classic Cabinet Depth Prototype', exact: true})});
+  assert.match(await model.innerText(), /3D model slot/);
+  assert.equal(await model.locator('a').count(), 0);
   assert.equal(await page.locator('a[href*="example.com"], a[href="undefined"]').count(), 0);
   for (const name of ['Home', 'Exit Arcade']) {
     assert.equal(await page.getByRole('link', {name, exact:true}).getAttribute('href'), '/');
@@ -131,7 +134,9 @@ async function visitGuideAndReturn(page, activate, index = 1) {
     headless: true, args: ['--enable-unsafe-swiftshader'],
   });
   try {
-    for (const mode of (process.env.TEST_MODE ? [process.env.TEST_MODE] : ['no-webgl', 'no-webgl-mobile', 'renderer-failure', 'import-failure', 'mobile', 'normal'])) {
+    for (const scenario of (process.env.TEST_MODE ? [process.env.TEST_MODE] : ['no-webgl', 'no-webgl-mobile', 'renderer-failure', 'import-failure', 'mobile', 'normal', 'missing-model', 'loader-failure'])) {
+      const assetFailure = scenario === 'missing-model' || scenario === 'loader-failure';
+      const mode = assetFailure ? 'normal' : scenario;
       const mobile = mode.includes('mobile');
       const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
       await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
@@ -151,6 +156,17 @@ async function visitGuideAndReturn(page, activate, index = 1) {
       page.on('pageerror', error => { errors.push(error.message); console.error(`${mode}: ${error.stack}`); });
       await page.route('https://fonts.googleapis.com/**', route => route.abort());
       await page.route('https://fonts.gstatic.com/**', route => route.abort());
+      await page.route('https://unpkg.com/three@0.157.0/examples/jsm/**', route => {
+        if (scenario === 'loader-failure') return route.abort();
+        if (process.env.THREE_ADDONS_PATH) {
+          const relative = new URL(route.request().url()).pathname.split('/examples/jsm/')[1];
+          return route.fulfill({path:path.join(process.env.THREE_ADDONS_PATH, relative),contentType:'application/javascript'});
+        }
+        return route.continue();
+      });
+      if (scenario === 'missing-model') {
+        await page.route('**/assets/3d/runtime/*.glb', route => route.abort());
+      }
       await page.route(engineUrl, route => {
         if (mode === 'import-failure') return route.abort();
         if (process.env.THREE_MODULE_PATH) return route.fulfill({path:process.env.THREE_MODULE_PATH, contentType:'application/javascript'});
@@ -174,6 +190,39 @@ async function visitGuideAndReturn(page, activate, index = 1) {
         });
       }
       await page.goto(url, {waitUntil:'domcontentloaded'});
+      if (mode === 'normal' || mode === 'mobile') {
+        await page.waitForFunction(() => window.arcadeTest?.state.introDone && window.arcadeTest.cabinets[5].userData.modelAssetLoaded !== undefined);
+        assert.equal(await page.evaluate(() => window.arcadeTest.cabinets[5].userData.modelAssetLoaded), !assetFailure);
+        assert.deepEqual(await page.evaluate(() => window.arcadeTest.cabinets[5].userData.actionButtons.map(button => button.userData.action)), ['cabinet-back']);
+        await page.evaluate(() => window.arcadeTest.restoreCabinet(5));
+        await page.waitForFunction(() => window.arcadeTest.active === 5 && window.arcadeTest.state.lookError < 0.05);
+        await page.waitForTimeout(100);
+        assert.equal(await page.getByRole('button', {name: 'Launch', exact: true}).isVisible(), false);
+        assert.equal(await page.getByRole('button', {name: 'Play Classic Cabinet Depth Prototype', exact: true}).isVisible(), false);
+        assert(await page.getByRole('button', {name: 'Back to aisle', exact: true}).isVisible());
+        await capture(`${scenario}-model`);
+        await page.evaluate(() => {
+          const model = window.arcadeTest.cabinets[5];
+          model.userData.game.url = 'https://example.com/stale-model';
+          window.arcadeTest.startCabinetLaunch(model);
+          delete model.userData.game.url;
+        });
+        assert.equal(await page.evaluate(() => window.arcadeTest.launching), false);
+        assert.equal(page.url(), url);
+        await page.getByRole('button', {name: 'Back to aisle', exact: true}).click();
+        assert.equal(await page.evaluate(() => window.arcadeTest.active), -1);
+        if (assetFailure) {
+          await page.setViewportSize({width:390,height:800});
+          await page.getByRole('button', {name: 'Games', exact: true}).click();
+          await assertDirectory(page, false);
+          assert.deepEqual(errors, []);
+          console.log(`PASS ${scenario}: model failure preserves room and directory`);
+          await context.close();
+          continue;
+        }
+        // Start the existing room regressions from their original camera position.
+        await page.reload({waitUntil:'domcontentloaded'});
+      }
       if (mode === 'normal') {
         await page.waitForFunction(() => !!window.arcadeTest);
         assert.equal(await page.locator('#scene-container canvas').count(), 1);
@@ -370,8 +419,11 @@ async function visitGuideAndReturn(page, activate, index = 1) {
           }
           await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
           assert.equal(await page.evaluate(() => window.arcadeTest.active),-1);
-          await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
+          for (const index of [5, 0]) {
+            await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
+            await page.waitForFunction(index => window.arcadeTest.active === index, index);
+            if (index === 5) assert.equal(await page.getByRole('button',{name:'Launch',exact:true}).isVisible(),false);
+          }
           for(let i=0;i<2;i++) {
             await page.getByRole('button',{name:'Games',exact:true}).tap();
             await assertDirectory(page,false);
@@ -490,7 +542,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
         .replace("name: 'OSRS Clone'", `name: ${JSON.stringify(hostileName)}`)
         .replace(/guideUrl: arcadeCodexLinks[\s\S]*?codexWorldUrl:/, `guideUrl: ${JSON.stringify(unsafeUrl).replaceAll('<', '\\u003c')},\n          codexWorldUrl:`);
       await securityPage.goto(url, {waitUntil:'domcontentloaded'});
-      await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 5);
+      await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 6);
       assert.equal(await securityPage.locator('.fallback-card h2').nth(1).innerText(), hostileName, 'Registry text must remain literal text');
       assert.equal(await securityPage.locator('.fallback-card img, .fallback-card script').count(), 0);
       assert.equal(await securityPage.locator('.fallback-card').nth(1).locator('a[aria-label*="guide"]').count(), 0);

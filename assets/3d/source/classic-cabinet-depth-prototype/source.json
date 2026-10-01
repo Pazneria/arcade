@@ -1,0 +1,109 @@
+{
+  "id": "classic-cabinet-depth-prototype",
+  "kind": "ai_image_to_3d_glb",
+  "status": "runtime_cleaned",
+  "units": "arcade-meter-ish",
+  "designIntent": "Sixth-slot classic upright arcade cabinet candidate generated through Hunyuan3D without replacing the current primitive cabinets.",
+  "conceptImage": "assets/3d/source/classic-cabinet-depth-prototype/concept.png",
+  "sourceGlb": "assets/3d/source/classic-cabinet-depth-prototype/raw.glb",
+  "runtimeGlb": "assets/3d/runtime/classic-cabinet-depth-prototype.glb",
+  "preview": "assets/3d/previews/classic-cabinet-depth-prototype.png",
+  "generator": {
+    "kind": "image_to_3d",
+    "space": "tencent/Hunyuan3D-2",
+    "model": "tencent/Hunyuan3D-2/hunyuan3d-dit-v2-0",
+    "endpoint": "/shape_generation",
+    "seed": 551029,
+    "steps": 24,
+    "guidanceScale": 5,
+    "octreeResolution": 256,
+    "numChunks": 8000,
+    "randomizeSeed": false,
+    "removeBackground": true,
+    "sourceConceptPrompt": "classic upright arcade cabinet 3D game asset, black wooden cabinet, red marquee panel, glass screen, slanted control deck, joystick, colored buttons, coin door, thick cabinet body, visible side panels, clean single object, no text"
+  },
+  "rawResult": {
+    "meshStats": {
+      "model": {
+        "shapegen": "tencent/Hunyuan3D-2/hunyuan3d-dit-v2-0",
+        "texgen": "tencent/Hunyuan3D-2"
+      },
+      "params": {
+        "caption": "classic upright arcade cabinet 3D game asset, black wooden cabinet, red marquee panel, glass screen, slanted control deck, joystick, colored buttons, coin door, thick cabinet body, visible side panels, clean single object, no text",
+        "steps": 24,
+        "guidance_scale": 5,
+        "seed": 551029,
+        "octree_resolution": 256,
+        "check_box_rembg": true,
+        "num_chunks": 8000
+      },
+      "number_of_faces": 566260,
+      "number_of_vertices": 151548,
+      "time": {
+        "remove background": 0.988976240158081,
+        "shape generation": 5.39008092880249,
+        "export to trimesh": 0.07076311111450195,
+        "total": 6.453471422195435
+      }
+    },
+    "returnedSeed": 551029
+  },
+  "cleanup": {
+    "kind": "vertex_cluster_cleanup",
+    "tool": "scripts/clean-cabinet-asset.mjs",
+    "notes": "Normalizes scale and pivot, clusters vertices, removes duplicate and collapsed triangles, and assigns cabinet material regions.",
+    "lastRun": {
+      "sourceVertices": 151548,
+      "sourceFaces": 566260,
+      "runtimeVertices": 59801,
+      "runtimeFaces": 119610,
+      "runtimeBytes": 2875244,
+      "groups": [
+        {
+          "material": "cabinet_shell_dark",
+          "faces": 37433
+        },
+        {
+          "material": "cabinet_side_charcoal",
+          "faces": 35268
+        },
+        {
+          "material": "screen_glass",
+          "faces": 2347
+        },
+        {
+          "material": "screen_trim_gold",
+          "faces": 4959
+        },
+        {
+          "material": "button_red",
+          "faces": 1855
+        },
+        {
+          "material": "marquee_red",
+          "faces": 11705
+        },
+        {
+          "material": "control_panel",
+          "faces": 11876
+        },
+        {
+          "material": "button_shadow",
+          "faces": 14167
+        }
+      ],
+      "output": "assets/3d/runtime/classic-cabinet-depth-prototype.glb"
+    }
+  },
+  "runtime": {
+    "path": "assets/3d/runtime/classic-cabinet-depth-prototype.glb",
+    "front": "+Z",
+    "up": "+Y",
+    "pivot": "centered floor base",
+    "targetBounds": {
+      "width": 2.95,
+      "height": 4.15,
+      "depth": 2.65
+    }
+  }
+}
