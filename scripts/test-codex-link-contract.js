@@ -9,6 +9,15 @@ function assert(condition, message) {
 
 function run() {
   assert(
+    codexLinks.buildCodexHomeUrl({
+      basePath: '/osrs-clone-codex/wiki/',
+      baseUrl: 'https://pazneria.github.io',
+      from: 'arcade',
+      returnTo: 'https://pazneria.github.io/arcade/'
+    }) === 'https://pazneria.github.io/osrs-clone-codex/wiki/?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F',
+    'arcade Guide must use the published OSRS field guide and preserve return context'
+  );
+  assert(
     codexLinks.normalizeCodexRepoName("/osrs-clone-codex/") === "osrs-clone-codex",
     "arcade codex repo name normalization mismatch"
   );
@@ -45,7 +54,7 @@ function run() {
   );
 
   const arcadeIndex = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert(arcadeIndex.includes("codexHomeUrl"), "arcade index should expose codex metadata for OSRS Clone");
+  assert(arcadeIndex.includes("guideUrl"), "arcade index should expose optional guide metadata for OSRS Clone");
   assert(arcadeIndex.includes("codexRepoName"), "arcade index should expose codex repo metadata for OSRS Clone");
   assert(
     arcadeIndex.includes("const publishedSiteOrigin = 'https://pazneria.github.io';"),
