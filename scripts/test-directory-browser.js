@@ -14,10 +14,10 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/\r\
           restoreCabinet(index) { writeReturnState(index); applyReturnStateIfPresent(); },
           get active() { return cabinets.indexOf(activeCabinet); },
           get launching() { return !!launchSequence; },
-          get guideLecternActive() { return activeCabinet === codexPedestals[0]; },
+          get guideLecternActive() { return activeCabinet === codexPedestals.find(p => p.userData.anchorCabinet === cabinets[1]); },
           bookPoint() {
             const position=new THREE.Vector3();
-            codexPedestals[0].userData.bookTargets[0].getWorldPosition(position);
+            codexPedestals.find(p => p.userData.anchorCabinet === cabinets[1]).userData.bookTargets[0].getWorldPosition(position);
             position.project(camera);
             return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
           },
@@ -103,20 +103,23 @@ async function assertDirectory(page, failed) {
   if (failed) assert.match(await page.locator('#directory-message').innerText(), /unavailable/);
   const guide = page.getByRole('link', {name: 'Open OSRS Clone guide (opens in new tab)', exact:true});
   assert(await guide.getAttribute('href'));
-  assert.equal(await page.locator('.fallback-card a[aria-label*="guide"]').count(), 1, 'Only confirmed guides appear');
+  assert.equal(await page.locator('.fallback-card a[aria-label*="guide"]').count(), 3, 'All three confirmed guides appear');
   assert.equal(await page.locator('#cabinet-actions').isVisible(), false, 'Inspection strip must disappear in the directory');
 }
 
-async function visitGuideAndReturn(page, activate) {
+const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/', '/sword-guys/wiki/'];
+async function visitGuideAndReturn(page, activate, index = 1) {
   await activate();
-  await page.waitForURL('https://pazneria.github.io/osrs-clone-codex/**');
+  await page.waitForURL(`https://pazneria.github.io${guidePaths[index]}**`);
   const destination = new URL(page.url());
-  assert.equal(destination.pathname, '/osrs-clone-codex/');
-  assert.equal(destination.searchParams.get('from'), 'arcade');
-  const returnUrl = destination.searchParams.get('return');
-  assert(returnUrl && new URL(returnUrl).hostname === '127.0.0.1');
+  assert.equal(destination.pathname, guidePaths[index]);
+  if (index === 1) {
+    assert.equal(destination.searchParams.get('from'), 'arcade');
+    const returnUrl = destination.searchParams.get('return');
+    assert(returnUrl && new URL(returnUrl).hostname === '127.0.0.1');
+  }
   await page.goBack({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(() => window.arcadeTest?.active === 1);
+  await page.waitForFunction(index => window.arcadeTest?.active === index, index);
   assert.equal(await page.locator('#scene-container canvas').count(), 1);
 }
 
@@ -133,8 +136,12 @@ async function visitGuideAndReturn(page, activate) {
       const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
       await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
       await context.route('https://pazneria.github.io/osrs-clone-codex/**', route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed guide test destination</h1>'}));
+      for (const path of [guidePaths[0],guidePaths[2]]) {
+        await context.route(`https://pazneria.github.io${path}**`, route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed game wiki test destination</h1>'}));
+      }
       await context.route('https://pazneria.github.io/', route => route.fulfill({contentType:'text/html',body:'<h1>Exit destination test</h1>'}));
       const page = await context.newPage();
+      if (process.env.TRACE_NAV) page.on('framenavigated', frame => { if (frame === page.mainFrame()) console.log(`${mode} navigation: ${frame.url()}`); });
       const capture = async name => {
         if (!process.env.ARTIFACT_DIR) return;
         fs.mkdirSync(process.env.ARTIFACT_DIR, {recursive:true});
@@ -225,7 +232,15 @@ async function visitGuideAndReturn(page, activate) {
           await page.waitForTimeout(100);
           await capture(`desktop-cabinet-${index}`);
         }
-        assert.equal(await page.locator('#cabinet-guide').isVisible(), false, 'Unconfigured Sword Guys guide stays hidden');
+        assert(await page.locator('#cabinet-guide').isVisible(), 'Confirmed Sword Guys guide appears');
+        for (const index of [0,2]) {
+          await page.evaluate(index => window.arcadeTest.restoreCabinet(index),index);
+          await page.waitForFunction(path => {
+            const href=document.querySelector('#cabinet-guide').getAttribute('href');
+            return href && new URL(href).pathname === path;
+          },guidePaths[index]);
+          await visitGuideAndReturn(page, () => page.locator('#cabinet-guide').click(), index);
+        }
         await page.locator('#cabinet-back').focus();
         await page.keyboard.press('Enter');
         await page.waitForFunction(() => window.arcadeTest.active === -1);
@@ -251,7 +266,7 @@ async function visitGuideAndReturn(page, activate) {
           const point = await page.evaluate(() => window.arcadeTest.actionPoint(1,'cabinet-guide'));
           await page.mouse.click(point.x,point.y);
         });
-        await page.evaluate(() => window.arcadeTest.focusCabinet(window.arcadeTest.codexPedestals[0]));
+        await page.evaluate(() => window.arcadeTest.focusCabinet(window.arcadeTest.codexPedestals.find(p => p.userData.anchorCabinet === window.arcadeTest.cabinets[1])));
         await page.waitForFunction(() => window.arcadeTest.guideLecternActive && window.arcadeTest.state.lookError < 0.05);
         await visitGuideAndReturn(page, async () => {
           const point = await page.evaluate(() => window.arcadeTest.bookPoint());
@@ -304,7 +319,7 @@ async function visitGuideAndReturn(page, activate) {
           await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
           await page.waitForFunction(() => window.arcadeTest.active === 0);
           await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-          assert.equal(await page.locator('#touch-guide').isVisible(), false, 'Unconfigured RaceGPT guide stays hidden');
+          assert(await page.locator('#touch-guide').isVisible(), 'Confirmed RaceGPT guide appears');
           await capture('mobile-racegpt');
           await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
           await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:140,y:250}]});
@@ -315,6 +330,7 @@ async function visitGuideAndReturn(page, activate) {
           assert(cabinetPoint.x>0&&cabinetPoint.x<390&&cabinetPoint.y>44&&cabinetPoint.y<600);
           await page.touchscreen.tap(cabinetPoint.x,cabinetPoint.y);
           await page.waitForFunction(() => window.arcadeTest.active === 0);
+          await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap(), 0);
           for (let i=0;i<4;i++) {
             await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
             await page.waitForFunction(index => window.arcadeTest.active === index,i+1);
@@ -333,6 +349,7 @@ async function visitGuideAndReturn(page, activate) {
                 await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap());
               }
             }
+            if (i===1) await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap(), 2);
           }
           assert(await page.getByRole('button',{name:'Coming soon',exact:true}).isDisabled());
           await capture('mobile-coming-soon');
@@ -364,6 +381,8 @@ async function visitGuideAndReturn(page, activate) {
             await page.waitForTimeout(100);
             assert.equal(await page.evaluate(() => window.arcadeTest.state.frames),frames,'Directory must pause rendering');
             await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).tap();
+            await page.waitForTimeout(100);
+            assert.equal(page.url(),url,'Returning from the directory must not click through into a Guide link');
             assert.equal(await page.evaluate(() => window.arcadeTest.active),0);
           }
           for(let i=0;i<2;i++) {
@@ -391,7 +410,7 @@ async function visitGuideAndReturn(page, activate) {
         const firstLaunch = page.getByRole('link', {name:'Launch',exact:true}).first();
         await firstLaunch.focus();
         await page.keyboard.press('Tab');
-        assert.equal(await page.evaluate(() => document.activeElement.closest('.fallback-card').querySelector('h2').textContent), 'OSRS Clone');
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Open RaceGPT guide (opens in new tab)', 'Tab moves from Launch to that cabinet\'s Guide');
         await firstLaunch.focus();
         await page.setViewportSize({width:400,height:800});
         await page.waitForTimeout(100);
@@ -448,6 +467,9 @@ async function visitGuideAndReturn(page, activate) {
     for (const [name, pathname] of [['RaceGPT','racegpt'],['OSRS Clone','osrs-clone'],['Sword Guys','sword-guys']]) {
       const launch = page.locator('.fallback-card').filter({has:page.getByRole('heading',{name,exact:true})}).getByRole('link',{name:'Launch',exact:true});
       assert.equal(await launch.getAttribute('href'), `https://pazneria.github.io/${pathname}/`);
+      const index=['RaceGPT','OSRS Clone','Sword Guys'].indexOf(name);
+      const guide=page.getByRole('link',{name:`Open ${name} guide (opens in new tab)`,exact:true});
+      assert.equal(new URL(await guide.getAttribute('href')).pathname,guidePaths[index]);
     }
     const codex = new URL(await page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true}).getAttribute('href'));
     assert.equal(codex.origin + codex.pathname, 'https://pazneria.github.io/osrs-clone-codex/');
@@ -470,7 +492,8 @@ async function visitGuideAndReturn(page, activate) {
       await securityPage.goto(url, {waitUntil:'domcontentloaded'});
       await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 5);
       assert.equal(await securityPage.locator('.fallback-card h2').nth(1).innerText(), hostileName, 'Registry text must remain literal text');
-      assert.equal(await securityPage.locator('.fallback-card img, .fallback-card script, .fallback-card a[aria-label*="guide"]').count(), 0);
+      assert.equal(await securityPage.locator('.fallback-card img, .fallback-card script').count(), 0);
+      assert.equal(await securityPage.locator('.fallback-card').nth(1).locator('a[aria-label*="guide"]').count(), 0);
       assert.equal(await securityPage.evaluate(() => window.arcadeInjected), undefined);
     }
     await security.close();

@@ -445,7 +445,7 @@
           name: 'RaceGPT',
           description: 'Run clean test-track time attacks, chase model ghosts, and try to beat the benchmark board.',
           url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`),
-          // guideUrl: not configured until a RaceGPT wiki is confirmed.
+          guideUrl: `${publishedSiteOrigin}/racegpt/wiki/`,
           thumbnail: './assets/cabinet-screens/racegpt-title.webp',
         },
         {
@@ -475,7 +475,7 @@
           name: 'Sword Guys',
           description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
           url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`),
-          // guideUrl: not configured until a Sword Guys wiki is confirmed.
+          guideUrl: `${publishedSiteOrigin}/sword-guys/wiki/`,
           thumbnail: './assets/cabinet-screens/sword-guys-title.webp',
         },
         {
@@ -1528,10 +1528,20 @@
         }
 
         const touchBindings = [];
-        function bindTouch(element, type, handler) {
-          element.addEventListener(type, handler);
-          touchBindings.push(() => element.removeEventListener(type, handler));
+        function bindTouch(element, type, handler, options) {
+          element.addEventListener(type, handler, options);
+          touchBindings.push(() => element.removeEventListener(type, handler, options));
         }
+        let handledTouchTapAt = -Infinity;
+        // A release can hide the directory and expose a Guide link beneath it.
+        // Cancel that gesture's following click even if its target has changed.
+        // A fresh pointer press or keyboard activation remains a separate action.
+        bindTouch(document, 'pointerdown', () => { handledTouchTapAt = -Infinity; }, true);
+        bindTouch(document, 'click', (event) => {
+          if (event.detail === 0 || performance.now() - handledTouchTapAt >= 700) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }, true);
         function bindTouchAction(element, action) {
           let press = null;
           let lastTap = -Infinity;
@@ -1546,6 +1556,7 @@
             press = null;
             if (!tapped || element.disabled) return;
             lastTap = performance.now();
+            handledTouchTapAt = lastTap;
             action();
           });
           bindTouch(element, 'pointercancel', () => { press = null; });
