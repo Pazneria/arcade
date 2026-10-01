@@ -455,12 +455,12 @@
           codexRepoName: 'osrs-clone-codex',
           guideUrl: arcadeCodexLinks
             ? arcadeCodexLinks.buildCodexHomeUrl({
-                repoName: 'osrs-clone-codex',
+                basePath: '/osrs-clone-codex/wiki/',
                 baseUrl: publishedSiteOrigin,
                 from: 'arcade',
                 returnTo: window.location.href,
               })
-            : `${publishedSiteOrigin}/osrs-clone-codex/`,
+            : `${publishedSiteOrigin}/osrs-clone-codex/wiki/`,
           codexWorldUrl: arcadeCodexLinks
             ? arcadeCodexLinks.buildCodexEntityUrl('world', 'starter_town', {
                 repoName: 'osrs-clone-codex',

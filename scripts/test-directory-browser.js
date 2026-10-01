@@ -107,7 +107,7 @@ async function assertDirectory(page, failed) {
   assert.equal(await page.locator('#cabinet-actions').isVisible(), false, 'Inspection strip must disappear in the directory');
 }
 
-const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/', '/sword-guys/wiki/'];
+const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/wiki/', '/sword-guys/wiki/'];
 async function visitGuideAndReturn(page, activate, index = 1) {
   await activate();
   await page.waitForURL(`https://pazneria.github.io${guidePaths[index]}**`);
@@ -423,7 +423,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
         await page.keyboard.press('Enter');
         const guidePopup=await guidePopupPromise;
         await guidePopup.waitForLoadState('domcontentloaded');
-        assert.equal(new URL(guidePopup.url()).pathname, '/osrs-clone-codex/');
+        assert.equal(new URL(guidePopup.url()).pathname, '/osrs-clone-codex/wiki/');
         await guidePopup.close();
         await capture(mode==='mobile'?'mobile-directory-guide':`fallback-guide-${mode}`);
         for (let i = 0; i < 2; i++) {
@@ -472,7 +472,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
       assert.equal(new URL(await guide.getAttribute('href')).pathname,guidePaths[index]);
     }
     const codex = new URL(await page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true}).getAttribute('href'));
-    assert.equal(codex.origin + codex.pathname, 'https://pazneria.github.io/osrs-clone-codex/');
+    assert.equal(codex.origin + codex.pathname, 'https://pazneria.github.io/osrs-clone-codex/wiki/');
     assert.equal(codex.searchParams.get('return'), 'https://pazneria.github.io/arcade/');
     assert.equal(await page.getByRole('link',{name:'Home',exact:true}).evaluate(link => link.href), 'https://pazneria.github.io/');
     console.log('PASS published destinations and assets');
