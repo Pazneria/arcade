@@ -490,6 +490,13 @@
           comingSoon: true,
           thumbnail: './assets/cabinet-screens/night-courier-title.webp',
         },
+        {
+          name: 'Rebound Relay',
+          description: 'Drive your hoverbug, knock the ball into the live gate, and chase clean shots in a 90-second run.',
+          url: `${publishedSiteOrigin}/rebound-relay/`,
+          guideUrl: `${publishedSiteOrigin}/rebound-relay/wiki/`,
+          thumbnail: './assets/cabinet-screens/rebound-relay-title.webp',
+        },
       ];
 
       // Guides are public HTTPS destinations, never script URLs or credentialed links.
@@ -2769,6 +2776,10 @@
             body: 0x1d2640, trim: 0xb89a62, accent: 0xe9c46a, ink: '#efe2c0', ground: '#1b2238',
             font: 'italic 700', motif: 'moon', tagline: 'COMING SOON',
           },
+          'Rebound Relay': {
+            body: 0x253e49, trim: 0xd3b681, accent: 0xff8a5c, ink: '#fff1d9', ground: '#253e49',
+            font: 'italic 800', motif: 'rebound', tagline: '90 SECOND SCORE CHASE',
+          },
         }; }
 
         function getCabinetIdentity(game, index) {
@@ -2816,6 +2827,16 @@
               ctx.fillRect(-size * 0.05, size * 0.32, size * 0.1, size * 0.2);
               ctx.restore();
             });
+          } else if (motif === 'rebound') {
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.7, size * 0.35);
+            ctx.lineTo(0, -size * 0.35);
+            ctx.lineTo(size * 0.42, size * 0.08);
+            ctx.stroke();
+            ctx.fillStyle = accent;
+            ctx.beginPath();
+            ctx.arc(size * 0.55, size * 0.22, size * 0.2, 0, Math.PI * 2);
+            ctx.fill();
           } else if (motif === 'wave') {
             ctx.beginPath();
             for (let i = 0; i <= 60; i += 1) {
