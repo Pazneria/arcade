@@ -89,8 +89,8 @@ const server = http.createServer((req, res) => {
 
 async function assertDirectory(page, failed) {
   assert(await page.locator('#mobile-fallback').isVisible());
-  assert.equal(await page.locator('.fallback-card').count(), 5);
-  assert.equal(await page.getByRole('link', {name: 'Launch', exact: true}).count(), 3);
+  assert.equal(await page.locator('.fallback-card').count(), 6);
+  assert.equal(await page.getByRole('link', {name: 'Launch', exact: true}).count(), 4);
   for (const name of ['Ghost Signal', 'Night Courier']) {
     const card = page.locator('.fallback-card').filter({has: page.getByRole('heading', {name, exact: true})});
     assert.match(await card.innerText(), /Coming soon/);
@@ -103,11 +103,11 @@ async function assertDirectory(page, failed) {
   if (failed) assert.match(await page.locator('#directory-message').innerText(), /unavailable/);
   const guide = page.getByRole('link', {name: 'Open OSRS Clone guide (opens in new tab)', exact:true});
   assert(await guide.getAttribute('href'));
-  assert.equal(await page.locator('.fallback-card a[aria-label*="guide"]').count(), 3, 'All three confirmed guides appear');
+  assert.equal(await page.locator('.fallback-card a[aria-label*="guide"]').count(), 4, 'All four confirmed guides appear');
   assert.equal(await page.locator('#cabinet-actions').isVisible(), false, 'Inspection strip must disappear in the directory');
 }
 
-const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/wiki/', '/sword-guys/wiki/'];
+const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/wiki/', '/sword-guys/wiki/', null, null, '/rebound-relay/wiki/'];
 async function visitGuideAndReturn(page, activate, index = 1) {
   await activate();
   await page.waitForURL(`https://pazneria.github.io${guidePaths[index]}**`);
@@ -123,6 +123,39 @@ async function visitGuideAndReturn(page, activate, index = 1) {
   assert.equal(await page.locator('#scene-container canvas').count(), 1);
 }
 
+async function checkReboundCabinet(page, mobile, capture) {
+  const prefix = mobile ? '#touch-' : '#cabinet-';
+  const activate = async selector => {
+    if (mobile) await page.locator(selector).tap();
+    else { await page.locator(selector).focus(); await page.keyboard.press('Enter'); }
+  };
+  // Browse from the original last cabinet, preserving all original registry indices.
+  await page.evaluate(() => window.arcadeTest.restoreCabinet(4));
+  await activate(`${prefix}next`);
+  await page.waitForFunction(() => window.arcadeTest.active === 5 && window.arcadeTest.state.lookError < 0.05);
+  assert.equal(await page.evaluate(() => window.arcadeTest.cabinets[5].userData.game.name), 'Rebound Relay');
+  await capture(mobile ? 'mobile-rebound' : 'desktop-rebound');
+  for (let visit = 0; visit < 2; visit++) {
+    await visitGuideAndReturn(page, () => activate(`${prefix}guide`), 5);
+    await activate(`${prefix}play`);
+    await page.waitForURL('https://pazneria.github.io/rebound-relay/');
+    await page.goBack({waitUntil:'domcontentloaded'});
+    await page.waitForFunction(() => window.arcadeTest?.active === 5);
+    assert.equal(await page.locator('#scene-container canvas').count(), 1);
+  }
+  if (!mobile) {
+    await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
+    await visitGuideAndReturn(page, async () => {
+      const point = await page.evaluate(() => window.arcadeTest.actionPoint(5,'cabinet-guide'));
+      await page.mouse.click(point.x,point.y);
+    }, 5);
+  }
+  await activate(`${prefix}next`);
+  await page.waitForFunction(() => window.arcadeTest.active === 0);
+  await activate(`${prefix}previous`);
+  await page.waitForFunction(() => window.arcadeTest.active === 5);
+}
+
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/`;
@@ -135,8 +168,9 @@ async function visitGuideAndReturn(page, activate, index = 1) {
       const mobile = mode.includes('mobile');
       const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
       await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
+      await context.route('https://pazneria.github.io/rebound-relay/', route => route.fulfill({contentType:'text/html',body:'<h1>Rebound Relay test destination</h1>'}));
       await context.route('https://pazneria.github.io/osrs-clone-codex/**', route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed guide test destination</h1>'}));
-      for (const path of [guidePaths[0],guidePaths[2]]) {
+      for (const path of [guidePaths[0],guidePaths[2],guidePaths[5]]) {
         await context.route(`https://pazneria.github.io${path}**`, route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed game wiki test destination</h1>'}));
       }
       await context.route('https://pazneria.github.io/', route => route.fulfill({contentType:'text/html',body:'<h1>Exit destination test</h1>'}));
@@ -272,6 +306,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
           const point = await page.evaluate(() => window.arcadeTest.bookPoint());
           await page.mouse.click(point.x,point.y);
         });
+        await checkReboundCabinet(page, false, capture);
         await page.keyboard.press('Escape');
         await page.evaluate(() => window.arcadeTest.focusExit());
         await page.waitForFunction(() => window.arcadeTest.exitActive && window.arcadeTest.state.lookError < 0.05);
@@ -368,6 +403,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
             assert(panel.y>=44&&panel.y+panel.height<=size.height);
             await capture(size.width>size.height?'mobile-landscape':'mobile-portrait');
           }
+          await checkReboundCabinet(page, true, capture);
           await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
           assert.equal(await page.evaluate(() => window.arcadeTest.active),-1);
           await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
@@ -425,6 +461,16 @@ async function visitGuideAndReturn(page, activate, index = 1) {
         await guidePopup.waitForLoadState('domcontentloaded');
         assert.equal(new URL(guidePopup.url()).pathname, '/osrs-clone-codex/wiki/');
         await guidePopup.close();
+        const reboundCard = page.locator('.fallback-card').filter({has:page.getByRole('heading',{name:'Rebound Relay',exact:true})});
+        for (const name of ['Launch','Open Rebound Relay guide (opens in new tab)']) {
+          const popupPromise = page.waitForEvent('popup');
+          await reboundCard.getByRole('link',{name,exact:true}).click();
+          const popup = await popupPromise;
+          await popup.waitForLoadState('domcontentloaded');
+          assert.equal(popup.url(), `https://pazneria.github.io/rebound-relay/${name === 'Launch' ? '' : 'wiki/'}`);
+          assert.equal(await popup.evaluate(() => window.opener === null), true);
+          await popup.close();
+        }
         await capture(mode==='mobile'?'mobile-directory-guide':`fallback-guide-${mode}`);
         for (let i = 0; i < 2; i++) {
           const popupPromise = page.waitForEvent('popup');
@@ -464,10 +510,10 @@ async function visitGuideAndReturn(page, activate, index = 1) {
     await page.route('https://pazneria.github.io/arcade/codex-link-contract.js', route => route.fulfill({contentType:'application/javascript',path:path.join(root,'codex-link-contract.js')}));
     await page.goto('https://pazneria.github.io/arcade/', {waitUntil:'domcontentloaded'});
     await assertDirectory(page, true);
-    for (const [name, pathname] of [['RaceGPT','racegpt'],['OSRS Clone','osrs-clone'],['Sword Guys','sword-guys']]) {
+    for (const [name, pathname] of [['RaceGPT','racegpt'],['OSRS Clone','osrs-clone'],['Sword Guys','sword-guys'],['Rebound Relay','rebound-relay']]) {
       const launch = page.locator('.fallback-card').filter({has:page.getByRole('heading',{name,exact:true})}).getByRole('link',{name:'Launch',exact:true});
       assert.equal(await launch.getAttribute('href'), `https://pazneria.github.io/${pathname}/`);
-      const index=['RaceGPT','OSRS Clone','Sword Guys'].indexOf(name);
+      const index=['RaceGPT','OSRS Clone','Sword Guys','Ghost Signal','Night Courier','Rebound Relay'].indexOf(name);
       const guide=page.getByRole('link',{name:`Open ${name} guide (opens in new tab)`,exact:true});
       assert.equal(new URL(await guide.getAttribute('href')).pathname,guidePaths[index]);
     }
@@ -490,7 +536,7 @@ async function visitGuideAndReturn(page, activate, index = 1) {
         .replace("name: 'OSRS Clone'", `name: ${JSON.stringify(hostileName)}`)
         .replace(/guideUrl: arcadeCodexLinks[\s\S]*?codexWorldUrl:/, `guideUrl: ${JSON.stringify(unsafeUrl).replaceAll('<', '\\u003c')},\n          codexWorldUrl:`);
       await securityPage.goto(url, {waitUntil:'domcontentloaded'});
-      await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 5);
+      await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 6);
       assert.equal(await securityPage.locator('.fallback-card h2').nth(1).innerText(), hostileName, 'Registry text must remain literal text');
       assert.equal(await securityPage.locator('.fallback-card img, .fallback-card script').count(), 0);
       assert.equal(await securityPage.locator('.fallback-card').nth(1).locator('a[aria-label*="guide"]').count(), 0);

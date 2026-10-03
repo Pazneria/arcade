@@ -35,6 +35,8 @@ Legacy option:
 
 More games coming soon!
 
+Rebound Relay 0.4.1 is also available at `https://pazneria.github.io/rebound-relay/`, with its guide at `https://pazneria.github.io/rebound-relay/wiki/`. Its cabinet is appended after the original five so existing cabinet return positions stay valid. The screen image is captured from the released game's canvas; its cabinet uses the hall's existing model and controls.
+
 ## Mobile 3D controls
 
 Phones and tablets with WebGL now enter the 3D arcade. Hold Forward or Backward to move down the aisle, drag the scene to look around, and tap a cabinet to inspect it. Previous and Next also browse cabinets directly. Use the large Launch, Guide, and Back to aisle buttons while inspecting.
