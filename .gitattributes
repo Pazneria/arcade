@@ -1,0 +1,6 @@
+# Keep exact upstream dependency bytes so recorded SHA256 hashes survive checkout.
+assets/vendor/three.module.js -text -whitespace
+assets/vendor/THREE-LICENSE.txt -text
+versions/arcade-*.zip -text
+versions/before-claude12/** -text -whitespace
+versions/earliest-2025-10-31/** -text -whitespace

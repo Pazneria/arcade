@@ -1,0 +1,103 @@
+{
+  "preservedOn": "2026-10-08",
+  "repository": "https://github.com/Pazneria/arcade",
+  "latestPath": "/arcade/",
+  "ancestorCommitsRetained": 107,
+  "historyPolicy": "Existing history retained. Restore tags pushed before merge. Snapshots and archives match tracked source bytes. Game repositories and game save data are separate and are not rolled back by these site snapshots.",
+  "versions": [
+    {
+      "id": "before-claude12",
+      "commit": "e274f0c14b6ec333fa8feb4249cc4ff1d8058cc0",
+      "tag": "arcade-before-claude12-2026-10-08",
+      "date": "2026-10-03T20:45:00Z",
+      "archive": "arcade-before-claude12-e274f0c.zip",
+      "snapshot": "before-claude12",
+      "kind": "Previous production 3D hall, all six games, exact source and assets. Static site; Three.js0.157 and Google Fonts remain external.",
+      "files": {
+        ".gitignore": {
+          "sha256": "4d56952b0fb13bf8f9b6c13a6d4c34a075bac3af447636a1df4335d7576e2f97",
+          "bytes": 14
+        },
+        "README.md": {
+          "sha256": "b552643a528f33f52ae51797c6e14ebe28da27213a974d5e0f0886722a55b06c",
+          "bytes": 6233
+        },
+        "assets/cabinet-screens/ghost-signal-title.webp": {
+          "sha256": "19e51111f5d21c150cca9733b39c0f2d055b4645c99bf04f114492244d86d166",
+          "bytes": 12698
+        },
+        "assets/cabinet-screens/night-courier-title.webp": {
+          "sha256": "dd742eb91d34a84eff0efb7f0ac65ad9c77977e35bae061f60441f12a141733a",
+          "bytes": 12764
+        },
+        "assets/cabinet-screens/osrs-clone-title.webp": {
+          "sha256": "65293de057e77e472d996ca49028e72ae92522f814365bdf0d076601598b9f61",
+          "bytes": 88178
+        },
+        "assets/cabinet-screens/racegpt-title.webp": {
+          "sha256": "b72fc425de258b1612cb7c7be91158936b87f4762227710ecb5758e043ca574a",
+          "bytes": 23466
+        },
+        "assets/cabinet-screens/rebound-relay-title.webp": {
+          "sha256": "9bce2d069be9b6f596861af35224db55a739979ae3cbfc70b368035508a62e2d",
+          "bytes": 21926
+        },
+        "assets/cabinet-screens/sword-guys-title.webp": {
+          "sha256": "992c99454cfed9ccc6f583c6504f57da81b2cb36e7f417615fd5942271a18ee7",
+          "bytes": 120686
+        },
+        "codex-link-contract.js": {
+          "sha256": "ccfe868ea35ae74b4d93db42722575fb385c8948358a5787a8ded6689b215589",
+          "bytes": 4038
+        },
+        "index.html": {
+          "sha256": "c80174d7e199cd103e11898ae12f48616e6aa8e9cfa602e60c99d2b6d3424ee1",
+          "bytes": 138011
+        },
+        "package-lock.json": {
+          "sha256": "bc94fd2f5a1f73eabe4fa68ad708885d4b0f92b4e35ed9c81f82fff8061244e9",
+          "bytes": 1178
+        },
+        "package.json": {
+          "sha256": "b97fdf076f8cc27921a105e1ade5ada4b7e83e3792d57f82cb1587485b169f6f",
+          "bytes": 473
+        },
+        "run.bat": {
+          "sha256": "6dd0cb4e5544734a0ba14c79cf6a0a47f99f98e9289903161ebb01c1cdfc1b62",
+          "bytes": 180
+        },
+        "scripts/dev-server.js": {
+          "sha256": "967ea5e6507bcb5c1ef5585f4d44cacc8f53e3d519b6cc9df10dff75e7a1da92",
+          "bytes": 6459
+        },
+        "scripts/test-codex-link-contract.js": {
+          "sha256": "7132b0e772bd7ed49c15e783da0e5b4b3c4dc2e8652a694e6f03dead0628221b",
+          "bytes": 4020
+        },
+        "scripts/test-directory-browser.js": {
+          "sha256": "e1e6aea963fbb99b9d512886ff5a6df02e6fa9091b2b8c73493ef20f438c19e0",
+          "bytes": 36454
+        }
+      },
+      "archiveSha256": "f5bd82bbab59a0a65a2b5080637792f760c2e93e730a1d0d00347c1f48566e0a",
+      "archiveBytes": 326321
+    },
+    {
+      "id": "earliest",
+      "commit": "676a1a1dbea06e04379bea5e9008bb2eb562d748",
+      "tag": "arcade-earliest-2025-10-31",
+      "date": "2025-10-31T18:57:55Z",
+      "archive": "arcade-earliest-676a1a1.zip",
+      "snapshot": "earliest-2025-10-31",
+      "kind": "Standalone Games coming soon HTML placeholder. No scripts, asset files, external dependencies or build step.",
+      "files": {
+        "index.html": {
+          "sha256": "db25d88699e90e2c8a85304db13854bb3634ab787b83634bc526f004eee82745",
+          "bytes": 123
+        }
+      },
+      "archiveSha256": "6230edae8cd630a4e1eeda5372f9d749fa2a1c5fa214c06b10309c4a6820ad30",
+      "archiveBytes": 267
+    }
+  ]
+}

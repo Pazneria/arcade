@@ -1,0 +1,53 @@
+{
+  "entry": "starlite-arcade-claude",
+  "promptVersion": "12-base",
+  "configuration": "Claude (manual); exact version/effort unknown",
+  "sourceRepository": "https://github.com/Pazneria/lab",
+  "sourceCommit": "17170c4f6210f2a93245e6a6cb94adcb1c6c0335",
+  "sourceDirectory": "walkable-3d/entries/starlite-arcade-claude",
+  "sourceArchiveSha256": "dc3a7903de3fcd7f10286997fe1594be2c1a16b5cdc9fbbbe6938b99da4c6d8c",
+  "sourceUnmodified": true,
+  "files": {
+    "frozen/index.html.txt": {
+      "sha256": "06418de0ac9942173479aa2303ef7896ea368c2ad36a3dd3e68714847e255005",
+      "bytes": 144746
+    },
+    "frozen/src/00_setup.js": {
+      "sha256": "a6ce800b7b74fbf6e4125dc257acd8b1c8b62402e1a5c28bf100ea785cca2a99",
+      "bytes": 7494
+    },
+    "frozen/src/10_textures.js": {
+      "sha256": "3eacb0e81fbc122a4a216b115133bc0794d7f97beae922c81ad1280bbd077834",
+      "bytes": 44249
+    },
+    "frozen/src/20_screens.js": {
+      "sha256": "d32d3d56808917489eadff17ad875aafc39b1d7a5d6dfd9fb6ff444c5d576558",
+      "bytes": 17469
+    },
+    "frozen/src/30_cabinets.js": {
+      "sha256": "69517651824670a1b6429bd9136af1d9b72fb86d8fef95b9bf5cce3d95d11d5c",
+      "bytes": 27466
+    },
+    "frozen/src/40_room.js": {
+      "sha256": "2975daf3c9edbd5a7071cbbdee3f6af3dbd4cd04451888a69144fc910dfea2e0",
+      "bytes": 32052
+    },
+    "frozen/src/90_main.js": {
+      "sha256": "a3bb93bb136b58ed99e1543f43f164dba7cba5930eaead3287c17bb7a29ead22",
+      "bytes": 12988
+    },
+    "frozen/src/head.html": {
+      "sha256": "4baca0683fa6bbc5226f67b1b5f581cd24a39b79098ef67259c9ffd604f9d309",
+      "bytes": 3002
+    },
+    "frozen/vendor/THREE-LICENSE.txt": {
+      "sha256": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454",
+      "bytes": 1081
+    },
+    "frozen/vendor/three.module.js": {
+      "sha256": "0a3368c165eea773490aec7b77c22de70e3eac288503409256fdbf4d12578416",
+      "bytes": 1304820
+    }
+  },
+  "derivative": "Separate production adaptation. Scene geometry and procedural art retained, game labels/extra cabinet and interaction anchors added; controller/HUD replaced; resource reuse/lifecycle added. Original performance claims are unverified."
+}

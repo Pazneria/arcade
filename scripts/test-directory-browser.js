@@ -2,549 +2,412 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
-const { chromium } = require('playwright');
+const vm = require('node:vm');
 
+// --check-fixtures parses served test instrumentation without a browser or server.
 const root = path.resolve(__dirname, '..');
-const engineUrl = 'https://unpkg.com/three@0.157.0/build/three.module.js';
-// Expose state only in the HTML served by this test, never in the shipped page.
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/\r\n/g, '\n').replace(
-  '        return () => {\n          touchBindings.forEach((remove) => remove());',
-  `        window.arcadeTest = {
-          cabinets, codexPedestals, focusCabinet, startCabinetLaunch,
-          restoreCabinet(index) { writeReturnState(index); applyReturnStateIfPresent(); },
-          get active() { return cabinets.indexOf(activeCabinet); },
-          get launching() { return !!launchSequence; },
-          get guideLecternActive() { return activeCabinet === codexPedestals.find(p => p.userData.anchorCabinet === cabinets[1]); },
-          bookPoint() {
-            const position=new THREE.Vector3();
-            codexPedestals.find(p => p.userData.anchorCabinet === cabinets[1]).userData.bookTargets[0].getWorldPosition(position);
-            position.project(camera);
-            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
-          },
-          actionPoint(index, action) {
-            const button=cabinets[index].userData.actionButtons.find(button=>button.userData.action===action);
-            const position=new THREE.Vector3();
-            button.getWorldPosition(position);
-            position.project(camera);
-            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
-          },
-          get renderStats() { return {...renderer.info.render}; },
-          focusExit() { focusCabinet(exitDoor.root); },
-          get exitActive() { return activeCabinet === exitDoor.root; },
-          get signImage() { return exitDoor.signMaterial.map.image.toDataURL(); },
-          signBounds() {
-            let mesh;
-            exitDoor.root.traverse(object => { if (object.material === exitDoor.signMaterial) mesh=object; });
-            const box=new THREE.Box3().setFromObject(mesh);
-            return [box.min,box.max].map(point => {
-              point.project(camera);
-              return {x:(point.x+1)*window.innerWidth/2,y:(1-point.y)*window.innerHeight/2};
-            });
-          },
-          arrowPoint(index) {
-            const position=new THREE.Vector3();
-            exitDoor.switchArrows[index].getWorldPosition(position);
-            position.project(camera);
-            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
-          },
-          exitPoint() {
-            const position = new THREE.Vector3(0, 2.1, 0);
-            exitDoor.root.localToWorld(position);
-            position.project(camera);
-            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
-          },
-          get state() { return {targetZ, touchMove, touchYaw, introDone, look:lookTarget.toArray(), lookError:lookTarget.distanceTo(desiredLookTarget), frames:renderer.info.render.frame}; },
-          loseContext() { renderer.forceContextLoss(); },
-          cabinetPoint(index) {
-            const position = new THREE.Vector3();
-            cabinets[index].getWorldPosition(position);
-            position.y = 2.4;
-            position.project(camera);
-            return {x:(position.x+1)*window.innerWidth/2,y:(1-position.y)*window.innerHeight/2};
-          },
-          clickAction(index, action) {
-            hoverCabinet = cabinets[index].userData.actionButtons.find(button => button.userData.action === action);
-            onRendererClick();
-          }
-        };
-        return () => {
-          touchBindings.forEach((remove) => remove());`
-);
-assert(html.includes('window.arcadeTest ='), 'Test instrumentation must match the cleanup boundary');
-for (const [, asset] of html.matchAll(/thumbnail: '(\.\/assets\/[^']+)'/g)) {
-  assert(fs.existsSync(path.join(root, asset)), `Missing cabinet thumbnail: ${asset}`);
+const read = file => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
+const names = ['RaceGPT','OSRS Clone','Sword Guys','Ghost Signal','Night Courier','Rebound Relay'];
+const guidePaths = ['/racegpt/wiki/','/osrs-clone-codex/wiki/','/sword-guys/wiki/',null,null,'/rebound-relay/wiki/'];
+const modes = ['no-webgl','no-webgl-mobile','renderer-failure','import-failure','normal','mobile','published'];
+function replaceOnce(source, needle, replacement, label) {
+  assert(source.includes(needle),`Test instrumentation no longer matches ${label}`);
+  assert.equal(source.indexOf(needle),source.lastIndexOf(needle),`Ambiguous test seam: ${label}`);
+  return source.replace(needle,replacement);
 }
-const server = http.createServer((req, res) => {
-  if (req.url === '/' || req.url.startsWith('/?')) {
-    res.setHeader('Content-Type', 'text/html');
-    return res.end(html);
-  }
-  const file = path.join(root, decodeURIComponent(req.url.split('?')[0]));
-  if (!file.startsWith(root + path.sep) || !fs.existsSync(file)) {
-    res.writeHead(404); return res.end();
-  }
-  res.setHeader('Content-Type', file.endsWith('.js') ? 'application/javascript' : 'image/webp');
-  res.end(fs.readFileSync(file));
-});
-
-async function assertDirectory(page, failed) {
-  assert(await page.locator('#mobile-fallback').isVisible());
-  assert.equal(await page.locator('.fallback-card').count(), 6);
-  assert.equal(await page.getByRole('link', {name: 'Launch', exact: true}).count(), 4);
-  for (const name of ['Ghost Signal', 'Night Courier']) {
-    const card = page.locator('.fallback-card').filter({has: page.getByRole('heading', {name, exact: true})});
-    assert.match(await card.innerText(), /Coming soon/);
-    assert.equal(await card.locator('a').count(), 0);
-  }
-  assert.equal(await page.locator('a[href*="example.com"], a[href="undefined"]').count(), 0);
-  for (const name of ['Home', 'Exit Arcade']) {
-    assert.equal(await page.getByRole('link', {name, exact:true}).getAttribute('href'), '/');
-  }
-  if (failed) assert.match(await page.locator('#directory-message').innerText(), /unavailable/);
-  const guide = page.getByRole('link', {name: 'Open OSRS Clone guide (opens in new tab)', exact:true});
-  assert(await guide.getAttribute('href'));
-  assert.equal(await page.locator('.fallback-card a[aria-label*="guide"]').count(), 4, 'All four confirmed guides appear');
-  assert.equal(await page.locator('#cabinet-actions').isVisible(), false, 'Inspection strip must disappear in the directory');
+function instrumentApp(source) {
+  source=replaceOnce(source,'const $=id=>document.getElementById(id);',`
+let __arcadeLastDisposed=null,__arcadeDisposeCalls=0;
+const __arcadePageShows=[];
+window.__arcadeControllersCreated=0;
+window.addEventListener('pageshow',e=>__arcadePageShows.push({persisted:e.persisted}));
+function __arcadeSnapshot() {
+  return {mode,selected,failed,generation,hasController:!!controller,
+    canvasCount:document.querySelectorAll('#scene-container canvas').length,
+    created:window.__arcadeControllersCreated,disposeCalls:__arcadeDisposeCalls,
+    pageShows:__arcadePageShows.slice(),controller:controller?.__test.snapshot()||null};
 }
-
-const guidePaths = ['/racegpt/wiki/', '/osrs-clone-codex/wiki/', '/sword-guys/wiki/', null, null, '/rebound-relay/wiki/'];
-async function visitGuideAndReturn(page, activate, index = 1) {
-  await activate();
-  await page.waitForURL(`https://pazneria.github.io${guidePaths[index]}**`);
-  const destination = new URL(page.url());
-  assert.equal(destination.pathname, guidePaths[index]);
-  if (index === 1) {
-    assert.equal(destination.searchParams.get('from'), 'arcade');
-    const returnUrl = destination.searchParams.get('return');
-    assert(returnUrl && new URL(returnUrl).hostname === '127.0.0.1');
-  }
-  await page.goBack({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(index => window.arcadeTest?.active === index, index);
-  assert.equal(await page.locator('#scene-container canvas').count(), 1);
+const $=id=>document.getElementById(id);`,'app DOM entry');
+  source=replaceOnce(source,'controller?.dispose();controller=null;',
+    'controller?.dispose();__arcadeDisposeCalls++;if(controller?.__test)__arcadeLastDisposed=controller.__test.snapshot();controller=null;',
+    'app disposal');
+  source=replaceOnce(source,'navigate:destination=>location.assign(destination)',`navigate:async destination=>{
+    await window.__recordArcadeNavigation({destination,app:__arcadeSnapshot(),lastDisposed:__arcadeLastDisposed});
+    location.assign(destination);
+  }`,'dispose-before-navigation');
+  return source+`
+// Exposed only by this test server, never by the shipped modules.
+window.arcadeTest={inspect,openDirectory,showWelcome,startExplore,initialize,dispose,save,
+  get controller(){return controller;},get state(){return __arcadeSnapshot();},
+  get lastDisposed(){return __arcadeLastDisposed;}};
+`;
 }
-
-async function checkReboundCabinet(page, mobile, capture) {
-  const prefix = mobile ? '#touch-' : '#cabinet-';
-  const activate = async selector => {
-    if (mobile) await page.locator(selector).tap();
-    else { await page.locator(selector).focus(); await page.keyboard.press('Enter'); }
+function instrumentController(source) {
+  source=replaceOnce(source,'  const ray=new THREE.Raycaster(),point=new THREE.Vector2(),view=new THREE.Vector3();',`
+  let __renders=0,__worldDisposals=0,__rendererDisposals=0,__contextLosses=0,__blocker=null;
+  window.__arcadeControllersCreated++;
+  const __render=renderer.render.bind(renderer),__worldDispose=world.dispose.bind(world);
+  const __rendererDispose=renderer.dispose.bind(renderer),__contextLoss=renderer.forceContextLoss.bind(renderer);
+  renderer.render=(...args)=>{__renders++;return __render(...args);};
+  world.dispose=()=>{__worldDisposals++;return __worldDispose();};
+  renderer.dispose=()=>{__rendererDisposals++;return __rendererDispose();};
+  renderer.forceContextLoss=()=>{__contextLosses++;return __contextLoss();};
+  const ray=new THREE.Raycaster(),point=new THREE.Vector2(),view=new THREE.Vector3();`,'controller counters');
+  return replaceOnce(source,'  return {player,pause,resume,capture,focusGame,dispose,',`
+  const __test={
+    snapshot(){return {disposed,active,raf,renderCount:__renders,worldDisposeCount:__worldDisposals,
+      rendererDisposeCount:__rendererDisposals,contextLossCount:__contextLosses,listenerCount:listeners.length,
+      connected:canvas.isConnected,keys:[...keys],touchMove,gesture:!!gesture,target:target?.id||null,
+      player:{...player},renderStats:{...renderer.info.render},pixels:canvas.width*canvas.height};},
+    anchors(){return anchors.map(a=>({id:a.id,kind:a.kind,gameIndex:a.gameIndex,
+      position:a.position.toArray(),approach:a.approach?.toArray()}));},
+    faceAnchor(id,distance=null){
+      const anchor=anchors.find(a=>a.id===id);if(!anchor)throw new Error('Missing anchor '+id);
+      clearInput();
+      const approach=anchor.approach||new THREE.Vector3(anchor.position.x,0,
+        anchor.position.z+(id==='home-entrance'?-1.05:1.05));
+      let x=approach.x,z=approach.z;
+      if(distance!==null){const dx=x-anchor.position.x,dz=z-anchor.position.z,len=Math.hypot(dx,dz)||1;
+        x=anchor.position.x+dx/len*distance;z=anchor.position.z+dz/len*distance;}
+      Object.assign(player,{x,z,eye:1.62,crouch:false});
+      view.copy(anchor.position).sub(new THREE.Vector3(player.x,player.eye,player.z));
+      player.yaw=Math.atan2(-view.x,-view.z);player.pitch=Math.atan2(view.y,Math.hypot(view.x,view.z));renderOnce();
+    },
+    point(id){const anchor=anchors.find(a=>a.id===id),p=anchor.position.clone().project(camera),rect=canvas.getBoundingClientRect();
+      return {x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2};},
+    pick(x,y){return pick(x,y)?.id||null;},
+    block(id){const anchor=anchors.find(a=>a.id===id);
+      __blocker=new THREE.Mesh(new THREE.BoxGeometry(.6,.6,.12),new THREE.MeshBasicMaterial({color:0x000000}));
+      __blocker.position.copy(camera.position).lerp(anchor.position,.5);__blocker.lookAt(camera.position);scene.add(__blocker);renderOnce();},
+    unblock(){if(!__blocker)return;scene.remove(__blocker);__blocker.geometry.dispose();__blocker.material.dispose();__blocker=null;renderOnce();},
+    loseContext(){renderer.forceContextLoss();}
   };
-  // Browse from the original last cabinet, preserving all original registry indices.
-  await page.evaluate(() => window.arcadeTest.restoreCabinet(4));
-  await activate(`${prefix}next`);
-  await page.waitForFunction(() => window.arcadeTest.active === 5 && window.arcadeTest.state.lookError < 0.05);
-  assert.equal(await page.evaluate(() => window.arcadeTest.cabinets[5].userData.game.name), 'Rebound Relay');
-  await capture(mobile ? 'mobile-rebound' : 'desktop-rebound');
-  for (let visit = 0; visit < 2; visit++) {
-    await visitGuideAndReturn(page, () => activate(`${prefix}guide`), 5);
-    await activate(`${prefix}play`);
-    await page.waitForURL('https://pazneria.github.io/rebound-relay/');
-    await page.goBack({waitUntil:'domcontentloaded'});
-    await page.waitForFunction(() => window.arcadeTest?.active === 5);
-    assert.equal(await page.locator('#scene-container canvas').count(), 1);
-  }
-  if (!mobile) {
-    await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-    await visitGuideAndReturn(page, async () => {
-      const point = await page.evaluate(() => window.arcadeTest.actionPoint(5,'cabinet-guide'));
-      await page.mouse.click(point.x,point.y);
-    }, 5);
-  }
-  await activate(`${prefix}next`);
-  await page.waitForFunction(() => window.arcadeTest.active === 0);
-  await activate(`${prefix}previous`);
-  await page.waitForFunction(() => window.arcadeTest.active === 5);
+  return {__test,player,pause,resume,capture,focusGame,dispose,`,'controller return');
 }
-
-(async () => {
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const url = `http://127.0.0.1:${server.address().port}/`;
-  const browser = await chromium.launch({
-    channel: process.env.BROWSER_CHANNEL || undefined,
-    headless: true, args: ['--enable-unsafe-swiftshader'],
-  });
-  try {
-    for (const mode of (process.env.TEST_MODE ? [process.env.TEST_MODE] : ['no-webgl', 'no-webgl-mobile', 'renderer-failure', 'import-failure', 'mobile', 'normal'])) {
-      const mobile = mode.includes('mobile');
-      const context = await browser.newContext({viewport:{width:mobile ? 390 : 1280, height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile ? 3 : 1});
-      await context.route('http://127.0.0.1:5178/**', route => route.fulfill({contentType:'text/html',body:'<h1>Local game test destination</h1>'}));
-      await context.route('https://pazneria.github.io/rebound-relay/', route => route.fulfill({contentType:'text/html',body:'<h1>Rebound Relay test destination</h1>'}));
-      await context.route('https://pazneria.github.io/osrs-clone-codex/**', route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed guide test destination</h1>'}));
-      for (const path of [guidePaths[0],guidePaths[2],guidePaths[5]]) {
-        await context.route(`https://pazneria.github.io${path}**`, route => route.fulfill({contentType:'text/html',body:'<h1>Confirmed game wiki test destination</h1>'}));
-      }
-      await context.route('https://pazneria.github.io/', route => route.fulfill({contentType:'text/html',body:'<h1>Exit destination test</h1>'}));
-      const page = await context.newPage();
-      if (process.env.TRACE_NAV) page.on('framenavigated', frame => { if (frame === page.mainFrame()) console.log(`${mode} navigation: ${frame.url()}`); });
-      const capture = async name => {
-        if (!process.env.ARTIFACT_DIR) return;
-        fs.mkdirSync(process.env.ARTIFACT_DIR, {recursive:true});
-        await page.screenshot({path:path.join(process.env.ARTIFACT_DIR, `${name}.png`)});
-      };
-      const errors = [];
-      page.on('pageerror', error => { errors.push(error.message); console.error(`${mode}: ${error.stack}`); });
-      await page.route('https://fonts.googleapis.com/**', route => route.abort());
-      await page.route('https://fonts.gstatic.com/**', route => route.abort());
-      await page.route(engineUrl, route => {
-        if (mode === 'import-failure') return route.abort();
-        if (process.env.THREE_MODULE_PATH) return route.fulfill({path:process.env.THREE_MODULE_PATH, contentType:'application/javascript'});
-        return route.continue();
-      });
-      if (mode.startsWith('no-webgl')) {
-        await page.addInitScript(() => { window.WebGLRenderingContext = undefined; });
-      }
-      if (mode === 'renderer-failure') {
-        // The probe succeeds, but the renderer cannot get its own context.
-        await page.addInitScript(() => {
-          const original = HTMLCanvasElement.prototype.getContext;
-          let probeCanvas;
-          HTMLCanvasElement.prototype.getContext = function(type, ...args) {
-            if (type.startsWith('webgl') || type === 'experimental-webgl') {
-              if (!probeCanvas) probeCanvas = this;
-              if (this !== probeCanvas) return null;
-            }
-            return original.call(this, type, ...args);
-          };
-        });
-      }
-      await page.goto(url, {waitUntil:'domcontentloaded'});
-      if (mode === 'normal') {
-        await page.waitForFunction(() => !!window.arcadeTest);
-        assert.equal(await page.locator('#scene-container canvas').count(), 1);
-        assert.equal(await page.locator('#mobile-fallback').isVisible(), false);
-        await page.waitForFunction(() => window.arcadeTest.state.introDone);
-        console.log('Desktop aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
-        await capture('desktop-room');
-        // Resizing must preserve one renderer; opening and closing Games keeps its state.
-        for (let i = 0; i < 3; i++) {
-          await page.setViewportSize({width:390,height:800});
-          await page.getByRole('button',{name:'Games',exact:true}).click();
-          await assertDirectory(page, false);
-          assert.equal(await page.locator('#scene-container canvas').count(), 1);
-          await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
-          await page.setViewportSize({width:1280,height:800});
-          await page.waitForFunction(() => !document.querySelector('#mobile-fallback').classList.contains('visible'));
-          assert.equal(await page.locator('#scene-container canvas').count(), 1);
-        }
-        for (const index of [3,4]) {
-          await page.evaluate(index => window.arcadeTest.restoreCabinet(index), index);
-          await page.waitForFunction(index => window.arcadeTest.active === index, index);
-          assert.equal(await page.evaluate(index => window.arcadeTest.cabinets[index].userData.actionButtons[0].userData.action, index), 'cabinet-coming-soon');
-          await page.evaluate(index => {
-            const test = window.arcadeTest;
-            test.clickAction(index, 'cabinet-coming-soon');
-            // Even a stale URL must not bypass the availability guard.
-            test.cabinets[index].userData.game.url = 'https://example.com/stale';
-            test.startCabinetLaunch(test.cabinets[index]);
-          }, index);
-          assert.equal(await page.evaluate(() => window.arcadeTest.launching), false);
-          assert.equal(page.url(), url);
-          await page.waitForTimeout(500);
-          await capture(`coming-soon-${index}`);
-          await page.evaluate(index => window.arcadeTest.clickAction(index, 'cabinet-back'), index);
-          assert.equal(await page.evaluate(() => window.arcadeTest.active), -1);
-        }
-        // Available cabinet launch and return state still work across navigation.
-        for (let i = 0; i < 2; i++) {
-          const previousFrames=await page.evaluate(() => window.arcadeTest.state.frames);
-          await page.evaluate(() => window.arcadeTest.restoreCabinet(0));
-          await page.waitForFunction(frames => window.arcadeTest.active === 0 && window.arcadeTest.state.frames>frames,previousFrames);
-          const playPoint=await page.evaluate(() => window.arcadeTest.actionPoint(0,'cabinet-play'));
-          await page.mouse.click(playPoint.x,playPoint.y);
-          const returnIndex = await page.evaluate(() => {
-            return JSON.parse(sessionStorage.getItem('arcade:return-state:v1')).cabinetIndex;
-          });
-          assert.equal(returnIndex, 0);
-          await page.waitForURL('http://127.0.0.1:5178/');
-          await page.goBack({waitUntil:'domcontentloaded'});
-          await page.waitForFunction(() => !!window.arcadeTest && window.arcadeTest.active === 0);
-          assert.equal(await page.locator('#scene-container canvas').count(), 1);
-        }
-        for (const index of [0,1,2]) {
-          await page.evaluate(index => window.arcadeTest.restoreCabinet(index),index);
-          await page.waitForFunction(index => window.arcadeTest.active === index && window.arcadeTest.state.lookError < 0.05,index);
-          await page.waitForTimeout(100);
-          await capture(`desktop-cabinet-${index}`);
-        }
-        assert(await page.locator('#cabinet-guide').isVisible(), 'Confirmed Sword Guys guide appears');
-        for (const index of [0,2]) {
-          await page.evaluate(index => window.arcadeTest.restoreCabinet(index),index);
-          await page.waitForFunction(path => {
-            const href=document.querySelector('#cabinet-guide').getAttribute('href');
-            return href && new URL(href).pathname === path;
-          },guidePaths[index]);
-          await visitGuideAndReturn(page, () => page.locator('#cabinet-guide').click(), index);
-        }
-        await page.locator('#cabinet-back').focus();
-        await page.keyboard.press('Enter');
-        await page.waitForFunction(() => window.arcadeTest.active === -1);
-        assert.equal(await page.locator('#cabinet-next').evaluate(e => e === document.activeElement), true, 'Back preserves a useful keyboard focus target');
-        await page.locator('#cabinet-previous').focus();
-        await page.keyboard.press('Enter');
-        await page.waitForFunction(() => window.arcadeTest.active === 1);
-        await page.waitForFunction(() => !!document.querySelector('#cabinet-guide').getAttribute('href'));
-        await capture('desktop-guide');
-        await visitGuideAndReturn(page, async () => {
-          await page.locator('#cabinet-guide').focus();
-          await page.keyboard.press('Enter');
-        });
-        await page.locator('#cabinet-guide').focus();
-        await page.keyboard.press('Escape');
-        await page.waitForFunction(() => window.arcadeTest.active === -1);
-        assert.equal(await page.locator('#cabinet-next').evaluate(e => e === document.activeElement), true, 'Escape remains usable from a focused Guide link');
-        const guideRestoreFrames=await page.evaluate(() => window.arcadeTest.state.frames);
-        await page.evaluate(() => window.arcadeTest.restoreCabinet(1));
-        await page.waitForFunction(frames => window.arcadeTest.state.frames > frames, guideRestoreFrames);
-        await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-        await visitGuideAndReturn(page, async () => {
-          const point = await page.evaluate(() => window.arcadeTest.actionPoint(1,'cabinet-guide'));
-          await page.mouse.click(point.x,point.y);
-        });
-        await page.evaluate(() => window.arcadeTest.focusCabinet(window.arcadeTest.codexPedestals.find(p => p.userData.anchorCabinet === window.arcadeTest.cabinets[1])));
-        await page.waitForFunction(() => window.arcadeTest.guideLecternActive && window.arcadeTest.state.lookError < 0.05);
-        await visitGuideAndReturn(page, async () => {
-          const point = await page.evaluate(() => window.arcadeTest.bookPoint());
-          await page.mouse.click(point.x,point.y);
-        });
-        await checkReboundCabinet(page, false, capture);
-        await page.keyboard.press('Escape');
-        await page.evaluate(() => window.arcadeTest.focusExit());
-        await page.waitForFunction(() => window.arcadeTest.exitActive && window.arcadeTest.state.lookError < 0.05);
-        await page.waitForTimeout(100);
-        await capture('desktop-exit');
-        const signBounds=await page.evaluate(() => window.arcadeTest.signBounds());
-        assert(signBounds.every(point => point.x>0&&point.x<1280&&point.y>0&&point.y<800),'Exit sign must fit completely in the door view');
-        for (let i=0;i<4;i++) {
-          const previousSign=await page.evaluate(() => window.arcadeTest.signImage);
-          const arrowPoint=await page.evaluate(() => window.arcadeTest.arrowPoint(1));
-          await page.mouse.move(arrowPoint.x,arrowPoint.y);
-          await page.mouse.click(arrowPoint.x,arrowPoint.y);
-          assert.notEqual(await page.evaluate(() => window.arcadeTest.signImage),previousSign,'Sign arrow must cycle its design');
-          assert.equal(page.url(),url,'Cycling the sign must not exit');
-        }
-        console.log('Desktop scene budget',await page.evaluate(() => window.arcadeTest.renderStats));
-        const exitPoint=await page.evaluate(() => window.arcadeTest.exitPoint());
-        await page.mouse.move(exitPoint.x,exitPoint.y);
-        await page.mouse.click(exitPoint.x,exitPoint.y);
-        await page.waitForURL('https://pazneria.github.io/');
-      } else {
-        if (mode === 'mobile') {
-          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
-          assert.equal(await page.locator('#scene-container canvas').count(),1);
-          assert(await page.locator('#touch-controls').isVisible());
-          console.log('Mobile aisle rendering',await page.evaluate(() => window.arcadeTest.renderStats));
-          const cdp = await context.newCDPSession(page);
-          const forward = await page.getByRole('button',{name:'Move forward',exact:true}).boundingBox();
-          const point = {x:forward.x+forward.width/2,y:forward.y+forward.height/2};
-          const startZ = await page.evaluate(() => window.arcadeTest.state.targetZ);
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
-          await page.waitForTimeout(400);
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-          assert((await page.evaluate(() => window.arcadeTest.state.targetZ)) < startZ);
-          assert.equal(await page.evaluate(() => window.arcadeTest.state.touchMove),0);
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
-          assert.equal(await page.evaluate(() => window.arcadeTest.state.touchMove),0,'Cancelled movement must stop');
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:160,y:260}]});
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:260,y:280}]});
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-          assert((await page.evaluate(() => window.arcadeTest.state.touchYaw)) < 0);
-          assert.equal(await page.evaluate(() => window.arcadeTest.active),-1,'Dragging must not inspect or launch');
-          await capture('mobile-aisle');
-          await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
-          await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-          assert(await page.locator('#touch-guide').isVisible(), 'Confirmed RaceGPT guide appears');
-          await capture('mobile-racegpt');
-          await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:140,y:250}]});
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:300,y:250}]});
-          await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-          await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-          const cabinetPoint=await page.evaluate(() => window.arcadeTest.cabinetPoint(0));
-          assert(cabinetPoint.x>0&&cabinetPoint.x<390&&cabinetPoint.y>44&&cabinetPoint.y<600);
-          await page.touchscreen.tap(cabinetPoint.x,cabinetPoint.y);
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
-          await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap(), 0);
-          for (let i=0;i<4;i++) {
-            await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
-            await page.waitForFunction(index => window.arcadeTest.active === index,i+1);
-            await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-            if(i===0) {
-              assert(await page.getByRole('link',{name:'Open OSRS Clone guide',exact:true}).isVisible());
-              await capture('mobile-osrs');
-              await page.setViewportSize({width:800,height:390});
-              await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-              assert(await page.locator('#touch-guide').isVisible());
-              const guideBounds=await page.locator('#touch-guide').boundingBox();
-              assert(guideBounds.width>=44&&guideBounds.height>=44&&guideBounds.y+guideBounds.height<=390,'Guide remains a usable touch target in landscape');
-              await capture('mobile-guide-landscape');
-              await page.setViewportSize({width:390,height:800});
-              for (let visit=0;visit<2;visit++) {
-                await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap());
-              }
-            }
-            if (i===1) await visitGuideAndReturn(page, () => page.locator('#touch-guide').tap(), 2);
-          }
-          assert(await page.getByRole('button',{name:'Coming soon',exact:true}).isDisabled());
-          await capture('mobile-coming-soon');
-          for (const size of [{width:800,height:390},{width:390,height:800}]) {
-            const previousFrames=await page.evaluate(() => window.arcadeTest.state.frames);
-            await page.setViewportSize(size);
-            await page.waitForFunction(frames => window.arcadeTest.state.frames > frames+1,previousFrames);
-            assert.equal(await page.locator('#scene-container canvas').count(),1);
-            assert(await page.locator('#touch-controls').isVisible());
-            assert.equal(await page.evaluate(() => window.arcadeTest.active),4);
-            await page.waitForFunction(() => window.arcadeTest.state.lookError < 0.05);
-            const pixels=await page.locator('#scene-container canvas').evaluate(canvas=>canvas.width*canvas.height);
-            assert(pixels<=900000);
-            assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),'Controls must fit without horizontal overflow');
-            const panel=await page.locator('.touch-panel').boundingBox();
-            assert(panel.y>=44&&panel.y+panel.height<=size.height);
-            await capture(size.width>size.height?'mobile-landscape':'mobile-portrait');
-          }
-          await checkReboundCabinet(page, true, capture);
-          await page.getByRole('button',{name:'Back to aisle',exact:true}).tap();
-          assert.equal(await page.evaluate(() => window.arcadeTest.active),-1);
-          await page.getByRole('button',{name:'Next cabinet ›',exact:true}).tap();
-          await page.waitForFunction(() => window.arcadeTest.active === 0);
-          for(let i=0;i<2;i++) {
-            await page.getByRole('button',{name:'Games',exact:true}).tap();
-            await assertDirectory(page,false);
-            await page.keyboard.press('Escape');
-            assert.equal(await page.evaluate(() => window.arcadeTest.active),0,'Directory keyboard input must preserve the inspected cabinet');
-            const frames=await page.evaluate(() => window.arcadeTest.state.frames);
-            await page.waitForTimeout(100);
-            assert.equal(await page.evaluate(() => window.arcadeTest.state.frames),frames,'Directory must pause rendering');
-            await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).tap();
-            await page.waitForTimeout(100);
-            assert.equal(page.url(),url,'Returning from the directory must not click through into a Guide link');
-            assert.equal(await page.evaluate(() => window.arcadeTest.active),0);
-          }
-          for(let i=0;i<2;i++) {
-            await page.getByRole('button',{name:'Launch',exact:true}).tap();
-            await page.waitForURL('http://127.0.0.1:5178/');
-            await page.goBack({waitUntil:'domcontentloaded'});
-            await page.waitForFunction(() => window.arcadeTest?.active === 0);
-            assert.equal(await page.locator('#scene-container canvas').count(),1);
-          }
-          await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.getByRole('link',{name:'Home / Exit',exact:true}).tap()]);
-          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
-          await page.evaluate(() => window.arcadeTest.loseContext());
-          await page.waitForFunction(() => document.querySelector('#directory-message').textContent.includes('unavailable'));
-          await assertDirectory(page,true);
-          assert.equal(await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).isVisible(),false);
-          await capture('mobile-context-lost');
-          // Reload restores the capable device after the simulated context loss.
-          await page.reload({waitUntil:'domcontentloaded'});
-          await page.waitForFunction(() => window.arcadeTest?.state.introDone);
-          await page.getByRole('button',{name:'Games',exact:true}).tap();
-        }
-        await page.waitForFunction(failed => document.querySelector('#mobile-fallback').classList.contains('visible') && (!failed || document.querySelector('#directory-message').textContent.includes('unavailable')), mode !== 'mobile');
-        await assertDirectory(page, mode !== 'mobile');
-        await capture(mode);
-        const firstLaunch = page.getByRole('link', {name:'Launch',exact:true}).first();
-        await firstLaunch.focus();
-        await page.keyboard.press('Tab');
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Open RaceGPT guide (opens in new tab)', 'Tab moves from Launch to that cabinet\'s Guide');
-        await firstLaunch.focus();
-        await page.setViewportSize({width:400,height:800});
-        await page.waitForTimeout(100);
-        assert(await firstLaunch.evaluate(element => element === document.activeElement), 'Directory resize must preserve keyboard focus');
-        const directoryGuide = page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true});
-        await directoryGuide.focus();
-        await page.setViewportSize({width:420,height:800});
-        assert(await directoryGuide.evaluate(element => element === document.activeElement), 'Guide focus survives directory resize');
-        const guidePopupPromise=page.waitForEvent('popup');
-        await page.keyboard.press('Enter');
-        const guidePopup=await guidePopupPromise;
-        await guidePopup.waitForLoadState('domcontentloaded');
-        assert.equal(new URL(guidePopup.url()).pathname, '/osrs-clone-codex/wiki/');
-        await guidePopup.close();
-        const reboundCard = page.locator('.fallback-card').filter({has:page.getByRole('heading',{name:'Rebound Relay',exact:true})});
-        for (const name of ['Launch','Open Rebound Relay guide (opens in new tab)']) {
-          const popupPromise = page.waitForEvent('popup');
-          await reboundCard.getByRole('link',{name,exact:true}).click();
-          const popup = await popupPromise;
-          await popup.waitForLoadState('domcontentloaded');
-          assert.equal(popup.url(), `https://pazneria.github.io/rebound-relay/${name === 'Launch' ? '' : 'wiki/'}`);
-          assert.equal(await popup.evaluate(() => window.opener === null), true);
-          await popup.close();
-        }
-        await capture(mode==='mobile'?'mobile-directory-guide':`fallback-guide-${mode}`);
-        for (let i = 0; i < 2; i++) {
-          const popupPromise = page.waitForEvent('popup');
-          await page.locator('.fallback-card').filter({has:page.getByRole('heading', {name:'RaceGPT',exact:true})}).getByRole('link', {name:'Launch',exact:true}).click();
-          const popup = await popupPromise;
-          await popup.waitForLoadState('domcontentloaded');
-          assert.equal(popup.url(), 'http://127.0.0.1:5178/');
-          await popup.close();
-          await assertDirectory(page, mode !== 'mobile');
-        }
-        for (const width of [1200,390,1000]) {
-          await page.setViewportSize({width,height:800});
-          if (mode !== 'mobile') await assertDirectory(page, true);
-        }
-        if (mode !== 'mobile') {
-          // Both plain HTML navigation links work repeatedly after startup failure.
-          for (const name of ['Home','Exit Arcade']) {
-            await Promise.all([
-              page.waitForNavigation({waitUntil:'domcontentloaded'}),
-              page.getByRole('link', {name,exact:true}).click(),
-            ]);
-            await page.waitForFunction(() => document.querySelector('#directory-message').textContent.includes('unavailable'));
-            await assertDirectory(page, true);
-          }
-        }
-      }
-      assert.deepEqual(errors, [], `${mode}: unhandled browser errors`);
-      console.log(`PASS ${mode}`);
-      await context.close();
-    }
-    // Verify the shipped URLs using a published origin rather than the local-dev branch.
-    const published = await browser.newContext();
-    const page = await published.newPage();
-    await page.addInitScript(() => { window.WebGLRenderingContext = undefined; });
-    await page.route('https://fonts.googleapis.com/**', route => route.abort());
-    await page.route('https://pazneria.github.io/arcade/', route => route.fulfill({contentType:'text/html',body:html}));
-    await page.route('https://pazneria.github.io/arcade/codex-link-contract.js', route => route.fulfill({contentType:'application/javascript',path:path.join(root,'codex-link-contract.js')}));
-    await page.goto('https://pazneria.github.io/arcade/', {waitUntil:'domcontentloaded'});
-    await assertDirectory(page, true);
-    for (const [name, pathname] of [['RaceGPT','racegpt'],['OSRS Clone','osrs-clone'],['Sword Guys','sword-guys'],['Rebound Relay','rebound-relay']]) {
-      const launch = page.locator('.fallback-card').filter({has:page.getByRole('heading',{name,exact:true})}).getByRole('link',{name:'Launch',exact:true});
-      assert.equal(await launch.getAttribute('href'), `https://pazneria.github.io/${pathname}/`);
-      const index=['RaceGPT','OSRS Clone','Sword Guys','Ghost Signal','Night Courier','Rebound Relay'].indexOf(name);
-      const guide=page.getByRole('link',{name:`Open ${name} guide (opens in new tab)`,exact:true});
-      assert.equal(new URL(await guide.getAttribute('href')).pathname,guidePaths[index]);
-    }
-    const codex = new URL(await page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true}).getAttribute('href'));
-    assert.equal(codex.origin + codex.pathname, 'https://pazneria.github.io/osrs-clone-codex/wiki/');
-    assert.equal(codex.searchParams.get('return'), 'https://pazneria.github.io/arcade/');
-    assert.equal(await page.getByRole('link',{name:'Home',exact:true}).evaluate(link => link.href), 'https://pazneria.github.io/');
-    console.log('PASS published destinations and assets');
-    await published.close();
-    // Hostile values exist only in these served fixtures, never in the registry.
-    const security = await browser.newContext();
-    const securityPage = await security.newPage();
-    await securityPage.addInitScript(() => { window.WebGLRenderingContext = undefined; });
-    await securityPage.route('https://fonts.googleapis.com/**', route => route.abort());
-    const hostileName = '<img src=x onerror="window.arcadeInjected=true">';
-    let securityHtml;
-    await securityPage.route(url, route => route.fulfill({contentType:'text/html',body:securityHtml}));
-    for (const unsafeUrl of ['javascript:window.arcadeInjected=true', 'data:text/html,<script>alert(1)</script>', 'https://user:pass@example.invalid/wiki/', '/unconfirmed-wiki/']) {
-      securityHtml = html
-        .replace("name: 'OSRS Clone'", `name: ${JSON.stringify(hostileName)}`)
-        .replace(/guideUrl: arcadeCodexLinks[\s\S]*?codexWorldUrl:/, `guideUrl: ${JSON.stringify(unsafeUrl).replaceAll('<', '\\u003c')},\n          codexWorldUrl:`);
-      await securityPage.goto(url, {waitUntil:'domcontentloaded'});
-      await securityPage.waitForFunction(() => document.querySelectorAll('.fallback-card').length === 6);
-      assert.equal(await securityPage.locator('.fallback-card h2').nth(1).innerText(), hostileName, 'Registry text must remain literal text');
-      assert.equal(await securityPage.locator('.fallback-card img, .fallback-card script').count(), 0);
-      assert.equal(await securityPage.locator('.fallback-card').nth(1).locator('a[aria-label*="guide"]').count(), 0);
-      assert.equal(await securityPage.evaluate(() => window.arcadeInjected), undefined);
-    }
-    await security.close();
-    console.log('PASS guide URL safety and literal directory text');
-  } finally {
-    await browser.close();
+const appFixture=instrumentApp(read('assets/arcade-app.js'));
+const controllerFixture=instrumentController(read('assets/arcade-controller.js'));
+const vendorFixture=read('assets/vendor/three.module.js');
+const rendererFailureFixture=replaceOnce(vendorFixture,'class WebGLRenderer {\n\n\tconstructor( parameters = {} ) {',
+  "class WebGLRenderer {\n\n\tconstructor( parameters = {} ) {\n\t\tthrow new Error('Test renderer constructor failure');",'pinned renderer constructor');
+function checkFixtureSyntax() {
+  for(const [label,source] of [['app',appFixture],['controller',controllerFixture]]) {
+    new vm.Script(source.replace(/^import .*;\s*$/gm,'').replace(/^export /gm,''),{filename:`test-fixture-${label}.js`});
   }
-})().catch(error => { console.error(error); process.exitCode = 1; }).finally(() => server.close());
+  assert(fs.existsSync(path.join(root,'assets/vendor/THREE-LICENSE.txt')));
+  console.log('Browser suite and served module fixtures parsed. No server, browser, or GPU session started.');
+}
+function fixtureFor(relative) {
+  if(relative==='assets/arcade-app.js')return Buffer.from(appFixture);
+  if(relative==='assets/arcade-controller.js')return Buffer.from(controllerFixture);
+  const absolute=path.resolve(root,relative);
+  if(!absolute.startsWith(root+path.sep)||!fs.existsSync(absolute)||!fs.statSync(absolute).isFile())return null;
+  return fs.readFileSync(absolute);
+}
+function mime(relative) {
+  return ({'.html':'text/html','.js':'application/javascript','.css':'text/css','.webp':'image/webp',
+    '.json':'application/json','.txt':'text/plain'})[path.extname(relative)]||'application/octet-stream';
+}
+const stubDestination='<!doctype html><html><body><h1>Test destination</h1><p>The real game or website was not contacted.</p></body></html>';
+function createFixtureServer() {
+  return http.createServer((req,res)=>{
+    let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);}catch{res.writeHead(400);res.end();return;}
+    if(pathname==='/'){res.setHeader('Content-Type','text/html');res.end(stubDestination);return;}
+    if(pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
+    if(!pathname.startsWith('/arcade/')){res.writeHead(404);res.end();return;}
+    const relative=pathname.slice('/arcade/'.length)||'index.html',body=fixtureFor(relative);
+    if(!body){res.writeHead(404);res.end();return;}
+    res.setHeader('Content-Type',mime(relative));res.end(body);
+  });
+}
+async function routeAll(context,localOrigin,mode,unexpected) {
+  await context.route('**/*',async route=>{
+    const url=new URL(route.request().url()),arcadeAsset=url.pathname.startsWith('/arcade/');
+    if(arcadeAsset&&url.pathname.endsWith('/assets/vendor/three.module.js')) {
+      if(mode==='import-failure')return route.abort('failed');
+      if(mode==='renderer-failure')return route.fulfill({contentType:'application/javascript',body:rendererFailureFixture});
+    }
+    if(url.origin===localOrigin)return route.continue();
+    if(url.origin==='https://pazneria.github.io') {
+      if(arcadeAsset){const relative=decodeURIComponent(url.pathname.slice('/arcade/'.length))||'index.html',body=fixtureFor(relative);
+        return body?route.fulfill({contentType:mime(relative),body}):route.fulfill({status:404,body:'Missing test fixture'});}
+      return route.fulfill({contentType:'text/html',body:stubDestination});
+    }
+    if(['http://127.0.0.1:5178','http://localhost:5178','http://127.0.0.1:5179','http://localhost:5179'].includes(url.origin))
+      return route.fulfill({contentType:'text/html',body:stubDestination});
+    unexpected.push(url.href);return route.abort('blockedbyclient');
+  });
+}
+async function assertDirectory(page,failed,published=false) {
+  assert(await page.locator('#mobile-fallback').isVisible());
+  assert.deepEqual(await page.locator('.fallback-card h2').allTextContents(),names);
+  assert.equal(await page.locator('.fallback-card a').count(),8,'Four Play destinations and four confirmed Guides');
+  for(const [index,name] of names.entries()) {
+    const card=page.locator('.fallback-card').nth(index);
+    if([3,4].includes(index)){assert.match(await card.innerText(),/Coming soon/);assert.equal(await card.locator('a').count(),0);continue;}
+    const launch=card.getByRole('link',{name:`Launch ${name} (opens in new tab)`,exact:true});
+    const guide=card.getByRole('link',{name:`Open ${name} guide (opens in new tab)`,exact:true});
+    for(const link of [launch,guide]){assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await link.getAttribute('rel'),'noopener');}
+    assert.equal(new URL(await guide.getAttribute('href')).pathname,guidePaths[index]);
+    const expected=published?`https://pazneria.github.io/${['racegpt','osrs-clone','sword-guys',null,null,'rebound-relay'][index]}/`
+      :index===0?'http://127.0.0.1:5178/':index===2?'http://127.0.0.1:5179/':`https://pazneria.github.io/${index===1?'osrs-clone':'rebound-relay'}/`;
+    assert.equal(await launch.getAttribute('href'),expected);
+  }
+  const codex=new URL(await page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true}).getAttribute('href'));
+  assert.equal(codex.searchParams.get('from'),'arcade');assert.equal(codex.searchParams.get('return'),page.url());
+  assert.equal(await page.locator('#cabinet-actions').isVisible(),false);
+  if(failed){assert.match(await page.locator('#directory-message').innerText(),/unavailable/);assert.equal(await page.locator('#return-to-3d').isVisible(),false);}
+  for(const name of ['Home','Exit Arcade'])assert.equal(await page.getByRole('link',{name,exact:true}).getAttribute('href'),'/');
+  assert.deepEqual(await page.locator('#site-nav a').evaluateAll(links=>links.map(a=>a.getAttribute('href'))),['/','/lab/lab-space/','/library/','./versions/']);
+  assert.equal(await page.locator('a[href*="example.com"],a[href="undefined"]').count(),0);
+}
+async function ready(page) {
+  await page.waitForFunction(()=>window.arcadeTest?.state.hasController&&!window.arcadeTest.state.failed,{},{timeout:90000});
+  assert.equal(await page.locator('#scene-container canvas').count(),1);
+}
+async function start(page) {
+  if(await page.locator('#cabinet-actions').isVisible())await page.getByRole('button',{name:'Back to aisle',exact:true}).click();
+  if(await page.locator('#mobile-fallback').isVisible())await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
+  await page.getByRole('button',{name:'Explore arcade',exact:true}).click();
+  await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore'&&window.arcadeTest.controller.active);
+}
+function assertDisposed(receipt,label) {
+  assert(receipt,`${label}: navigation must produce a cleanup receipt`);
+  assert.equal(receipt.app.hasController,false,label);assert.equal(receipt.app.canvasCount,0,label);
+  const old=receipt.lastDisposed;assert(old,`${label}: active renderer had disposal evidence`);
+  assert.equal(old.disposed,true,label);assert.equal(old.active,false,label);assert.equal(old.raf,0,label);
+  assert.equal(old.connected,false,label);assert.equal(old.listenerCount,0,label);
+  assert.equal(old.worldDisposeCount,1,label);assert.equal(old.rendererDisposeCount,1,label);
+  assert(old.contextLossCount>=1,label);assert.deepEqual(old.keys,[],label);assert.equal(old.touchMove,0,label);
+}
+async function inspectAndVisit(page,index,action,receipts,entry) {
+  await page.evaluate(i=>window.arcadeTest.inspect(i),index);
+  await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);
+  const link=page.locator(action==='guide'?'#cabinet-guide':'#cabinet-play'),destination=await link.getAttribute('href');
+  const count=receipts.length,pages=page.context().pages().length;
+  await link.focus();await page.keyboard.press('Enter');await page.waitForURL(destination,{waitUntil:'domcontentloaded'});
+  assert.equal(page.context().pages().length,pages,'Cabinet action stays in the same tab');
+  assert.equal(await page.getByRole('heading',{name:'Test destination',exact:true}).count(),1);
+  assert.equal(receipts.length,count+1);assertDisposed(receipts.at(-1),`${action} ${names[index]}`);
+  if(index===1&&action==='guide'){const url=new URL(page.url());assert.equal(url.searchParams.get('from'),'arcade');assert.equal(url.searchParams.get('return'),entry);}
+  await page.goBack({waitUntil:'domcontentloaded'});await ready(page);
+  await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);
+  assert.equal(await page.locator('#cabinet-title').innerText(),names[index]);
+  assert.equal(await page.locator('#scene-container canvas').count(),1,'Back produces exactly one live renderer');
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),false);
+}
+async function assertPopup(page,locator) {
+  const destination=await locator.getAttribute('href'),promise=page.waitForEvent('popup');await locator.click();const popup=await promise;
+  try{await popup.waitForLoadState('domcontentloaded');assert.equal(popup.url(),destination);
+    assert.equal(await popup.evaluate(()=>window.opener===null),true);
+    assert.equal(await popup.getByRole('heading',{name:'Test destination',exact:true}).count(),1);
+  }finally{await popup.close();}
+}
+async function checkDirectoryFocusAndPopups(page,failed,published) {
+  await assertDirectory(page,failed,published);
+  const first=page.getByRole('link',{name:'Launch RaceGPT (opens in new tab)',exact:true});
+  await first.focus();await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'Open RaceGPT guide (opens in new tab)');
+  const guide=page.getByRole('link',{name:'Open OSRS Clone guide (opens in new tab)',exact:true});
+  await guide.focus();await page.setViewportSize({width:420,height:800});
+  assert(await guide.evaluate(element=>element===document.activeElement),'Directory resize preserves focus');
+  await assertPopup(page,guide);
+  await assertPopup(page,page.getByRole('link',{name:'Launch Rebound Relay (opens in new tab)',exact:true}));
+  await assertPopup(page,page.getByRole('link',{name:'Launch Sword Guys (opens in new tab)',exact:true}));
+  await assertDirectory(page,failed,published);
+}
+async function checkKeyboardAndPicking(page) {
+  await start(page);const initial=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot());
+  await page.keyboard.down('w');await page.waitForFunction(z=>window.arcadeTest.controller.player.z<z-.12,initial.player.z);await page.keyboard.up('w');
+  await page.waitForTimeout(80);const stopped=await page.evaluate(()=>window.arcadeTest.controller.player.z);await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.z),stopped,'Key release stops movement');
+  await page.keyboard.press('c');await page.waitForFunction(()=>window.arcadeTest.controller.player.eye<1.5);
+  await page.keyboard.press('r');assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.crouch),false);
+  await page.keyboard.down('w');await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('w');
+  await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+  assert.deepEqual(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().keys),[],'Blur cancels held keys');
+  await start(page);const resetZ=await page.evaluate(()=>window.arcadeTest.controller.player.z);await page.waitForTimeout(180);
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.z),resetZ);
+  const yaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);
+  await page.mouse.move(580,400);await page.mouse.down();await page.mouse.move(760,470,{steps:5});await page.mouse.up();
+  assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),yaw,'Drag fallback changes view');
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore','Dragging does not activate a cabinet');
+  await page.keyboard.press('Tab');await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');await start(page);
+  await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.pick()),'game-0','Nearby cabinet picks precisely');
+  await page.evaluate(()=>window.arcadeTest.controller.__test.block('game-0'));
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.pick()),null,'Opaque geometry blocks interaction');
+  await page.evaluate(()=>{const test=window.arcadeTest.controller.__test;test.unblock();test.faceAnchor('game-0',5);});
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.pick()),null,'Distant cabinets cannot activate');
+  await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));await page.keyboard.press('e');
+  await page.waitForFunction(()=>window.arcadeTest.state.selected===0&&window.arcadeTest.state.mode==='inspect');
+}
+async function checkCabinetCatalog(page) {
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.anchors().filter(a=>a.kind==='game').length),6);
+  assert.deepEqual(await page.evaluate(()=>window.arcadeTest.controller.__test.anchors().filter(a=>a.kind==='home').map(a=>a.id)),['home-entrance','home-exit']);
+  await page.evaluate(()=>window.arcadeTest.inspect(0));
+  for(let index=0;index<6;index++) {
+    assert.equal(await page.locator('#cabinet-title').innerText(),names[index]);
+    assert.equal(await page.locator('#cabinet-play').isVisible(),![3,4].includes(index));
+    assert.equal(await page.locator('#cabinet-guide').isVisible(),![3,4].includes(index));
+    assert.equal(await page.locator('#coming-soon').isVisible(),[3,4].includes(index));
+    if([3,4].includes(index)){assert.equal(await page.locator('#cabinet-play').getAttribute('href'),null);assert.equal(await page.locator('#cabinet-guide').getAttribute('href'),null);}
+    await page.getByRole('button',{name:'Next cabinet >',exact:true}).click();
+  }
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.selected),0,'Next wraps in the established order');
+  await page.getByRole('button',{name:'< Previous cabinet',exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.selected),5,'Previous wraps to Rebound Relay');
+}
+async function checkPauseAndDirectory(page,mobile) {
+  await start(page);const before=await page.evaluate(()=>window.arcadeTest.state);
+  await page.getByRole('button',{name:'Games',exact:true}).click();await assertDirectory(page,false);
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),false);
+  await page.waitForTimeout(100);const renderCount=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount);
+  await page.waitForTimeout(220);
+  assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount),renderCount,'Directory stops the render loop');
+  assert.deepEqual(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().player),before.controller.player);
+  await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'welcome');
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.created),before.created,'Directory return reuses the renderer');
+  assert.equal(await page.locator('#scene-container canvas').count(),1);
+  await start(page);await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+  await page.waitForTimeout(80);const paused=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount);
+  await page.waitForTimeout(160);assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount),paused);
+  for(const size of mobile?[{width:800,height:390},{width:390,height:800}]:[{width:1440,height:900},{width:1280,height:800}]) {
+    await page.setViewportSize(size);assert.equal(await page.locator('#scene-container canvas').count(),1);
+    const pixels=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().pixels);
+    assert(pixels<=(mobile?900000:2304000)+2,'Drawing buffer respects the device pixel budget');
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Navigation and panels fit the viewport');
+  }
+}
+async function checkTouch(page,context) {
+  await start(page);assert(await page.locator('#touch-controls').isVisible());const cdp=await context.newCDPSession(page);
+  try {
+    const box=await page.getByRole('button',{name:'Move forward',exact:true}).boundingBox(),point={x:box.x+box.width/2,y:box.y+box.height/2};
+    const z=await page.evaluate(()=>window.arcadeTest.controller.player.z);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+    await page.waitForFunction(z=>window.arcadeTest.controller.player.z<z-.1,z);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().touchMove),0);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+    assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().touchMove),0,'Cancelled touch stops movement');
+    const stopped=await page.evaluate(()=>window.arcadeTest.controller.player.z);await page.waitForTimeout(160);
+    assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.z),stopped);
+    const yaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:150,y:350}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:260,y:390}]});
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),yaw);
+    assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore','Touch drag does not activate');
+    assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().gesture),false);
+    await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));
+    const cabinetPoint=await page.evaluate(()=>window.arcadeTest.controller.__test.point('game-0'));
+    await page.touchscreen.tap(cabinetPoint.x,cabinetPoint.y);
+    await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===0);
+    await page.setViewportSize({width:800,height:390});const guide=await page.locator('#cabinet-guide').boundingBox();
+    assert(guide.width>=44&&guide.height>=44&&guide.y>=0&&guide.y+guide.height<=390,'Guide touch target fits landscape');
+    await page.setViewportSize({width:390,height:800});
+  } finally {await cdp.detach();}
+}
+async function checkBfCacheLifecycle(page) {
+  await page.evaluate(()=>{window.arcadeTest.inspect(2);window.arcadeTest.save(2);window.__oldArcadeController=window.arcadeTest.controller;
+    window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));});
+  const old=await page.evaluate(()=>window.__oldArcadeController.__test.snapshot());
+  assert.equal(await page.locator('#scene-container canvas').count(),0);
+  assert.equal(old.disposed,true);assert.equal(old.listenerCount,0);assert.equal(old.raf,0);
+  await page.keyboard.press('w');await page.waitForTimeout(100);
+  assert.equal(await page.evaluate(()=>window.__oldArcadeController.__test.snapshot().renderCount),old.renderCount,'Disposed BFcache renderer cannot restart');
+  await page.evaluate(()=>window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true})));await ready(page);
+  await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===2);
+  assert.equal(await page.locator('#scene-container canvas').count(),1);
+  assert.equal(await page.evaluate(()=>window.__oldArcadeController.__test.snapshot().worldDisposeCount),1);
+  await page.evaluate(()=>{delete window.__oldArcadeController;});
+  console.log('PASS simulated persisted pagehide/pageshow disposal and restoration');
+}
+async function checkHomeDoors(page,receipts,entry) {
+  for(const [id,activation] of [['home-entrance','keyboard'],['home-exit','click']]) {
+    await start(page);await page.evaluate(id=>window.arcadeTest.controller.__test.faceAnchor(id),id);
+    assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.pick()),id,`${id} is reachable by its physical target`);
+    const count=receipts.length;
+    if(activation==='keyboard')await page.keyboard.press('e');
+    else{const point=await page.evaluate(id=>window.arcadeTest.controller.__test.point(id),id);await page.mouse.click(point.x,point.y);}
+    await page.waitForURL(new URL('/',entry).href,{waitUntil:'domcontentloaded'});
+    assert.equal(receipts.length,count+1);assertDisposed(receipts.at(-1),id);
+    await page.goBack({waitUntil:'domcontentloaded'});await ready(page);
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem('arcade:return-state:v1')),null,'Home clears game-return state');
+    await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+  }
+}
+async function checkContextLoss(page) {
+  await start(page);await page.evaluate(()=>window.arcadeTest.controller.__test.loseContext());
+  await page.waitForFunction(()=>window.arcadeTest.state.failed&&!window.arcadeTest.state.hasController);
+  await assertDirectory(page,true);assert.equal(await page.locator('#scene-container canvas').count(),0);
+  const disposed=await page.evaluate(()=>window.arcadeTest.lastDisposed);
+  assert.equal(disposed.disposed,true);assert.equal(disposed.raf,0);assert.equal(disposed.listenerCount,0);
+  await page.reload({waitUntil:'domcontentloaded'});await ready(page);
+}
+async function runCase(browser,localOrigin,mode) {
+  const mobile=mode==='mobile'||mode==='no-webgl-mobile',published=mode==='published';
+  const failed=mode.startsWith('no-webgl')||['renderer-failure','import-failure','published'].includes(mode);
+  const context=await browser.newContext({viewport:{width:mobile?390:1280,height:800},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
+  const receipts=[],unexpected=[],errors=[];
+  try {
+    await routeAll(context,localOrigin,mode,unexpected);
+    await context.exposeBinding('__recordArcadeNavigation',(_source,receipt)=>{receipts.push(receipt);});
+    await context.addInitScript(()=>{HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(new Error('Test pointer-lock unavailable'));});
+    if(mode.startsWith('no-webgl')||published)await context.addInitScript(()=>{
+      const getContext=HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext=function(type,...args){return /^(webgl2?|experimental-webgl)$/.test(type)?null:getContext.call(this,type,...args);};
+    });
+    const page=await context.newPage();page.setDefaultTimeout(20000);page.on('pageerror',error=>errors.push(error.message));
+    if(process.env.TRACE_NAV)page.on('framenavigated',frame=>{if(frame===page.mainFrame())console.log(`${mode} navigation: ${frame.url()}`);});
+    const entry=published?'https://pazneria.github.io/arcade/':`${localOrigin}/arcade/`;
+    const capture=async name=>{if(!process.env.ARTIFACT_DIR)return;fs.mkdirSync(process.env.ARTIFACT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.ARTIFACT_DIR,`${mode}-${name}.png`)});};
+    await page.goto(entry,{waitUntil:'domcontentloaded'});
+    if(failed) {
+      await page.waitForFunction(()=>window.arcadeTest?.state.failed,{},{timeout:90000});
+      await assertDirectory(page,true,published);assert.equal(await page.locator('#scene-container canvas').count(),0);
+      await checkDirectoryFocusAndPopups(page,true,published);await capture('fallback');
+      for(const name of ['Home','Exit Arcade']) {
+        await page.getByRole('link',{name,exact:true}).click();await page.waitForURL(new URL('/',entry).href,{waitUntil:'domcontentloaded'});
+        const receipt=receipts.at(-1);assert.equal(receipt.app.hasController,false);assert.equal(receipt.app.canvasCount,0);
+        await page.goBack({waitUntil:'domcontentloaded'});await page.waitForFunction(()=>window.arcadeTest?.state.failed);
+        await assertDirectory(page,true,published);
+      }
+    } else {
+      await ready(page);assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'welcome');
+      if(mobile)await checkTouch(page,context);else await checkKeyboardAndPicking(page);
+      await checkCabinetCatalog(page);await checkPauseAndDirectory(page,mobile);await capture('room');
+      for(const index of mobile?[1]:[0,1,2,5])await inspectAndVisit(page,index,'guide',receipts,entry);
+      for(const index of mobile?[0]:[0,1,2,5])await inspectAndVisit(page,index,'play',receipts,entry);
+      const pageShows=await page.evaluate(()=>window.arcadeTest.state.pageShows);
+      console.log(`${mode}: real Back pageshow persisted=${pageShows.some(e=>e.persisted)} (browser-controlled)`);
+      await checkBfCacheLifecycle(page);if(!mobile)await checkHomeDoors(page,receipts,entry);
+      await checkContextLoss(page);await page.getByRole('button',{name:'Games',exact:true}).click();
+      await checkDirectoryFocusAndPopups(page,false,false);await capture('directory');
+      console.log(`${mode}: functional renderer counters only; no performance conclusion`,await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderStats));
+    }
+    assert.deepEqual(unexpected,[],`${mode}: no external or unstubbed requests`);
+    assert.deepEqual(errors,[],`${mode}: no unhandled browser errors`);console.log(`PASS ${mode}`);
+  } finally {await context.close();}
+}
+async function run() {
+  checkFixtureSyntax();const selected=process.env.TEST_MODE?process.env.TEST_MODE.split(','):modes;
+  for(const mode of selected)assert(modes.includes(mode),`Unknown TEST_MODE: ${mode}`);
+  let server,browser;
+  try {
+    server=createFixtureServer();await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+    const localOrigin=`http://127.0.0.1:${server.address().port}`,{chromium}=require('playwright');
+    // Exactly one browser process; cases and contexts run sequentially.
+    browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
+    for(const mode of selected)await runCase(browser,localOrigin,mode);
+  } finally {
+    try{if(browser)await browser.close();}
+    finally{if(server){server.closeAllConnections?.();await new Promise(resolve=>server.close(resolve));}}
+  }
+}
+if(require.main===module) {
+  if(process.argv.includes('--check-fixtures')){try{checkFixtureSyntax();}catch(error){console.error(error);process.exitCode=1;}}
+  else run().catch(error=>{console.error(error);process.exitCode=1;});
+}
+module.exports={instrumentApp,instrumentController,checkFixtureSyntax};
