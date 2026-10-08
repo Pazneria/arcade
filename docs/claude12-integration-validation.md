@@ -1,0 +1,15 @@
+# Claude12 integration validation
+
+Status: implementation and CPU checks; graphics validation pending explicit resource-slot release. Production main was `e274f0c` when this separate checkout was created. No Lab, Library, game or benchmark repository is modified by this change.
+
+The frozen source was fetched from public Lab commit `17170c4f6210f2a93245e6a6cb94adcb1c6c0335`, outside the derivative checkout. The original HTML, six source JS/HTML files and two dependency/license files match all ten recorded SHA256 values in `assets/arcade-source.json`. The host archive SHA256 is retained as provenance; the archive is not republished. The manifest omits private host paths. The benchmark entry is `starlite-arcade-claude`, prompt `12-base`.
+
+Focused CPU verification passes catalog/Codex contracts, safe guides, return-state boundaries and storage failure, disposal-before-navigation, motion/collision, all six collision-free inspection positions, two Home doors, geometry construction/animation/disposal and pinned dependency hashes. Following static material sharing, the CPU scene has 163 renderable meshes, 63,249 triangles, 79 procedural textures and 152 merged static buckets. These are structural counts; they are not draw-call, frame-time, GPU-time or FPS measurements.
+
+Independent static review caught a missing environment builder and startup cleanup after renderer failure; both are fixed and rechecked. Rendering failure during inspection/paused resize was also fixed and tested. No remaining material production findings were reported. The browser harness has been rewritten for the modular scene, and its served test fixtures pass CPU syntax checks. It has not been executed in a browser under the resource hold.
+
+Pending coordinated checks: scene visual comparison against the untouched original (same viewport/DPR/camera); pointer-lock/drag and near-object occlusion; touch and portrait/landscape layouts; game/guide launch and Back restoration; context/engine failure; stopped frames while hidden/directory/inspection; zero old canvas/listeners/renderer on same-tab game entry; both exit doors; website route confirmation by the parent.
+
+For performance evidence, use one background browser/page at a time with matched renderer/backend, viewport, DPR, pixel budget, camera positions and warm-up duration. Record renderer/backend identity and frame interval distributions (median/p95/p99), render calls/triangles and available disjoint GPU timing separately. Keep raw intervals, avoid clamping reported samples, and distinguish software rendering or Intel from another GPU. Baseline and derivative run sequentially. No benchmark runs/reruns, driver changes or global settings changes are part of this task.
+
+Cleanup receipt for the CPU phase: no browsers, native UI, GPU contexts or servers were started; the user's Library preview on localhost5418 is untouched; frozen originals are unchanged. Only this isolated Arcade checkout and task-local source snapshot were written. Merge and deploy remain held.

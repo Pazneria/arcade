@@ -1,99 +1,106 @@
-const fs = require("fs");
-const path = require("path");
+const assert = require('node:assert/strict');
+const codexLinks = require('../codex-link-contract.js');
+const loadArcadeModules = require('./load-arcade-modules.js');
 
-const codexLinks = require("../codex-link-contract.js");
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
-
-function run() {
-  assert(
+async function run() {
+  assert.equal(
     codexLinks.buildCodexHomeUrl({
       basePath: '/osrs-clone-codex/wiki/',
       baseUrl: 'https://pazneria.github.io',
       from: 'arcade',
-      returnTo: 'https://pazneria.github.io/arcade/'
-    }) === 'https://pazneria.github.io/osrs-clone-codex/wiki/?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F',
-    'arcade Guide must use the published OSRS field guide and preserve return context'
+      returnTo: 'https://pazneria.github.io/arcade/',
+    }),
+    'https://pazneria.github.io/osrs-clone-codex/wiki/?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F',
+    'Guide must use the published OSRS field guide and preserve return context',
   );
-  assert(
-    codexLinks.normalizeCodexRepoName("/osrs-clone-codex/") === "osrs-clone-codex",
-    "arcade codex repo name normalization mismatch"
+  assert.equal(codexLinks.normalizeCodexRepoName('/osrs-clone-codex/'), 'osrs-clone-codex');
+  assert.equal(
+    codexLinks.buildCodexHomePath({ repoName: 'osrs-clone-codex', from: 'arcade' }),
+    '/osrs-clone-codex/?from=arcade',
   );
-  assert(
-    codexLinks.buildCodexHomePath({ repoName: "osrs-clone-codex", from: "arcade" }) === "/osrs-clone-codex/?from=arcade",
-    "arcade codex home path mismatch"
+  assert.equal(
+    codexLinks.buildCodexEntityPath('item', 'bronze_axe', { repoName: 'osrs-clone-codex', from: 'arcade' }),
+    '/osrs-clone-codex/items/bronze_axe?from=arcade',
   );
-  assert(
-    codexLinks.buildCodexEntityPath("item", "bronze_axe", {
-      repoName: "osrs-clone-codex",
-      from: "arcade"
-    }) === "/osrs-clone-codex/items/bronze_axe?from=arcade",
-    "arcade codex item path mismatch"
+  assert.equal(
+    codexLinks.buildCodexEntityUrl('world', 'starter_town', {
+      repoName: 'osrs-clone-codex',
+      baseUrl: 'https://pazneria.github.io/',
+      from: 'arcade',
+      returnTo: 'https://pazneria.github.io/arcade/',
+    }),
+    'https://pazneria.github.io/osrs-clone-codex/world/starter_town?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F',
   );
-  assert(
-    codexLinks.buildCodexEntityUrl("world", "starter_town", {
-      repoName: "osrs-clone-codex",
-      baseUrl: "https://pazneria.github.io/",
-      from: "arcade",
-      returnTo: "https://pazneria.github.io/arcade/"
-    }) === "https://pazneria.github.io/osrs-clone-codex/world/starter_town?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F",
-    "arcade codex world url mismatch"
+  assert.equal(
+    codexLinks.buildCodexHomeUrl({ repoName: 'osrs-clone-codex', baseUrl: 'https://pazneria.github.io/' }),
+    'https://pazneria.github.io/osrs-clone-codex/',
   );
-  assert(
-    codexLinks.buildCodexHomeUrl({
-      repoName: "osrs-clone-codex",
-      baseUrl: "https://pazneria.github.io/"
-    }) === "https://pazneria.github.io/osrs-clone-codex/",
-    "arcade codex repo home url mismatch"
-  );
-  assert(
-    codexLinks.getCodexRouteTemplates().skill === "/osrs-clone-codex/skills/:skillId",
-    "arcade codex route template mismatch"
-  );
+  assert.equal(codexLinks.getCodexRouteTemplates().skill, '/osrs-clone-codex/skills/:skillId');
 
-  const arcadeIndex = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  assert(arcadeIndex.includes("guideUrl"), "arcade index should expose optional guide metadata for OSRS Clone");
-  assert(arcadeIndex.includes("codexRepoName"), "arcade index should expose codex repo metadata for OSRS Clone");
-  assert(
-    arcadeIndex.includes("const publishedSiteOrigin = 'https://pazneria.github.io';"),
-    "arcade codex links should target the published site origin"
-  );
-  assert(
-    arcadeIndex.includes("function getLocalSwordGuysDevUrl()"),
-    "arcade local Sword Guys cabinet should target the sibling dev server"
-  );
-  assert(
-    arcadeIndex.includes("url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`)"),
-    "arcade Sword Guys cabinet should resolve local and published URLs from one cabinet entry"
-  );
-  assert(
-    arcadeIndex.includes("function getLocalRaceGptDevUrl()"),
-    "arcade local RaceGPT cabinet should target the sibling dev server"
-  );
-  assert(
-    arcadeIndex.includes("return `http://${hostname}:5178/`;"),
-    "arcade local RaceGPT cabinet should use the RaceGPT dev server port"
-  );
-  assert(
-    arcadeIndex.includes("url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`)"),
-    "arcade RaceGPT cabinet should resolve local and published URLs from one cabinet entry"
-  );
-  assert(
-    !arcadeIndex.includes("url: 'https://example.com/racegpt'"),
-    "arcade RaceGPT cabinet should not point at the placeholder URL"
-  );
-  assert(arcadeIndex.includes("createCodexPedestal"), "arcade index should define a codex pedestal builder");
-  assert(arcadeIndex.includes("codex-open"), "arcade index should expose a codex-open interaction");
-  assert(arcadeIndex.includes("fallback-card-actions"), "arcade mobile fallback should expose grouped launch/codex actions");
+  const { catalog: { buildArcadeCatalog, PUBLISHED_SITE_ORIGIN } } = await loadArcadeModules();
+  const publishedLocation = { hostname: 'pazneria.github.io', href: 'https://pazneria.github.io/arcade/' };
+  const games = buildArcadeCatalog(publishedLocation, codexLinks);
+  assert.equal(PUBLISHED_SITE_ORIGIN, 'https://pazneria.github.io');
+  assert.deepEqual(games.map(({ id, name }) => [id, name]), [
+    ['racegpt', 'RaceGPT'], ['osrs-clone', 'OSRS Clone'], ['sword-guys', 'Sword Guys'],
+    ['ghost-signal', 'Ghost Signal'], ['night-courier', 'Night Courier'], ['rebound-relay', 'Rebound Relay'],
+  ], 'All six cabinet identities and their stored-index order stay intact');
+  assert.deepEqual(games.map(({ description }) => description), [
+    'Run clean test-track time attacks, chase model ghosts, and try to beat the benchmark board.',
+    'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
+    'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
+    'Tune into other realities and banish glitches in a haunted synthwave control room.',
+    'Slam through midnight streets delivering impossible payloads before dawn.',
+    'Drive your hoverbug, knock the ball into the live gate, and chase clean shots in a 90-second run.',
+  ]);
+  assert.deepEqual(games.map(({ thumbnail }) => thumbnail), [
+    './assets/cabinet-screens/racegpt-title.webp', './assets/cabinet-screens/osrs-clone-title.webp',
+    './assets/cabinet-screens/sword-guys-title.webp', './assets/cabinet-screens/ghost-signal-title.webp',
+    './assets/cabinet-screens/night-courier-title.webp', './assets/cabinet-screens/rebound-relay-title.webp',
+  ]);
+  assert.deepEqual(games.map(({ url }) => url), [
+    'https://pazneria.github.io/racegpt/', 'https://pazneria.github.io/osrs-clone/',
+    'https://pazneria.github.io/sword-guys/', undefined, undefined, 'https://pazneria.github.io/rebound-relay/',
+  ]);
+  assert.deepEqual(games.map(({ comingSoon }) => Boolean(comingSoon)), [false, false, false, true, true, false]);
+  assert.equal(games.filter(({ guideUrl }) => guideUrl).length, 4);
+  assert.equal(games[1].codexRepoName, 'osrs-clone-codex');
+  assert.equal(games[1].guideUrl,
+    'https://pazneria.github.io/osrs-clone-codex/wiki/?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F');
+  assert.equal(games[1].codexWorldUrl,
+    'https://pazneria.github.io/osrs-clone-codex/world/starter_town?from=arcade&return=https%3A%2F%2Fpazneria.github.io%2Farcade%2F');
+  for (const index of [3, 4]) {
+    assert.equal(games[index].url, undefined);
+    assert.equal(games[index].guideUrl, undefined);
+  }
 
-  console.log("Arcade codex link contract checks passed.");
+  for (const hostname of ['localhost', '127.0.0.1', '::1', '[::1]', '']) {
+    const href = hostname === '' ? 'file:///arcade/index.html' : 'http://127.0.0.1:5510/?view=games#osrs';
+    const local = buildArcadeCatalog({ hostname, href }, codexLinks);
+    const expectedHost = hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
+    assert.equal(local[0].url, `http://${expectedHost}:5178/`);
+    assert.equal(local[2].url, `http://${expectedHost}:5179/`);
+    assert.equal(local[1].url, games[1].url);
+    assert.equal(local[5].url, games[5].url);
+    assert.equal(new URL(local[1].guideUrl).searchParams.get('return'), href);
+    assert.equal(new URL(local[1].codexWorldUrl).searchParams.get('return'), href);
+  }
+  const otherHost = buildArcadeCatalog({ hostname: 'preview.example', href: 'https://preview.example/arcade/' }, codexLinks);
+  assert.equal(otherHost[0].url, games[0].url);
+  assert.equal(otherHost[2].url, games[2].url);
+  const noCodexApi = buildArcadeCatalog(publishedLocation);
+  assert.equal(noCodexApi[1].guideUrl, 'https://pazneria.github.io/osrs-clone-codex/wiki/');
+  assert.equal(noCodexApi[1].codexWorldUrl, 'https://pazneria.github.io/osrs-clone-codex/world/starter_town');
+  assert(Object.isFrozen(games) && games.every(Object.isFrozen), 'Scene placement cannot mutate catalog routes');
+  const unsafeCodexApi = {
+    buildCodexHomeUrl: () => 'javascript:alert(1)',
+    buildCodexEntityUrl: () => 'https://pazneria.github.io/osrs-clone-codex/world/starter_town',
+  };
+  assert.equal(buildArcadeCatalog(publishedLocation, unsafeCodexApi)[1].guideUrl, null);
+  console.log('Arcade catalog and Codex link contract checks passed.');
 }
 
-try {
-  run();
-} catch (error) {
-  console.error(error.message);
-  process.exit(1);
+if (require.main === module) {
+  run().catch((error) => { console.error(error); process.exitCode = 1; });
 }
+module.exports = { run };

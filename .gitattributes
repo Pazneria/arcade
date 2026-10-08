@@ -1,0 +1,3 @@
+# Keep exact upstream dependency bytes so recorded SHA256 hashes survive checkout.
+assets/vendor/three.module.js -text -whitespace
+assets/vendor/THREE-LICENSE.txt -text
