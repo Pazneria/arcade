@@ -157,7 +157,7 @@ async function assertDirectory(page,failed,published=false) {
   assert.equal(await page.locator('#cabinet-actions').isVisible(),false);
   if(failed){assert.match(await page.locator('#directory-message').innerText(),/unavailable/);assert.equal(await page.locator('#return-to-3d').isVisible(),false);}
   for(const name of ['Home','Exit Arcade'])assert.equal(await page.getByRole('link',{name,exact:true}).getAttribute('href'),'/');
-  assert.deepEqual(await page.locator('#site-nav a').evaluateAll(links=>links.map(a=>a.getAttribute('href'))),['/','/lab/lab-space/','/library/']);
+  assert.deepEqual(await page.locator('#site-nav a').evaluateAll(links=>links.map(a=>a.getAttribute('href'))),['/','/lab/lab-space/','/library/','./versions/']);
   assert.equal(await page.locator('a[href*="example.com"],a[href="undefined"]').count(),0);
 }
 async function ready(page) {

@@ -24,7 +24,7 @@ class Surface {
 }
 class ElementSurface extends Surface { closest() { return null; } }
 
-function harness(THREE, createArcadeController, failureStage = null) {
+function harness(THREE, createArcadeController, failureStage = null, callbacks = {}) {
   const windowSurface = new Surface(), documentSurface = new Surface(), canvas = new ElementSurface();
   const children = new Set(), frames = new Map(), pauses = [], failures = [];
   const stats = { renders: 0, worldDisposals: 0, rendererDisposals: 0, contextLosses: 0,
@@ -60,7 +60,7 @@ function harness(THREE, createArcadeController, failureStage = null) {
     anchors: [{ gameIndex: 0, approach: new THREE.Vector3(0, 0, -2), position: new THREE.Vector3(0, 1.2, -3) }],
     targetMeshes: [], colliders: [], animate() {}, dispose() { stats.worldDisposals++; } };
   const create = () => createArcadeController(THREE, renderer, world, {
-    container: { append(node) { children.add(node); } }, onTarget() {}, onInspect() {}, onHome() {},
+    container: { append(node) { children.add(node); } }, onTarget() {}, onInspect() {}, onHome: callbacks.onHome || (() => {}),
     onPause() { pauses.push(true); }, onFailure(error) { failures.push(error); },
   });
   return { create, renderer, world, stats, canvas, window: windowSurface, document: documentSurface,
@@ -80,6 +80,21 @@ async function run() {
   const source = fs.readFileSync(path.join(root, 'assets/arcade-controller.js'), 'utf8')
     .replace(/(['"])\.\/arcade-motion\.js\1/g, JSON.stringify(motionUrl));
   const { createArcadeController } = await import(moduleUrl(source));
+  const { navigation } = await require('./load-arcade-modules')();
+
+  for (const [id,x,z,fromZ,yaw,width] of [['home-entrance',0,-0.02,-0.95,Math.PI,1.72],['home-exit',-2.75,-10.88,-9,0,1]]) {
+    const visited=[]; let controller,h;
+    h=harness(THREE,createArcadeController,null,{onHome:()=>navigation.navigateAfterDispose('/',{
+      dispose:()=>controller.dispose(),navigate:destination=>visited.push({destination,listeners:h.listenerCount,frames:h.frames.size,canvas:h.children.size,world:h.stats.worldDisposals,renderer:h.stats.rendererDisposals,pointerLock:h.document.pointerLockElement})
+    })});
+    const anchor={id,kind:'home',position:new THREE.Vector3(x,1.3,z)};
+    const hit=new THREE.Mesh(new THREE.BoxGeometry(width,2.5,.15),new THREE.MeshBasicMaterial({visible:false}));
+    hit.position.copy(anchor.position);hit.userData.anchor=anchor;h.world.scene.add(hit);h.world.targetMeshes.push(hit);
+    controller=h.create();Object.assign(controller.player,{x,z:fromZ,yaw});controller.resume();h.tick(100);
+    await controller.capture();h.window.emit('keydown',{code:'KeyE',repeat:false});
+    await Promise.resolve();
+    assert.deepEqual(visited,[{destination:'/',listeners:0,frames:0,canvas:0,world:1,renderer:1,pointerLock:null}],`${id} must navigate Home in the same page after releasing every scene resource`);
+  }
 
   for (const failureStage of ['setSize', 'render']) {
     const h = harness(THREE, createArcadeController, failureStage);

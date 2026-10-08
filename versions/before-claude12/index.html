@@ -1,0 +1,3293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Arcade Matrix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&family=Rajdhani:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #05070d;
+        --accent-primary: #0ff0fc;
+        --accent-secondary: #ff4de1;
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.65);
+        --panel-bg: rgba(5, 7, 13, 0.82);
+        --panel-border: rgba(15, 240, 252, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: "Rajdhani", system-ui, sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at center, rgba(15, 240, 252, 0.12), transparent 55%),
+          radial-gradient(circle at 20% 20%, rgba(255, 77, 225, 0.18), transparent 40%), var(--bg);
+        overflow: hidden;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      canvas {
+        display: block;
+      }
+
+      #scene-container {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      #overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 1.5rem;
+        z-index: 10;
+      }
+
+      .neon-button {
+        pointer-events: auto;
+        background: linear-gradient(120deg, rgba(15, 240, 252, 0.15), rgba(255, 77, 225, 0.1));
+        border: 1px solid var(--panel-border);
+        border-radius: 999px;
+        color: var(--text);
+        font-family: "Orbitron", system-ui, sans-serif;
+        font-size: 0.95rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        transition: transform 180ms ease, box-shadow 180ms ease;
+        box-shadow: 0 0 0.75rem rgba(15, 240, 252, 0.25);
+        text-decoration: none;
+      }
+
+      .neon-button:hover,
+      .neon-button:focus-visible {
+        transform: translateY(-2px);
+        box-shadow: 0 0 1.5rem rgba(255, 77, 225, 0.4);
+        outline: none;
+      }
+
+      #mobile-fallback {
+        position: fixed;
+        inset: 0;
+        padding: clamp(1.5rem, 5vw, 3rem);
+        display: none;
+        flex-direction: column;
+        gap: 1.5rem;
+        background: rgba(5, 7, 13, 0.94);
+        color: var(--text);
+        overflow-y: auto;
+        z-index: 20;
+      }
+
+      #mobile-fallback.visible {
+        display: flex;
+      }
+
+      .fallback-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 1rem;
+      }
+
+      .fallback-card {
+        background: rgba(10, 14, 24, 0.85);
+        border: 1px solid rgba(15, 240, 252, 0.3);
+        border-radius: 14px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .fallback-card h2 {
+        margin: 0;
+        font-family: "Orbitron", system-ui, sans-serif;
+        font-size: 1.1rem;
+      }
+
+      .fallback-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .fallback-card a {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-family: "Orbitron", system-ui, sans-serif;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 240, 252, 0.6);
+        text-decoration: none;
+      }
+
+      .fallback-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      #mobile-fallback nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      #touch-controls {
+        --accent-primary: #f0d9a8;
+        position: fixed;
+        inset: 0;
+        z-index: 12;
+        pointer-events: none;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+          max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      #touch-controls[hidden], #return-to-3d[hidden], #touch-guide[hidden] { display: none; }
+      .guide-icon { color: #d8b06a; flex: none; }
+      .touch-toolbar, .touch-actions, .touch-browse { display: flex; gap: 8px; }
+      .touch-toolbar { justify-content: space-between; }
+      #touch-controls button, #touch-controls a {
+        pointer-events: auto;
+        touch-action: none;
+        user-select: none;
+        min-height: 44px;
+        min-width: 44px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 12px;
+        background: rgba(26, 18, 12, 0.94);
+        color: var(--text);
+        font: 600 16px "Rajdhani", system-ui, sans-serif;
+        padding: 10px 16px;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #touch-controls button:focus-visible, #touch-controls a:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 3px;
+      }
+      #touch-controls button:disabled, #touch-controls a:not([href]) { opacity: 0.55; cursor: default; }
+      #touch-controls button:active { background: #4a321e; }
+      .touch-panel {
+        max-width: 480px;
+        width: 100%;
+        align-self: center;
+        pointer-events: auto;
+        padding: 12px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 16px;
+        background: rgba(26, 18, 12, 0.96);
+      }
+      #touch-title { margin: 0 0 4px; font-size: 20px; }
+      #touch-hint { margin: 0 0 10px; font-size: 14px; color: var(--muted); }
+      .touch-actions button, .touch-actions a { flex: 1; }
+      .touch-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+      .touch-browse { margin-top: 8px; }
+      .touch-browse button { flex: 1; }
+      .touch-mode #scene-container canvas { touch-action: none; }
+      @media (max-height: 500px) {
+        .touch-panel { max-width: 560px; padding: 8px; }
+        #touch-title { font-size: 17px; }
+        #touch-hint { margin-bottom: 4px; }
+        .touch-browse { margin-top: 4px; }
+        #touch-controls button { padding: 6px 10px; }
+      }
+
+      /* Desktop cabinet strip: shown while inspecting, or when keyboard focus enters it. */
+      #cabinet-actions {
+        position: fixed;
+        left: 50%;
+        bottom: 1.25rem;
+        transform: translateX(-50%);
+        z-index: 12;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        max-width: min(92vw, 560px);
+        padding: 10px 12px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 14px;
+        background: rgba(26, 18, 12, 0.94);
+      }
+      #cabinet-actions[hidden], #cabinet-actions [hidden] { display: none; }
+      #cabinet-actions:not(.is-inspecting):not(:focus-within) {
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      #cabinet-actions-title { margin: 0; font-size: 18px; font-weight: 700; }
+      .cabinet-actions-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+      #cabinet-actions button, #cabinet-actions a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 40px;
+        padding: 8px 16px;
+        border: 1px solid rgba(181, 138, 76, 0.7);
+        border-radius: 10px;
+        background: rgba(42, 26, 16, 0.96);
+        color: #f1e2c2;
+        font: 600 16px "Rajdhani", system-ui, sans-serif;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      #cabinet-actions button:hover:not(:disabled), #cabinet-actions a[href]:hover { background: #4a321e; }
+      #cabinet-actions button:focus-visible, #cabinet-actions a:focus-visible {
+        outline: 2px solid #f0d9a8;
+        outline-offset: 3px;
+      }
+      #cabinet-actions button:disabled, #cabinet-actions a:not([href]) { opacity: 0.55; cursor: default; }
+      #cabinet-actions .cabinet-browse button { min-height: 32px; padding: 4px 12px; font-size: 14px; }
+
+      @media (max-width: 768px) {
+        body {
+          overflow-y: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="scene-container"></div>
+    <div id="overlay"></div>
+
+    <section id="touch-controls" aria-label="Arcade touch controls" hidden>
+      <nav class="touch-toolbar" aria-label="Arcade navigation">
+        <button id="touch-directory" type="button">Games</button>
+        <a href="/">Home / Exit</a>
+      </nav>
+      <div class="touch-panel">
+        <h2 id="touch-title" role="status">Explore the arcade</h2>
+        <p id="touch-hint">Hold to move · drag to look · tap a cabinet</p>
+        <div class="touch-actions">
+          <button id="touch-forward" type="button" aria-label="Move forward">↑ Forward</button>
+          <button id="touch-backward" type="button" aria-label="Move backward">↓ Backward</button>
+          <button id="touch-play" type="button" hidden>Launch</button>
+          <a id="touch-guide" hidden aria-disabled="true"><svg class="guide-icon" aria-hidden="true" width="18" height="18" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 4.8 3 2 3v9c2.8 0 4.8.4 6 1.5 1.2-1.1 3.2-1.5 6-1.5V3c-2.8 0-4.8.4-6 1.5zm0 0v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Guide</a>
+          <button id="touch-back" type="button" hidden>Back to aisle</button>
+        </div>
+        <div class="touch-browse">
+          <button id="touch-previous" type="button">‹ Previous</button>
+          <button id="touch-next" type="button">Next cabinet ›</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="cabinet-actions" aria-label="Cabinet actions" hidden>
+      <p id="cabinet-actions-title" aria-live="polite">Explore the arcade</p>
+      <div class="cabinet-actions-row">
+        <button id="cabinet-play" type="button" hidden>Play</button>
+        <a id="cabinet-guide" hidden aria-disabled="true"><svg class="guide-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M8 4.5C6.8 3.4 4.8 3 2 3v9c2.8 0 4.8.4 6 1.5 1.2-1.1 3.2-1.5 6-1.5V3c-2.8 0-4.8.4-6 1.5zm0 0v9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Guide</a>
+        <button id="cabinet-back" type="button" aria-label="Back to aisle" hidden>Back</button>
+      </div>
+      <div class="cabinet-actions-row cabinet-browse">
+        <button id="cabinet-previous" type="button">‹ Previous cabinet</button>
+        <button id="cabinet-next" type="button">Next cabinet ›</button>
+      </div>
+    </section>
+
+    <section id="mobile-fallback">
+      <h1>Arcade Cabinet Directory</h1>
+      <p id="directory-message" role="status">
+        Loading the 3D arcade. You can also launch available games below.
+      </p>
+      <div class="fallback-grid" id="fallback-grid"></div>
+      <nav aria-label="Site navigation">
+        <button id="return-to-3d" class="neon-button" type="button" hidden>Return to 3D arcade</button>
+        <a class="neon-button" href="/">Home</a>
+        <a class="neon-button" href="/">Exit Arcade</a>
+      </nav>
+    </section>
+
+    <noscript>
+      <section id="fallback-noscript" style="padding: 2rem; color: white;">
+        <h1>JavaScript Disabled</h1>
+        <p>
+          Enable JavaScript to access the interactive arcade selection. You can still view game
+          repositories from the project homepage.
+        </p>
+      </section>
+    </noscript>
+
+    <script src="./codex-link-contract.js"></script>
+    <script type="module">
+      let THREE;
+
+      const sceneContainer = document.getElementById('scene-container');
+      const directoryMessage = document.getElementById('directory-message');
+      const mobileFallback = document.getElementById('mobile-fallback');
+      const fallbackGrid = document.getElementById('fallback-grid');
+      const touchControls = document.getElementById('touch-controls');
+      const returnTo3d = document.getElementById('return-to-3d');
+      const cabinetActions = document.getElementById('cabinet-actions');
+      const arcadeCodexLinks = window.ArcadeCodexLinks;
+
+      const supportsWebGL = (() => {
+        try {
+          const canvas = document.createElement('canvas');
+          return !!(
+            window.WebGLRenderingContext &&
+            (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+          );
+        } catch (err) {
+          return false;
+        }
+      })();
+
+      const coarsePointerQuery = window.matchMedia('(pointer: coarse)');
+
+      function usesTouchControls() {
+        return coarsePointerQuery.matches || window.innerWidth < 768;
+      }
+
+      let layoutMode = null;
+      let arcadeHasInitialized = false;
+      let arcadeCleanup = null;
+      let engineFailed = !supportsWebGL;
+      let directoryRequested = false;
+      const RETURN_STATE_KEY = 'arcade:return-state:v1';
+      const RETURN_STATE_MAX_AGE_MS = 1000 * 60 * 60;
+
+      function readReturnState() {
+        try {
+          const raw = window.sessionStorage.getItem(RETURN_STATE_KEY);
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed.cabinetIndex !== 'number') return null;
+          if (!Number.isFinite(parsed.cabinetIndex)) return null;
+          if (typeof parsed.savedAt !== 'number' || !Number.isFinite(parsed.savedAt)) return null;
+          if (Date.now() - parsed.savedAt > RETURN_STATE_MAX_AGE_MS) return null;
+          return parsed;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function writeReturnState(cabinetIndex) {
+        try {
+          window.sessionStorage.setItem(
+            RETURN_STATE_KEY,
+            JSON.stringify({
+              cabinetIndex,
+              savedAt: Date.now(),
+            })
+          );
+        } catch (error) {
+          // Ignore storage errors (private mode, quota, etc.).
+        }
+      }
+
+      function clearReturnState() {
+        try {
+          window.sessionStorage.removeItem(RETURN_STATE_KEY);
+        } catch (error) {
+          // Ignore storage errors.
+        }
+      }
+
+      const publishedSiteOrigin = 'https://pazneria.github.io';
+
+      function getLocalSwordGuysDevUrl() {
+        const hostname = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
+        return `http://${hostname}:5179/`;
+      }
+
+      function getLocalRaceGptDevUrl() {
+        const hostname = window.location.hostname === '127.0.0.1' ? '127.0.0.1' : 'localhost';
+        return `http://${hostname}:5178/`;
+      }
+
+      function isLocalArcadeOrigin() {
+        return ['localhost', '127.0.0.1', '::1', ''].includes(window.location.hostname);
+      }
+
+      function resolveArcadeGameUrl(localUrl, publishedUrl) {
+        return isLocalArcadeOrigin() ? localUrl : publishedUrl;
+      }
+
+      // Optional `guideUrl` drives every Guide action: the 3D cabinet button, the
+      // guide lectern, the touch/desktop action strips, and the HTML directory.
+      // Only set it for a confirmed, published wiki; games without one show no Guide.
+      const games = [
+        {
+          name: 'RaceGPT',
+          description: 'Run clean test-track time attacks, chase model ghosts, and try to beat the benchmark board.',
+          url: resolveArcadeGameUrl(getLocalRaceGptDevUrl(), `${publishedSiteOrigin}/racegpt/`),
+          guideUrl: `${publishedSiteOrigin}/racegpt/wiki/`,
+          thumbnail: './assets/cabinet-screens/racegpt-title.webp',
+        },
+        {
+          name: 'OSRS Clone',
+          description: 'Step into a nostalgic low-poly grind with skilling, inventory flow, and classic MMO vibes.',
+          url: 'https://pazneria.github.io/osrs-clone/',
+          codexRepoName: 'osrs-clone-codex',
+          guideUrl: arcadeCodexLinks
+            ? arcadeCodexLinks.buildCodexHomeUrl({
+                basePath: '/osrs-clone-codex/wiki/',
+                baseUrl: publishedSiteOrigin,
+                from: 'arcade',
+                returnTo: window.location.href,
+              })
+            : `${publishedSiteOrigin}/osrs-clone-codex/wiki/`,
+          codexWorldUrl: arcadeCodexLinks
+            ? arcadeCodexLinks.buildCodexEntityUrl('world', 'starter_town', {
+                repoName: 'osrs-clone-codex',
+                baseUrl: publishedSiteOrigin,
+                from: 'arcade',
+                returnTo: window.location.href,
+              })
+            : `${publishedSiteOrigin}/osrs-clone-codex/world/starter_town`,
+          thumbnail: './assets/cabinet-screens/osrs-clone-title.webp',
+        },
+        {
+          name: 'Sword Guys',
+          description: 'Team up with your blade-slinging crew to carve through waves of neon rivals and claim the arena.',
+          url: resolveArcadeGameUrl(getLocalSwordGuysDevUrl(), `${publishedSiteOrigin}/sword-guys/`),
+          guideUrl: `${publishedSiteOrigin}/sword-guys/wiki/`,
+          thumbnail: './assets/cabinet-screens/sword-guys-title.webp',
+        },
+        {
+          name: 'Ghost Signal',
+          description: 'Tune into other realities and banish glitches in a haunted synthwave control room.',
+          comingSoon: true,
+          thumbnail: './assets/cabinet-screens/ghost-signal-title.webp',
+        },
+        {
+          name: 'Night Courier',
+          description: 'Slam through midnight streets delivering impossible payloads before dawn.',
+          comingSoon: true,
+          thumbnail: './assets/cabinet-screens/night-courier-title.webp',
+        },
+        {
+          name: 'Rebound Relay',
+          description: 'Drive your hoverbug, knock the ball into the live gate, and chase clean shots in a 90-second run.',
+          url: `${publishedSiteOrigin}/rebound-relay/`,
+          guideUrl: `${publishedSiteOrigin}/rebound-relay/wiki/`,
+          thumbnail: './assets/cabinet-screens/rebound-relay-title.webp',
+        },
+      ];
+
+      // Guides are public HTTPS destinations, never script URLs or credentialed links.
+      // The registry is authored locally; keep a safe boundary for future entries.
+      games.forEach((game) => {
+        if (!game.guideUrl) return;
+        try {
+          const url = new URL(game.guideUrl);
+          game.guideUrl = url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+        } catch {
+          game.guideUrl = null;
+        }
+      });
+      const guideIcon = document.querySelector('#touch-guide .guide-icon');
+
+      function buildMobileDirectory() {
+        // Keep the same links across resize events so keyboard focus is preserved.
+        if (fallbackGrid.childElementCount) {
+          mobileFallback.classList.add('visible');
+          return;
+        }
+        games.forEach((game) => {
+          const card = document.createElement('article');
+          card.className = 'fallback-card';
+          const title = document.createElement('h2');
+          title.textContent = game.name;
+          const description = document.createElement('p');
+          description.textContent = game.description;
+          const actions = document.createElement('div');
+          actions.className = 'fallback-card-actions';
+          const addLink = (url, label) => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = label;
+            actions.appendChild(link);
+            return link;
+          };
+          if (game.comingSoon) {
+            const availability = document.createElement('span');
+            availability.textContent = 'Coming soon';
+            actions.appendChild(availability);
+          } else if (game.url) {
+            addLink(game.url, 'Launch');
+          }
+          if (game.guideUrl) {
+            const link = addLink(game.guideUrl, 'Guide ');
+            link.setAttribute('aria-label', `Open ${game.name} guide (opens in new tab)`);
+            link.prepend(guideIcon.cloneNode(true));
+            const arrow = document.createElement('span');
+            arrow.setAttribute('aria-hidden', 'true');
+            arrow.textContent = '↗';
+            link.appendChild(arrow);
+          }
+          card.append(title, description, actions);
+          fallbackGrid.appendChild(card);
+        });
+        mobileFallback.classList.add('visible');
+      }
+
+      function maybeToggleLayout() {
+        document.body.classList.toggle('touch-mode', usesTouchControls());
+        if (engineFailed) {
+          buildMobileDirectory();
+          directoryMessage.textContent = 'The 3D arcade is unavailable. You can still launch available games below.';
+          layoutMode = 'directory';
+          touchControls.hidden = true;
+          cabinetActions.hidden = true;
+          returnTo3d.hidden = true;
+          return;
+        }
+        if (directoryRequested) {
+          buildMobileDirectory();
+          directoryMessage.textContent = 'Launch a game below, or return to explore the 3D arcade.';
+          touchControls.hidden = true;
+          cabinetActions.hidden = true;
+          returnTo3d.hidden = !arcadeHasInitialized;
+          layoutMode = 'directory';
+          return;
+        }
+
+        // Keep the directory usable while the engine loads.
+        if (!THREE) return;
+
+        if (layoutMode !== 'arcade' || !sceneContainer.firstChild) {
+          if (!arcadeHasInitialized || !sceneContainer.firstChild) {
+            try {
+              arcadeCleanup = initArcade();
+              arcadeHasInitialized = true;
+            } catch (error) {
+              console.warn('Unable to initialize the 3D arcade.', error);
+              sceneContainer.replaceChildren();
+              engineFailed = true;
+              maybeToggleLayout();
+              return;
+            }
+          }
+          layoutMode = 'arcade';
+        }
+        mobileFallback.classList.remove('visible');
+        touchControls.hidden = !usesTouchControls();
+        cabinetActions.hidden = usesTouchControls();
+        returnTo3d.hidden = false;
+      }
+
+      const handlePointerPreferenceChange = () => maybeToggleLayout();
+
+      buildMobileDirectory();
+      maybeToggleLayout();
+
+      if (typeof coarsePointerQuery.addEventListener === 'function') {
+        coarsePointerQuery.addEventListener('change', handlePointerPreferenceChange);
+      } else if (typeof coarsePointerQuery.addListener === 'function') {
+        coarsePointerQuery.addListener(handlePointerPreferenceChange);
+      }
+
+      window.addEventListener('resize', maybeToggleLayout);
+
+      if (supportsWebGL) {
+        import('https://unpkg.com/three@0.157.0/build/three.module.js').then(
+          (engine) => {
+            THREE = engine;
+            maybeToggleLayout();
+          },
+          (error) => {
+            console.warn('Unable to load the 3D arcade engine.', error);
+            engineFailed = true;
+            maybeToggleLayout();
+          }
+        );
+      }
+
+      function initArcade() {
+        const renderer = new THREE.WebGLRenderer({ antialias: !usesTouchControls(), alpha: true });
+        function updateRenderSize() {
+          const pixelBudget = usesTouchControls() ? 900000 : 2200000;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, usesTouchControls() ? 1.25 : 1.5,
+            Math.sqrt(pixelBudget / (window.innerWidth * window.innerHeight))));
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        updateRenderSize();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        sceneContainer.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x03060d);
+        scene.fog = new THREE.FogExp2(0x03060d, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 120);
+        const CAMERA_START_POSITION = new THREE.Vector3(0, 2.4, 0);
+        // Keep the camera height controlled solely by the rig so it remains at 2.4m
+        // when focusing on a cabinet.
+        camera.position.set(0, 0, 0);
+
+        const cameraRig = new THREE.Group();
+        cameraRig.position.copy(CAMERA_START_POSITION);
+        cameraRig.add(camera);
+        scene.add(cameraRig);
+
+        const DEFAULT_LOOK_TARGET = new THREE.Vector3(0, 2.4, -999);
+        const lookTarget = DEFAULT_LOOK_TARGET.clone();
+        const desiredLookTarget = DEFAULT_LOOK_TARGET.clone();
+
+        // Art direction: a mid-century arcade hall. Walnut wainscot, warm plaster,
+        // oak parquet, dark ceiling coffers, low brass pendants. Light is warm and
+        // sparse; colour comes from the cabinets themselves.
+        const ROOM = { halfWidth: 9.2, height: 6.2, nearZ: 16, farZ: -7 - (games.length - 1) * 6.5 - 6.5 * 1.15 };
+        const touchQuality = usesTouchControls();
+
+        function makeCanvasTexture(w, h, draw, repeatX = 1, repeatY = 1) {
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (ctx) draw(ctx, w, h);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+          texture.repeat.set(repeatX, repeatY);
+          texture.anisotropy = touchQuality ? 1 : 4;
+          return texture;
+        }
+
+        // Herringbone-ish oak parquet in 2 tones with a soft grain.
+        const floorTexture = makeCanvasTexture(256, 256, (ctx, w, h) => {
+          ctx.fillStyle = '#5a3a22';
+          ctx.fillRect(0, 0, w, h);
+          const plankW = 32;
+          const plankH = 128;
+          for (let row = 0; row < 2; row += 1) {
+            for (let col = 0; col < 8; col += 1) {
+              const tone = (col + row) % 2 === 0 ? [118, 78, 46] : [102, 66, 38];
+              const jitter = ((col * 37 + row * 91) % 17) - 8;
+              ctx.fillStyle = `rgb(${tone[0] + jitter}, ${tone[1] + jitter * 0.7}, ${tone[2] + jitter * 0.4})`;
+              ctx.fillRect(col * plankW + 1, row * plankH + ((col % 2) * 64) % plankH + 1, plankW - 2, plankH - 2);
+              ctx.fillRect(col * plankW + 1, row * plankH + ((col % 2) * 64) % plankH - plankH + 1, plankW - 2, plankH - 2);
+            }
+          }
+          ctx.globalAlpha = 0.12;
+          ctx.strokeStyle = '#2b180c';
+          for (let i = 0; i < 90; i += 1) {
+            const x = (i * 53) % w;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x + ((i % 5) - 2), h);
+            ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+        }, 9, 28);
+
+        // Walnut wainscot: vertical boards with a routed rail.
+        const wainscotTexture = makeCanvasTexture(256, 128, (ctx, w, h) => {
+          ctx.fillStyle = '#3b2415';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 8; i += 1) {
+            ctx.fillStyle = i % 2 ? '#442a19' : '#3f2717';
+            ctx.fillRect(i * 32 + 1, 0, 30, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fillRect(i * 32, 0, 1, h);
+          }
+          ctx.fillStyle = 'rgba(255, 214, 160, 0.08)';
+          ctx.fillRect(0, 6, w, 3);
+        }, 18, 1);
+
+        // Warm lime plaster with faint trowel mottling.
+        const plasterTexture = makeCanvasTexture(128, 128, (ctx, w, h) => {
+          ctx.fillStyle = '#b89c7d';
+          ctx.fillRect(0, 0, w, h);
+          for (let i = 0; i < 220; i += 1) {
+            const x = (i * 71) % w;
+            const y = (i * 29) % h;
+            ctx.fillStyle = i % 2 ? 'rgba(255,240,215,0.05)' : 'rgba(80,50,30,0.05)';
+            ctx.beginPath();
+            ctx.ellipse(x, y, 10 + (i % 7), 4 + (i % 3), (i % 6) * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }, 10, 2);
+
+        const floorMaterial = new THREE.MeshStandardMaterial({ map: floorTexture, roughness: 0.62, metalness: 0.02 });
+        const wainscotMaterial = new THREE.MeshStandardMaterial({ map: wainscotTexture, roughness: 0.7, metalness: 0.02 });
+        const plasterMaterial = new THREE.MeshStandardMaterial({ map: plasterTexture, roughness: 0.95, metalness: 0 });
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x1f1813, roughness: 0.9 });
+        const beamMaterial = new THREE.MeshStandardMaterial({ color: 0x2c1c12, roughness: 0.75 });
+        const brassTrimMaterial = new THREE.MeshStandardMaterial({ color: 0xb58a4c, metalness: 0.75, roughness: 0.35 });
+        const runnerMaterial = new THREE.MeshStandardMaterial({ color: 0x5b1f1c, roughness: 0.96 });
+
+        const roomGroup = new THREE.Group();
+        scene.add(roomGroup);
+        const roomLength = ROOM.nearZ - ROOM.farZ;
+        const roomMidZ = (ROOM.nearZ + ROOM.farZ) / 2;
+
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.halfWidth * 2, roomLength), floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(0, -0.01, roomMidZ);
+        roomGroup.add(floor);
+
+        // Oxblood aisle runner with brass edge strips leads the eye to the exit.
+        const runner = new THREE.Mesh(new THREE.PlaneGeometry(2.6, roomLength - 3), runnerMaterial);
+        runner.rotation.x = -Math.PI / 2;
+        runner.position.set(0, 0.005, roomMidZ - 1.5);
+        roomGroup.add(runner);
+        [-1.35, 1.35].forEach((x) => {
+          const edge = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.012, roomLength - 3), brassTrimMaterial);
+          edge.position.set(x, 0.008, roomMidZ - 1.5);
+          roomGroup.add(edge);
+        });
+
+        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.halfWidth * 2, roomLength), ceilingMaterial);
+        ceiling.rotation.x = Math.PI / 2;
+        ceiling.position.set(0, ROOM.height, roomMidZ);
+        roomGroup.add(ceiling);
+
+        [-1, 1].forEach((sideSign) => {
+          const x = sideSign * ROOM.halfWidth;
+          const faceRot = -sideSign * Math.PI / 2;
+          const wain = new THREE.Mesh(new THREE.PlaneGeometry(roomLength, 1.3), wainscotMaterial);
+          wain.rotation.y = faceRot;
+          wain.position.set(x, 0.65, roomMidZ);
+          roomGroup.add(wain);
+          const plaster = new THREE.Mesh(new THREE.PlaneGeometry(roomLength, ROOM.height - 1.3), plasterMaterial);
+          plaster.rotation.y = faceRot;
+          plaster.position.set(x, 1.3 + (ROOM.height - 1.3) / 2, roomMidZ);
+          roomGroup.add(plaster);
+          const rail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.07, roomLength), brassTrimMaterial);
+          rail.position.set(x - sideSign * 0.04, 1.32, roomMidZ);
+          roomGroup.add(rail);
+          const skirting = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, roomLength), beamMaterial);
+          skirting.position.set(x - sideSign * 0.05, 0.09, roomMidZ);
+          roomGroup.add(skirting);
+        });
+
+        // Near wall closes the hall behind the entry point.
+        const nearWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.halfWidth * 2, ROOM.height), plasterMaterial);
+        nearWall.rotation.y = Math.PI;
+        nearWall.position.set(0, ROOM.height / 2, ROOM.nearZ);
+        roomGroup.add(nearWall);
+
+        // Far wall with a framed opening for the exit door (opening ~2.7m x 4.3m).
+        const farWallZ = ROOM.farZ - 0.2;
+        const openingHalf = 1.36;
+        const openingTop = 4.32;
+        const farSideWidth = ROOM.halfWidth - openingHalf;
+        [-1, 1].forEach((sideSign) => {
+          const piece = new THREE.Mesh(new THREE.PlaneGeometry(farSideWidth, ROOM.height), plasterMaterial);
+          piece.position.set(sideSign * (openingHalf + farSideWidth / 2), ROOM.height / 2, farWallZ);
+          roomGroup.add(piece);
+          const wainPiece = new THREE.Mesh(new THREE.PlaneGeometry(farSideWidth, 1.3), wainscotMaterial);
+          wainPiece.position.set(sideSign * (openingHalf + farSideWidth / 2), 0.65, farWallZ + 0.01);
+          roomGroup.add(wainPiece);
+        });
+        const lintel = new THREE.Mesh(new THREE.PlaneGeometry(openingHalf * 2, ROOM.height - openingTop), plasterMaterial);
+        lintel.position.set(0, openingTop + (ROOM.height - openingTop) / 2, farWallZ);
+        roomGroup.add(lintel);
+
+        // Structural bays: timber pilasters and ceiling beams sit between each
+        // cabinet slot (slots at z = -7 - 6.5n), framing every machine in its own alcove.
+        const bayZs = [];
+        for (let n = 0; n <= games.length; n += 1) bayZs.push(-7 + 3.25 - n * 6.5);
+        const pilasterGeometry = new THREE.BoxGeometry(0.42, ROOM.height, 0.5);
+        const beamGeometry = new THREE.BoxGeometry(ROOM.halfWidth * 2, 0.36, 0.42);
+        bayZs.forEach((z) => {
+          [-1, 1].forEach((sideSign) => {
+            const pilaster = new THREE.Mesh(pilasterGeometry, beamMaterial);
+            pilaster.position.set(sideSign * (ROOM.halfWidth - 0.21), ROOM.height / 2, z);
+            roomGroup.add(pilaster);
+          });
+          const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+          beam.position.set(0, ROOM.height - 0.18, z);
+          roomGroup.add(beam);
+        });
+
+        // Pendant lamps: brass shade + emissive diffuser over the aisle at each cabinet row.
+        // Only a few real lights; the rest of the "light" is baked into emissive diffusers.
+        const shadeGeometry = new THREE.ConeGeometry(0.34, 0.3, 20, 1, true);
+        const diffuserGeometry = new THREE.CircleGeometry(0.3, 20);
+        const cordGeometry = new THREE.CylinderGeometry(0.01, 0.01, 1.3, 4);
+        const shadeMaterial = new THREE.MeshStandardMaterial({ color: 0x8a6432, metalness: 0.8, roughness: 0.4, side: THREE.DoubleSide });
+        const diffuserMaterial = new THREE.MeshBasicMaterial({ color: 0xffd9a0, toneMapped: false });
+        const cordMaterial = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        for (let n = 0; n < games.length; n += 1) {
+          const z = -7 - n * 6.5;
+          const lamp = new THREE.Group();
+          lamp.position.set(0, ROOM.height - 1.5, z);
+          const cord = new THREE.Mesh(cordGeometry, cordMaterial);
+          cord.position.y = 0.8;
+          lamp.add(cord);
+          const shade = new THREE.Mesh(shadeGeometry, shadeMaterial);
+          lamp.add(shade);
+          const diffuser = new THREE.Mesh(diffuserGeometry, diffuserMaterial);
+          diffuser.rotation.x = Math.PI / 2;
+          diffuser.position.y = -0.14;
+          lamp.add(diffuser);
+          roomGroup.add(lamp);
+        }
+
+        const ambientLight = new THREE.AmbientLight(0xffe2c4, 0.28);
+        scene.add(ambientLight);
+
+        const hemi = new THREE.HemisphereLight(0xffe0b8, 0x2a1a10, 0.55);
+        scene.add(hemi);
+
+        // Three warm pools of light along the aisle (kept low for mobile shading cost).
+        const aisleLightCount = touchQuality ? 2 : 3;
+        for (let i = 0; i < aisleLightCount; i += 1) {
+          const t = aisleLightCount === 1 ? 0.5 : i / (aisleLightCount - 1);
+          const light = new THREE.PointLight(0xffc98a, 1.25, 22, 1.6);
+          light.position.set(0, ROOM.height - 1.8, THREE.MathUtils.lerp(-4, -33, t));
+          scene.add(light);
+        }
+
+        scene.background = new THREE.Color(0x140e0a);
+        scene.fog = new THREE.Fog(0x140e0a, 22, 58);
+
+        function createGlowTexture(coreRgba, midRgba, edgeRgba) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 256;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+          }
+          const gradient = ctx.createRadialGradient(128, 128, 12, 128, 128, 120);
+          gradient.addColorStop(0, coreRgba);
+          gradient.addColorStop(0.5, midRgba);
+          gradient.addColorStop(1, edgeRgba);
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 256, 256);
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function randomXOutsideWalkway(span, clearance = 7.2) {
+          const halfSpan = span * 0.5;
+          for (let attempt = 0; attempt < 14; attempt += 1) {
+            const x = (Math.random() - 0.5) * span;
+            if (Math.abs(x) >= clearance) {
+              return x;
+            }
+          }
+          const edge = clearance + Math.random() * Math.max(0.2, halfSpan - clearance);
+          return (Math.random() < 0.5 ? -1 : 1) * edge;
+        }
+
+        function addStarField(targetGroup, options = {}) {
+          const count = options.count ?? 1400;
+          const size = options.size ?? 0.07;
+          const color = options.color ?? 0xf2f6ff;
+          const opacity = options.opacity ?? 0.82;
+
+          const centerY = options.centerY ?? CAMERA_START_POSITION.y;
+          const outer = options.outerBounds || {
+            minX: -70,
+            maxX: 70,
+            minY: centerY - 48,
+            maxY: centerY + 48,
+            minZ: -260,
+            maxZ: 70,
+          };
+          const inner = options.innerBounds || {
+            minX: -11,
+            maxX: 11,
+            minY: -1.6,
+            maxY: 8,
+            minZ: -48,
+            maxZ: 16,
+          };
+
+          const isInsideBounds = (x, y, z, bounds) =>
+            x >= bounds.minX &&
+            x <= bounds.maxX &&
+            y >= bounds.minY &&
+            y <= bounds.maxY &&
+            z >= bounds.minZ &&
+            z <= bounds.maxZ;
+
+          const positions = new Float32Array(count * 3);
+          for (let i = 0; i < count; i += 1) {
+            const base = i * 3;
+            let x = 0;
+            let y = 0;
+            let z = 0;
+            let attempts = 0;
+            do {
+              x = outer.minX + Math.random() * (outer.maxX - outer.minX);
+              y = outer.minY + Math.random() * (outer.maxY - outer.minY);
+              z = outer.minZ + Math.random() * (outer.maxZ - outer.minZ);
+              attempts += 1;
+            } while (isInsideBounds(x, y, z, inner) && attempts < 20);
+
+            if (isInsideBounds(x, y, z, inner)) {
+              const faceChoice = Math.floor(Math.random() * 3);
+              if (faceChoice === 0) {
+                x = Math.random() < 0.5 ? outer.minX : outer.maxX;
+              } else if (faceChoice === 1) {
+                y = Math.random() < 0.5 ? outer.minY : outer.maxY;
+              } else {
+                z = Math.random() < 0.5 ? outer.minZ : outer.maxZ;
+              }
+            }
+
+            positions[base] = x;
+            positions[base + 1] = y;
+            positions[base + 2] = z;
+          }
+
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          const material = new THREE.PointsMaterial({
+            color,
+            size,
+            transparent: true,
+            opacity,
+            depthWrite: false,
+            depthTest: true,
+            blending: THREE.AdditiveBlending,
+          });
+          const points = new THREE.Points(geometry, material);
+          targetGroup.add(points);
+          return points;
+        }
+
+        const deepFieldGroup = new THREE.Group();
+        scene.add(deepFieldGroup);
+
+        let deepStarField = null;
+
+        function updateDeepField(deltaSeconds, now) {
+          // Keep stars fixed for a static deep-space backdrop.
+        }
+
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.crossOrigin = 'anonymous';
+
+        const cabinetGroup = new THREE.Group();
+        scene.add(cabinetGroup);
+        const propGroup = new THREE.Group();
+        scene.add(propGroup);
+
+        const cabinets = [];
+        const codexPedestals = [];
+        const introAnimations = [];
+        let introClockStart = null;
+        let introDone = false;
+        const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+        const spacing = 6.5;
+        const laneOffset = 5.5;
+        const startZ = -7;
+        // The enclosed hall starts furnished; machines no longer fly through its walls.
+        const introSpawnOffset = 0;
+        const STAR_INTRO_DELAY_MS = 120;
+        const STAR_INTRO_DURATION_MS = 620;
+        const CABINET_INTRO_OFFSET_MS = STAR_INTRO_DELAY_MS + STAR_INTRO_DURATION_MS - 240;
+        const CABINET_INTRO_PAIR_STAGGER_MS = 140;
+        const CABINET_INTRO_SIDE_STAGGER_MS = 70;
+        const CABINET_INTRO_DURATION_MS = 760;
+        const DOOR_INTRO_GAP_MS = 120;
+        const DOOR_INTRO_SPEED_FACTOR = 0.75;
+        const DOOR_INTRO_DURATION_MS = CABINET_INTRO_DURATION_MS / DOOR_INTRO_SPEED_FACTOR;
+
+        const starFromZ = -introSpawnOffset;
+        deepFieldGroup.position.z = starFromZ;
+        introAnimations.push({
+          delay: STAR_INTRO_DELAY_MS,
+          duration: STAR_INTRO_DURATION_MS,
+          done: false,
+          apply: (eased) => {
+            deepFieldGroup.position.z = THREE.MathUtils.lerp(starFromZ, 0, eased);
+          },
+          finalize: () => {
+            deepFieldGroup.position.z = 0;
+          },
+        });
+
+        let cabinetIntroLastStartMs = 0;
+
+        games.forEach((game, index) => {
+          const side = index % 2 === 0 ? 'left' : 'right';
+          const cabinet = createCabinet(game, side, index);
+          const x = side === 'left' ? -laneOffset : laneOffset;
+          const z = startZ - index * spacing;
+          const finalPosition = new THREE.Vector3(x, 0, z);
+          cabinet.position.copy(finalPosition);
+          cabinet.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+          cabinet.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, z);
+          cabinet.userData.restPosition = finalPosition.clone();
+          const fromZ = finalPosition.z - introSpawnOffset;
+          cabinet.position.z = fromZ;
+          const pairIndex = Math.floor(index / 2);
+          const delay =
+            CABINET_INTRO_OFFSET_MS +
+            pairIndex * CABINET_INTRO_PAIR_STAGGER_MS +
+            (side === 'left' ? 0 : CABINET_INTRO_SIDE_STAGGER_MS);
+          cabinetIntroLastStartMs = Math.max(cabinetIntroLastStartMs, delay);
+          introAnimations.push({
+            delay,
+            duration: CABINET_INTRO_DURATION_MS,
+            done: false,
+            apply: (eased) => {
+              cabinet.position.z = THREE.MathUtils.lerp(fromZ, finalPosition.z, eased);
+            },
+            finalize: () => {
+              cabinet.position.z = finalPosition.z;
+            },
+          });
+
+          cabinetGroup.add(cabinet);
+          cabinets.push(cabinet);
+
+          if (game.guideUrl) {
+            const pedestal = createCodexPedestal(game, side);
+            const pedestalX = x;
+            const pedestalOffsetZ = 3.3;
+            const pedestalZ = z + pedestalOffsetZ;
+            const pedestalTopCenterY = 1.37;
+            const pedestalFocusX = side === 'left' ? -3.05 : 3.05;
+            const pedestalFinalPosition = new THREE.Vector3(pedestalX, 0, pedestalZ);
+            pedestal.position.copy(pedestalFinalPosition);
+            pedestal.rotation.y = side === 'left' ? Math.PI / 2 : -Math.PI / 2;
+            pedestal.userData.focusPosition = new THREE.Vector3(
+              pedestalFocusX,
+              CAMERA_START_POSITION.y,
+              pedestalZ
+            );
+            pedestal.userData.lookPosition = new THREE.Vector3(
+              pedestalX,
+              pedestalTopCenterY,
+              pedestalZ
+            );
+            const aisleApproachDistance = Math.abs(pedestalFocusX - pedestalX);
+            const bookFacingPitch = Math.atan2(
+              CAMERA_START_POSITION.y - pedestalTopCenterY,
+              aisleApproachDistance
+            );
+            if (pedestal.userData.bookTiltGroup) {
+              pedestal.userData.bookTiltGroup.rotation.x = bookFacingPitch;
+            }
+            pedestal.userData.restPosition = pedestalFinalPosition.clone();
+            pedestal.userData.returnCabinetIndex = index;
+            pedestal.userData.anchorCabinet = cabinet;
+            pedestal.userData.offsetZ = pedestalOffsetZ;
+            const pedestalFromZ = fromZ + pedestalOffsetZ;
+            pedestal.position.z = pedestalFromZ;
+            introAnimations.push({
+              delay,
+              duration: CABINET_INTRO_DURATION_MS,
+              done: false,
+              apply: () => {
+                pedestal.position.z = cabinet.position.z + pedestalOffsetZ;
+              },
+              finalize: () => {
+                pedestal.position.z = cabinet.position.z + pedestalOffsetZ;
+              },
+            });
+            propGroup.add(pedestal);
+            codexPedestals.push(pedestal);
+          }
+        });
+
+        const cabinetIntroSettleMs = cabinetIntroLastStartMs + CABINET_INTRO_DURATION_MS;
+
+        const lastCabinetZ = startZ - (games.length - 1) * spacing;
+        const doorZ = lastCabinetZ - spacing * 1.15;
+        deepStarField = addStarField(deepFieldGroup, {
+          // The walled hall hides the old deep field; keep the contract but skip the cost.
+          count: 0,
+          centerY: CAMERA_START_POSITION.y,
+          outerBounds: {
+            minX: -76,
+            maxX: 76,
+            minY: CAMERA_START_POSITION.y - 50,
+            maxY: CAMERA_START_POSITION.y + 50,
+            minZ: doorZ - 240,
+            maxZ: 82,
+          },
+          innerBounds: {
+            minX: -11,
+            maxX: 11,
+            minY: -1.6,
+            maxY: 8,
+            minZ: doorZ - 4,
+            maxZ: 16,
+          },
+          size: 0.1,
+          color: 0xffffff,
+          opacity: 1,
+        });
+        const exitDoor = createExitDoor(doorZ);
+        scene.add(exitDoor.root);
+        const doorFromZ = doorZ - introSpawnOffset;
+        exitDoor.root.position.z = doorFromZ;
+        const doorIntroDelay = cabinetIntroLastStartMs + CABINET_INTRO_DURATION_MS + DOOR_INTRO_GAP_MS;
+        introAnimations.push({
+          delay: doorIntroDelay,
+          duration: DOOR_INTRO_DURATION_MS,
+          done: false,
+          apply: (eased) => {
+            exitDoor.root.position.z = THREE.MathUtils.lerp(doorFromZ, doorZ, eased);
+          },
+          finalize: () => {
+            exitDoor.root.position.z = doorZ;
+          },
+        });
+
+        const cabinetActionButtons = cabinets.flatMap((cabinet) => cabinet.userData.actionButtons || []);
+        const codexBooks = codexPedestals.flatMap((pedestal) => pedestal.userData.bookTargets || []).filter(Boolean);
+        const interactableTargets = [
+          ...cabinets,
+          ...cabinetActionButtons,
+          ...codexPedestals,
+          ...codexBooks,
+          exitDoor.root,
+          ...exitDoor.switchArrows,
+        ];
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+
+        // Raycasts ignore visibility, so skip hidden action buttons and resolve
+        // child meshes (labels, glyphs) to their owning interactable target.
+        function isRenderedObject(object) {
+          for (let node = object; node; node = node.parent) {
+            if (!node.visible) return false;
+          }
+          return true;
+        }
+        function pickInteractable(clientX, clientY) {
+          const rect = renderer.domElement.getBoundingClientRect();
+          pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+          raycaster.setFromCamera(pointer, camera);
+          for (const hit of raycaster.intersectObjects(interactableTargets, true)) {
+            if (!isRenderedObject(hit.object)) continue;
+            let candidate = hit.object;
+            while (candidate && !interactableTargets.includes(candidate)) candidate = candidate.parent;
+            if (candidate) return candidate;
+          }
+          return null;
+        }
+        let hoverCabinet = null;
+        let pendingHoverCabinet = null;
+        let hoverLockState = 'idle';
+        let hoverLockUntil = 0;
+        let cabinetIntroDone = false;
+        const HOVER_LOCK_HOLD_MS = 200;
+        const CODEX_HOVER_LOCK_HOLD_MS = HOVER_LOCK_HOLD_MS * 2;
+        const LOOK_TARGET_SETTLED_EPSILON = 0.05;
+        let activeCabinet = null;
+        let approachingCabinet = null;
+        let targetZ = cameraRig.position.z;
+        let scrollVelocity = 0;
+        const walkwayDoorStandoff = Math.max(4.2, laneOffset - 0.8);
+        const minZ = doorZ + walkwayDoorStandoff;
+        const maxZ = 12;
+        const walkwayReturnPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, cameraRig.position.z);
+        const focusRigTarget = new THREE.Vector3();
+        const rigGoal = new THREE.Vector3();
+        const APPROACH_ALIGNMENT_EPSILON = 0.12;
+        let touchMove = 0;
+        let touchYaw = 0;
+        let touchPitch = 0;
+        let touchGesture = null;
+        let touchCabinetIndex = -1;
+
+        const emissivePulse = new THREE.Color(0x0ff0fc);
+
+        function applyReturnStateIfPresent() {
+          const returnState = readReturnState();
+          if (!returnState) return false;
+          const cabinet = cabinets[returnState.cabinetIndex];
+          if (!cabinet || !cabinet.userData || !cabinet.userData.focusPosition) {
+            clearReturnState();
+            return false;
+          }
+
+          introAnimations.forEach((animation) => {
+            animation.done = true;
+            if (typeof animation.finalize === 'function') {
+              animation.finalize();
+            }
+          });
+          introDone = true;
+          cabinetIntroDone = true;
+          introClockStart = performance.now();
+
+          focusRigTarget.copy(cabinet.userData.focusPosition);
+          rigGoal.copy(focusRigTarget);
+          rigGoal.y = CAMERA_START_POSITION.y;
+          cameraRig.position.copy(rigGoal);
+          targetZ = focusRigTarget.z;
+          walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, targetZ);
+          scrollVelocity = 0;
+          hoverLockState = 'idle';
+          hoverLockUntil = 0;
+          pendingHoverCabinet = null;
+          approachingCabinet = null;
+          activeCabinet = cabinet;
+          hoverCabinet = cabinet;
+
+          if (cabinet.userData.lookPosition) {
+            desiredLookTarget.copy(cabinet.userData.lookPosition);
+          } else {
+            desiredLookTarget.copy(cabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+          }
+          lookTarget.copy(desiredLookTarget);
+          clearReturnState();
+          return true;
+        }
+
+        applyReturnStateIfPresent();
+
+        const onWheel = (event) => {
+          if (!cabinetIntroDone) return;
+          if (exitDoor.opening.active || launchSequence) return;
+          if (activeCabinet || approachingCabinet) return;
+          scrollVelocity += event.deltaY * 0.025;
+        };
+
+        window.addEventListener('wheel', onWheel, { passive: true });
+
+        const onPointerMove = (event) => {
+          if (event.pointerType === 'touch' || touchGesture) return;
+          if (!introDone) return;
+          if (exitDoor.opening.active || launchSequence) return;
+          if (approachingCabinet) return;
+          pendingHoverCabinet = pickInteractable(event.clientX, event.clientY);
+          const now = performance.now();
+          if (hoverLockState === 'idle') {
+            applyHoverSelection(pendingHoverCabinet);
+          } else if (hoverLockState === 'hold' && now >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(pendingHoverCabinet);
+          }
+        };
+
+        renderer.domElement.addEventListener('pointermove', onPointerMove);
+
+        const onPointerLeave = () => {
+          if (!introDone) return;
+          if (launchSequence) return;
+          if (approachingCabinet) return;
+          pendingHoverCabinet = null;
+          if (hoverLockState === 'idle') {
+            applyHoverSelection(null);
+          } else if (hoverLockState === 'hold' && performance.now() >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(null);
+          }
+        };
+
+        renderer.domElement.addEventListener('pointerleave', onPointerLeave);
+
+        const isGameCabinet = (target) => !!(target && target.userData && target.userData.game);
+        const isCodexPedestal = (target) => !!(target && target.userData && target.userData.kind === 'codex-pedestal');
+        const isCodexPedestalBookTarget = (pedestal, target) =>
+          !!(pedestal && target && (pedestal.userData.bookTargets || []).includes(target));
+        function getHoverHoldDurationMs(target) {
+          if (!target || !target.userData) return HOVER_LOCK_HOLD_MS;
+          if (isCodexPedestal(target)) return CODEX_HOVER_LOCK_HOLD_MS;
+          if (target.userData.action === 'codex-open') return CODEX_HOVER_LOCK_HOLD_MS;
+          if (isCodexPedestal(target.userData.pedestal)) return CODEX_HOVER_LOCK_HOLD_MS;
+          return HOVER_LOCK_HOLD_MS;
+        }
+        const CABINET_LAUNCH_DURATION_SECONDS = 0.32;
+        let launchSequence = null;
+
+        function startCabinetLaunch(cabinet) {
+          if (!isGameCabinet(cabinet) || launchSequence) return;
+          if (cabinet.userData.game.comingSoon) return;
+          const url = cabinet.userData.game?.url || cabinet.userData.url;
+          if (!url) return;
+          const cabinetIndex = cabinets.indexOf(cabinet);
+          if (cabinetIndex >= 0) {
+            writeReturnState(cabinetIndex);
+          }
+          launchSequence = {
+            cabinet,
+            url,
+            elapsed: 0,
+            from: cameraRig.position.clone(),
+            to: new THREE.Vector3(
+              THREE.MathUtils.clamp(cabinet.position.x * 0.62, -3.6, 3.6),
+              CAMERA_START_POSITION.y,
+              cameraRig.position.z
+            ),
+          };
+          activeCabinet = cabinet;
+          approachingCabinet = null;
+          scrollVelocity = 0;
+        }
+
+        function syncCabinetActionButtons() {
+          const target = isGameCabinet(activeCabinet)
+            ? activeCabinet
+            : isGameCabinet(approachingCabinet)
+            ? approachingCabinet
+            : null;
+
+          cabinets.forEach((cabinet) => {
+            const buttons = cabinet.userData.actionButtons || [];
+            const visible = cabinet === target;
+            buttons.forEach((button) => {
+              button.visible = visible;
+            });
+          });
+        }
+
+        const onRendererClick = (event) => {
+          // Taps are resolved once by pointerup, without relying on mouse hover.
+          if (event && usesTouchControls()) return;
+          if (!introDone) return;
+          if (exitDoor.opening.active || launchSequence) return;
+          if (approachingCabinet) return;
+
+          // Hover has a short camera-pan hold. A click must use its actual target,
+          // including a door click immediately after changing the sign.
+          if (event) {
+            hoverCabinet = pickInteractable(event.clientX, event.clientY);
+          }
+
+          if (hoverCabinet?.userData.action === 'cabinet-coming-soon') return;
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign') {
+            exitDoor.cycleSign(hoverCabinet.userData.delta ?? 1);
+            return;
+          }
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-play') {
+            const targetCabinet = hoverCabinet.userData.cabinet;
+            if (activeCabinet === targetCabinet) {
+              startCabinetLaunch(targetCabinet);
+            }
+            return;
+          }
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-guide') {
+            const targetCabinet = hoverCabinet.userData.cabinet;
+            if (activeCabinet === targetCabinet) {
+              openGuide(targetCabinet);
+            }
+            return;
+          }
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cabinet-back') {
+            exitCabinetView();
+            return;
+          }
+
+          if (hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'codex-open') {
+            const targetPedestal = hoverCabinet.userData.pedestal;
+            if (activeCabinet === targetPedestal) {
+              openGuide(targetPedestal);
+            } else if (targetPedestal) {
+              focusCabinet(targetPedestal);
+            }
+            return;
+          }
+
+          if (activeCabinet) {
+            if (isGameCabinet(activeCabinet)) {
+              if (hoverCabinet === activeCabinet) {
+                return;
+              }
+              exitCabinetView();
+              return;
+            }
+
+            if (isCodexPedestal(activeCabinet)) {
+              if (hoverCabinet === activeCabinet || isCodexPedestalBookTarget(activeCabinet, hoverCabinet)) {
+                return;
+              }
+              exitCabinetView();
+              return;
+            }
+
+            if (activeCabinet === exitDoor.root) {
+              if (hoverCabinet === activeCabinet) {
+                triggerExitDoorOpen();
+                return;
+              }
+              exitCabinetView();
+              return;
+            }
+          }
+
+          if (hoverCabinet) {
+            focusCabinet(hoverCabinet);
+            return;
+          }
+        };
+
+        renderer.domElement.addEventListener('click', onRendererClick);
+
+        const onKeyDown = (event) => {
+          // Preserve Escape-to-aisle from action links/buttons; leave editors and
+          // the flat directory's native keyboard interactions alone.
+          if (event.defaultPrevented || layoutMode !== 'arcade') return;
+          if (event.target instanceof Element &&
+              event.target.closest('input, select, textarea, [contenteditable]:not([contenteditable="false"])')) return;
+          if (exitDoor.opening.active || launchSequence) return;
+          if (event.key === 'Escape') {
+            exitCabinetView();
+            if (cabinetActions.contains(document.activeElement)) deskButton('next').focus();
+          }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+
+        function focusCabinet(target) {
+          if (!introDone) return;
+          walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
+          resetHoverState();
+          hoverCabinet = target;
+          approachingCabinet = target;
+          focusRigTarget.copy(target.userData.focusPosition);
+          targetZ = focusRigTarget.z;
+          scrollVelocity = 0;
+          activeCabinet = null;
+          touchMove = 0;
+          touchYaw = 0;
+          touchPitch = 0;
+          renderer.domElement.style.cursor = 'default';
+        }
+
+        // Guides: a game cabinet and its lectern share the game's registry guideUrl.
+        function getGuideCabinet(target) {
+          if (isGameCabinet(target)) return target;
+          if (isCodexPedestal(target)) return target.userData.anchorCabinet || null;
+          return null;
+        }
+
+        function getGuideUrl(target) {
+          return getGuideCabinet(target)?.userData.game.guideUrl || null;
+        }
+
+        function inspectActionsReady() {
+          return introDone && !launchSequence && !exitDoor.opening.active;
+        }
+
+        // Same-tab navigation from the 3D scene; the return state restores the cabinet.
+        function openGuide(target) {
+          if (!inspectActionsReady() || !target || activeCabinet !== target) return;
+          const url = getGuideUrl(target);
+          if (!url) return;
+          const cabinetIndex = cabinets.indexOf(getGuideCabinet(target));
+          if (cabinetIndex >= 0) writeReturnState(cabinetIndex);
+          window.location.href = url;
+        }
+
+        // DOM Guide anchors navigate natively; this only blocks early activation
+        // and records the selected cabinet for a same-tab visit.
+        function onGuideLinkClick(event) {
+          if (!inspectActionsReady() || !activeCabinet || !getGuideUrl(activeCabinet)) {
+            event.preventDefault();
+            return;
+          }
+          const newContext = event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+          const cabinetIndex = cabinets.indexOf(getGuideCabinet(activeCabinet));
+          if (!newContext && cabinetIndex >= 0) writeReturnState(cabinetIndex);
+        }
+
+        function playActiveTarget() {
+          if (!inspectActionsReady() || !activeCabinet) return;
+          if (activeCabinet === exitDoor.root) triggerExitDoorOpen();
+          else startCabinetLaunch(activeCabinet);
+        }
+
+        function exitCabinetView() {
+          if (!activeCabinet && !approachingCabinet) return;
+          activeCabinet = null;
+          approachingCabinet = null;
+          resetHoverState();
+          targetZ = walkwayReturnPosition.z;
+        }
+
+        const touchBindings = [];
+        function bindTouch(element, type, handler, options) {
+          element.addEventListener(type, handler, options);
+          touchBindings.push(() => element.removeEventListener(type, handler, options));
+        }
+        let handledTouchTapAt = -Infinity;
+        // A release can hide the directory and expose a Guide link beneath it.
+        // Cancel that gesture's following click even if its target has changed.
+        // A fresh pointer press or keyboard activation remains a separate action.
+        bindTouch(document, 'pointerdown', () => { handledTouchTapAt = -Infinity; }, true);
+        bindTouch(document, 'click', (event) => {
+          if (event.detail === 0 || performance.now() - handledTouchTapAt >= 700) return;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }, true);
+        function bindTouchAction(element, action) {
+          let press = null;
+          let lastTap = -Infinity;
+          bindTouch(element, 'pointerdown', (event) => {
+            if (event.pointerType === 'mouse' || element.disabled) return;
+            press = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            element.setPointerCapture(event.pointerId);
+          });
+          bindTouch(element, 'pointerup', (event) => {
+            if (!press || press.id !== event.pointerId) return;
+            const tapped = Math.hypot(event.clientX - press.x, event.clientY - press.y) < 12;
+            press = null;
+            if (!tapped || element.disabled) return;
+            lastTap = performance.now();
+            handledTouchTapAt = lastTap;
+            action();
+          });
+          bindTouch(element, 'pointercancel', () => { press = null; });
+          bindTouch(element, 'lostpointercapture', () => { press = null; });
+          bindTouch(element, 'click', (event) => {
+            // A touch release already handled this action; keyboard clicks have detail 0.
+            if (event.pointerType === 'touch' || event.pointerType === 'pen' ||
+                (event.detail > 0 && performance.now() - lastTap < 700)) {
+              event.preventDefault();
+              return;
+            }
+            event.preventDefault();
+            action();
+          });
+        }
+        const touchButton = (id) => document.getElementById(`touch-${id}`);
+        const forwardButton = touchButton('forward');
+        const backwardButton = touchButton('backward');
+        const playButton = touchButton('play');
+        const backButton = touchButton('back');
+        const touchGuideLink = touchButton('guide');
+        const deskButton = (id) => document.getElementById(`cabinet-${id}`);
+        const deskPlayButton = deskButton('play');
+        const deskGuideLink = deskButton('guide');
+        const deskBackButton = deskButton('back');
+        let inspectUiTarget = undefined;
+
+        // Guide anchors only carry an href once the focused cabinet has settled.
+        function syncGuideLinkHref(link, url) {
+          if (url) {
+            if (link.getAttribute('href') !== url) link.setAttribute('href', url);
+            link.removeAttribute('aria-disabled');
+          } else if (link.hasAttribute('href')) {
+            link.removeAttribute('href');
+            link.setAttribute('aria-disabled', 'true');
+          }
+        }
+
+        // One model drives the touch strip and the desktop strip.
+        function syncInspectControls() {
+          const target = activeCabinet || approachingCabinet;
+          const ready = inspectActionsReady();
+          const settled = ready && !!activeCabinet;
+          const playable = target === exitDoor.root || (!!target?.userData.game?.url && !target.userData.game.comingSoon);
+          forwardButton.disabled = backwardButton.disabled = !ready || !!target;
+          touchButton('previous').disabled = touchButton('next').disabled = !ready;
+          deskButton('previous').disabled = deskButton('next').disabled = !ready;
+          playButton.disabled = deskPlayButton.disabled = !settled || !playable;
+          const guideHref = settled ? getGuideUrl(activeCabinet) : null;
+          syncGuideLinkHref(touchGuideLink, guideHref);
+          syncGuideLinkHref(deskGuideLink, guideHref);
+          if (inspectUiTarget === target) return;
+          inspectUiTarget = target;
+          const game = target?.userData.game;
+          const guideGame = getGuideCabinet(target)?.userData.game;
+          const inspecting = !!target;
+          const title = game?.name || (guideGame ? `${guideGame.name} guide` : inspecting ? 'Arcade exit' : 'Explore the arcade');
+          forwardButton.hidden = backwardButton.hidden = inspecting;
+          playButton.hidden = deskPlayButton.hidden = !game && target !== exitDoor.root;
+          backButton.hidden = deskBackButton.hidden = !inspecting;
+          [touchGuideLink, deskGuideLink].forEach((link) => {
+            link.hidden = !guideGame?.guideUrl;
+            if (guideGame?.guideUrl) link.setAttribute('aria-label', `Open ${guideGame.name} guide`);
+            else link.removeAttribute('aria-label');
+          });
+          touchButton('title').textContent = title;
+          touchButton('hint').textContent = game?.comingSoon ? 'Coming soon · explore another cabinet' : inspecting ? 'Choose an action, or return to the aisle' : 'Hold to move · drag to look · tap a cabinet';
+          playButton.textContent = game?.comingSoon ? 'Coming soon' : target === exitDoor.root ? 'Exit Arcade' : 'Launch';
+          cabinetActions.classList.toggle('is-inspecting', inspecting);
+          deskButton('actions-title').textContent = title;
+          deskPlayButton.textContent = game?.comingSoon ? 'Coming soon' : target === exitDoor.root ? 'Exit Arcade' : 'Play';
+          if (game && !game.comingSoon) deskPlayButton.setAttribute('aria-label', `Play ${game.name}`);
+          else deskPlayButton.removeAttribute('aria-label');
+          if (game) touchCabinetIndex = cabinets.indexOf(target);
+        }
+        function stopTouchInput() {
+          touchMove = 0;
+          touchGesture = null;
+        }
+        function browseCabinet(delta) {
+          if (!introDone || launchSequence || exitDoor.opening.active) return;
+          const index = touchCabinetIndex < 0 ? (delta > 0 ? 0 : cabinets.length - 1)
+            : (touchCabinetIndex + delta + cabinets.length) % cabinets.length;
+          touchCabinetIndex = index;
+          focusCabinet(cabinets[index]);
+        }
+        bindTouchAction(touchButton('next'), () => browseCabinet(1));
+        bindTouchAction(touchButton('previous'), () => browseCabinet(-1));
+        bindTouchAction(backButton, exitCabinetView);
+        bindTouchAction(playButton, playActiveTarget);
+        // Guide links stay native anchors: one tap/click/Enter is one navigation.
+        bindTouch(touchGuideLink, 'click', onGuideLinkClick);
+        bindTouch(deskGuideLink, 'click', onGuideLinkClick);
+        bindTouch(deskPlayButton, 'click', playActiveTarget);
+        bindTouch(deskBackButton, 'click', () => {
+          const keyboardFocus = deskBackButton.matches(':focus-visible');
+          exitCabinetView();
+          // Keep keyboard focus inside the strip once Back hides itself.
+          if (keyboardFocus) deskButton('next').focus();
+        });
+        bindTouch(deskButton('previous'), 'click', () => browseCabinet(-1));
+        bindTouch(deskButton('next'), 'click', () => browseCabinet(1));
+        bindTouchAction(touchButton('directory'), () => {
+          stopTouchInput();
+          directoryRequested = true;
+          maybeToggleLayout();
+          returnTo3d.focus();
+        });
+        bindTouchAction(returnTo3d, () => {
+          directoryRequested = false;
+          maybeToggleLayout();
+          touchButton('directory').focus();
+        });
+        const touchHomeLink = touchControls.querySelector('.touch-toolbar a');
+        bindTouchAction(touchHomeLink, () => { window.location.href = touchHomeLink.href; });
+        [forwardButton, backwardButton].forEach((button, index) => {
+          bindTouch(button, 'pointerdown', (event) => {
+            if (button.disabled) return;
+            button.setPointerCapture(event.pointerId);
+            touchMove = index === 0 ? -1 : 1;
+          });
+          ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((type) => bindTouch(button, type, () => { touchMove = 0; }));
+          bindTouch(button, 'keydown', (event) => {
+            if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); touchMove = index === 0 ? -1 : 1; }
+          });
+          bindTouch(button, 'keyup', () => { touchMove = 0; });
+          bindTouch(button, 'blur', () => { touchMove = 0; });
+        });
+        bindTouch(window, 'blur', stopTouchInput);
+        bindTouch(document, 'visibilitychange', stopTouchInput);
+        bindTouch(renderer.domElement, 'pointerdown', (event) => {
+          if (!usesTouchControls() || !introDone || touchGesture || launchSequence || approachingCabinet) return;
+          renderer.domElement.setPointerCapture(event.pointerId);
+          touchGesture = { id: event.pointerId, x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, dragged: false };
+        });
+        bindTouch(renderer.domElement, 'pointermove', (event) => {
+          if (!touchGesture || event.pointerId !== touchGesture.id) return;
+          const dx = event.clientX - touchGesture.x;
+          const dy = event.clientY - touchGesture.y;
+          if (Math.hypot(event.clientX - touchGesture.startX, event.clientY - touchGesture.startY) > 8) touchGesture.dragged = true;
+          if (touchGesture.dragged && !activeCabinet) {
+            resetHoverState();
+            touchYaw = THREE.MathUtils.clamp(touchYaw - dx * 0.006, -1.25, 1.25);
+            touchPitch = THREE.MathUtils.clamp(touchPitch + dy * 0.004, -0.4, 0.4);
+          }
+          touchGesture.x = event.clientX;
+          touchGesture.y = event.clientY;
+        });
+        bindTouch(renderer.domElement, 'pointerup', (event) => {
+          if (!touchGesture || event.pointerId !== touchGesture.id) return;
+          const wasDragged = touchGesture.dragged;
+          touchGesture = null;
+          if (wasDragged) return;
+          const candidate = pickInteractable(event.clientX, event.clientY);
+          if (!candidate) return;
+          hoverCabinet = candidate;
+          onRendererClick();
+        });
+        bindTouch(renderer.domElement, 'pointercancel', () => { touchGesture = null; });
+        bindTouch(renderer.domElement, 'lostpointercapture', () => { touchGesture = null; });
+        bindTouch(renderer.domElement, 'webglcontextlost', (event) => {
+          event.preventDefault();
+          stopTouchInput();
+          engineFailed = true;
+          maybeToggleLayout();
+        });
+
+        const arcadeEntryUrl = document.referrer && document.referrer !== window.location.href ? document.referrer : '/';
+        const exitTransition = {
+          // Default to site destination; switch to 'reset' for local loop testing.
+          mode: 'navigate',
+          destination: 'https://pazneria.github.io/',
+          fallbackDestination: arcadeEntryUrl,
+          delayMs: 420,
+        };
+        const EXIT_DOOR_OPEN_DURATION_SECONDS = 2.2;
+        const EXIT_DOOR_OPEN_ANGLE = -1.45;
+        const EXIT_PORTAL_LIGHT_MAX_OPACITY = 0.86;
+        const EXIT_PORTAL_BLOOM_MAX_OPACITY = 0.3;
+
+        function performExitTransition() {
+          if (exitTransition.mode === 'navigate') {
+            const target = exitTransition.destination || exitTransition.fallbackDestination || '/';
+            window.location.href = target;
+            return;
+          }
+          window.location.reload();
+        }
+
+        function triggerExitDoorOpen() {
+          if (activeCabinet !== exitDoor.root) return;
+          if (exitDoor.opening.active || exitDoor.opening.progress >= 1) return;
+          exitDoor.opening.active = true;
+          exitDoor.opening.completed = false;
+        }
+
+        function updateExitDoorOpen(deltaSeconds, now) {
+          if (!exitDoor.opening.active) return;
+          const openSpeed = 1 / EXIT_DOOR_OPEN_DURATION_SECONDS;
+          exitDoor.opening.progress = Math.min(1, exitDoor.opening.progress + deltaSeconds * openSpeed);
+          if (exitDoor.opening.progress >= 1) {
+            exitDoor.opening.active = false;
+            if (!exitDoor.opening.completed) {
+              exitDoor.opening.completed = true;
+              window.setTimeout(performExitTransition, exitTransition.delayMs);
+            }
+          }
+        }
+
+        function createExitDoor(doorZ) {
+          const root = new THREE.Group();
+          root.position.set(0, 0, doorZ);
+          root.rotation.y = 0;
+          root.userData.url = '/';
+          root.userData.focusPosition = new THREE.Vector3(0, CAMERA_START_POSITION.y, doorZ + 5.6);
+          root.userData.lookPosition = new THREE.Vector3(0, 2.5, doorZ);
+
+          // Walnut doorway with brass detailing, matching the hall's wainscot and rails.
+          const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3a2416,
+            metalness: 0.04,
+            roughness: 0.62,
+          });
+          const trimMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2c1c12,
+            metalness: 0.04,
+            roughness: 0.7,
+          });
+          const doorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x5a3820,
+            emissive: 0x1a100a,
+            emissiveIntensity: 0.06,
+            metalness: 0.04,
+            roughness: 0.55,
+          });
+          const panelMaterial = new THREE.MeshStandardMaterial({
+            color: 0x40271a,
+            metalness: 0.04,
+            roughness: 0.68,
+          });
+          const brassMaterial = new THREE.MeshStandardMaterial({
+            color: 0xc6a46f,
+            emissive: 0x4b2f0e,
+            emissiveIntensity: 0.22,
+            metalness: 0.82,
+            roughness: 0.25,
+          });
+
+          const openingWidth = 2.18;
+          const openingHeight = 3.86;
+          const frameDepth = 0.34;
+          const jambWidth = 0.24;
+
+          const leftJamb = new THREE.Mesh(
+            new THREE.BoxGeometry(jambWidth, openingHeight + 0.34, frameDepth),
+            frameMaterial
+          );
+          leftJamb.position.set(-openingWidth / 2 - jambWidth * 0.5, 2.05, 0);
+          root.add(leftJamb);
+
+          const rightJamb = leftJamb.clone();
+          rightJamb.position.x = openingWidth / 2 + jambWidth * 0.5;
+          root.add(rightJamb);
+
+          const header = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2, 0.24, frameDepth),
+            trimMaterial
+          );
+          header.position.set(0, openingHeight + 0.22, 0);
+          root.add(header);
+
+          const threshold = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2, 0.12, frameDepth),
+            trimMaterial
+          );
+          threshold.position.set(0, 0.06, 0);
+          root.add(threshold);
+
+          // Architrave: stepped casing, brass bead, and a projecting cornice that
+          // carries the sign, so the exit reads as built into the far wall.
+          const casingDepth = 0.12;
+          [-1, 1].forEach((s) => {
+            const casing = new THREE.Mesh(new THREE.BoxGeometry(0.2, openingHeight + 0.5, casingDepth), trimMaterial);
+            casing.position.set(s * (openingWidth / 2 + jambWidth + 0.1), (openingHeight + 0.5) / 2, frameDepth / 2);
+            root.add(casing);
+            const bead = new THREE.Mesh(new THREE.BoxGeometry(0.03, openingHeight + 0.3, 0.03), brassMaterial);
+            bead.position.set(s * (openingWidth / 2 + jambWidth + 0.005), (openingHeight + 0.3) / 2, frameDepth / 2 + 0.02);
+            root.add(bead);
+            const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, casingDepth + 0.04), frameMaterial);
+            plinth.position.set(s * (openingWidth / 2 + jambWidth + 0.1), 0.17, frameDepth / 2 + 0.01);
+            root.add(plinth);
+            // Frosted wall sconces flank the doorway (emissive only, no extra lights).
+            const sconceBack = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.3, 0.04), brassMaterial);
+            sconceBack.position.set(s * (openingWidth / 2 + 0.95), 2.6, 0.06);
+            root.add(sconceBack);
+            const sconceGlass = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.07, 0.09, 0.26, 12),
+              new THREE.MeshBasicMaterial({ color: 0xf2d3a0, toneMapped: false })
+            );
+            sconceGlass.position.set(s * (openingWidth / 2 + 0.95), 2.62, 0.16);
+            root.add(sconceGlass);
+          });
+          const cornice = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2 + 0.72, 0.16, 0.36),
+            trimMaterial
+          );
+          cornice.position.set(0, openingHeight + 0.42, 0.14);
+          root.add(cornice);
+          const corniceBead = new THREE.Mesh(
+            new THREE.BoxGeometry(openingWidth + jambWidth * 2 + 0.72, 0.03, 0.03),
+            brassMaterial
+          );
+          corniceBead.position.set(0, openingHeight + 0.34, 0.33);
+          root.add(corniceBead);
+
+          const roomPlaneMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff0dd,
+            transparent: true,
+            opacity: 0.24,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const roomPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth - 0.18, openingHeight - 0.2),
+            roomPlaneMaterial
+          );
+          roomPlane.position.set(0, 2.04, -0.1);
+          root.add(roomPlane);
+
+          const portalLightMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff0d8,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            fog: false,
+            toneMapped: false,
+          });
+          const portalLight = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth - 0.2, openingHeight - 0.22),
+            portalLightMaterial
+          );
+          portalLight.position.set(0, 2.04, -0.22);
+          portalLight.rotation.y = Math.PI;
+          portalLight.renderOrder = 2;
+          root.add(portalLight);
+
+          const portalBloomMaterial = new THREE.MeshBasicMaterial({
+            color: 0xfff2de,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            fog: false,
+            toneMapped: false,
+          });
+          const portalBloom = new THREE.Mesh(
+            new THREE.PlaneGeometry(openingWidth + 0.65, openingHeight + 0.72),
+            portalBloomMaterial
+          );
+          portalBloom.position.set(0, 2.04, -0.26);
+          portalBloom.rotation.y = Math.PI;
+          portalBloom.renderOrder = 1;
+          root.add(portalBloom);
+
+          const roomLight = new THREE.PointLight(0xffe7c9, 0.72, 10, 2);
+          roomLight.position.set(0, 3.1, 2.3);
+          root.add(roomLight);
+
+          const doorSpot = new THREE.SpotLight(0xfff0dc, 0, 18, Math.PI / 6, 0.35, 1.1);
+          doorSpot.position.set(0, 3.2, -2.9);
+          const doorLightTarget = new THREE.Object3D();
+          doorLightTarget.position.set(0, 2.05, 2.6);
+          root.add(doorLightTarget);
+          root.add(doorSpot);
+
+          const doorWidth = openingWidth - 0.16;
+          const doorHeight = openingHeight - 0.2;
+          const DOOR_CLOSED_ROTATION = -0.33;
+          const doorPivot = new THREE.Group();
+          doorPivot.position.set(-doorWidth * 0.5, 2.04, 0.04);
+          doorPivot.rotation.y = DOOR_CLOSED_ROTATION;
+          root.add(doorPivot);
+          doorSpot.target = doorLightTarget;
+
+          const door = new THREE.Mesh(new THREE.BoxGeometry(doorWidth, doorHeight, 0.11), doorMaterial);
+          door.position.set(doorWidth * 0.5, 0, 0);
+          doorPivot.add(door);
+
+          const panelTop = new THREE.Mesh(
+            new THREE.BoxGeometry(doorWidth * 0.72, doorHeight * 0.34, 0.04),
+            panelMaterial
+          );
+          panelTop.position.set(doorWidth * 0.5, 0.86, 0.058);
+          doorPivot.add(panelTop);
+
+          const panelBottom = panelTop.clone();
+          panelBottom.scale.y = 1.2;
+          panelBottom.position.y = -0.76;
+          doorPivot.add(panelBottom);
+
+          const plate = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.34, 0.015), brassMaterial);
+          plate.position.set(doorWidth * 0.79, -0.1, 0.065);
+          doorPivot.add(plate);
+
+          const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.17, 14), brassMaterial);
+          handle.rotation.y = Math.PI / 2;
+          handle.position.set(doorWidth * 0.85, -0.1, 0.065);
+          doorPivot.add(handle);
+
+          const signCanvas = document.createElement('canvas');
+          signCanvas.width = 640;
+          signCanvas.height = 256;
+          const signCtx = signCanvas.getContext('2d');
+          const signTexture = new THREE.CanvasTexture(signCanvas);
+          signTexture.encoding = THREE.sRGBEncoding;
+
+          function drawRoundRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width * 0.5, height * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + width, y, x + width, y + height, r);
+            ctx.arcTo(x + width, y + height, x, y + height, r);
+            ctx.arcTo(x, y + height, x, y, r);
+            ctx.arcTo(x, y, x + width, y, r);
+            ctx.closePath();
+          }
+
+          function drawExitSign(variant) {
+            if (!signCtx) return;
+            const w = signCanvas.width;
+            const h = signCanvas.height;
+            // Lit opal glass in a walnut housing; lettering is the only strong colour.
+            // Variants change type treatment only, so EXIT always stays readable.
+            const variants = [
+              { glass: '#f1e4c8', ink: '#7a1f1a', font: '700 150px Georgia, "Times New Roman", serif', label: 'EXIT', arrow: false },
+              { glass: '#f1e4c8', ink: '#7a1f1a', font: '700 132px Rajdhani, "Arial Narrow", sans-serif', label: 'EXIT', arrow: true },
+              { glass: '#2a1a10', ink: '#f0d9a8', font: '700 140px Georgia, "Times New Roman", serif', label: 'EXIT', arrow: false },
+              { glass: '#e9ddc0', ink: '#1f3b2c', font: '700 112px Rajdhani, "Arial Narrow", sans-serif', label: 'WAY OUT', arrow: false },
+            ];
+            const v = variants[variant] || variants[0];
+            signCtx.fillStyle = '#24160d';
+            signCtx.fillRect(0, 0, w, h);
+            drawRoundRect(signCtx, 18, 18, w - 36, h - 36, 10);
+            signCtx.fillStyle = v.glass;
+            signCtx.fill();
+            const vignette = signCtx.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w * 0.6);
+            vignette.addColorStop(0, 'rgba(255, 245, 225, 0.18)');
+            vignette.addColorStop(1, 'rgba(60, 30, 10, 0.22)');
+            signCtx.fillStyle = vignette;
+            signCtx.fill();
+            signCtx.lineWidth = 5;
+            signCtx.strokeStyle = '#b58a4c';
+            signCtx.stroke();
+
+            signCtx.textAlign = 'center';
+            signCtx.textBaseline = 'middle';
+            signCtx.fillStyle = v.ink;
+            signCtx.font = v.font;
+            const textX = v.arrow ? w / 2 - 50 : w / 2;
+            signCtx.fillText(v.label, textX, h / 2 + 8);
+            if (v.arrow) {
+              const ax = w - 130;
+              const ay = h / 2 + 4;
+              signCtx.beginPath();
+              signCtx.moveTo(ax - 40, ay - 12);
+              signCtx.lineTo(ax + 4, ay - 12);
+              signCtx.lineTo(ax + 4, ay - 36);
+              signCtx.lineTo(ax + 50, ay);
+              signCtx.lineTo(ax + 4, ay + 36);
+              signCtx.lineTo(ax + 4, ay + 12);
+              signCtx.lineTo(ax - 40, ay + 12);
+              signCtx.closePath();
+              signCtx.fill();
+            }
+
+            signTexture.needsUpdate = true;
+          }
+
+          // Opaque, steady sign; slightly below full white so it reads as lit glass, not bloom.
+          const signMaterial = new THREE.MeshBasicMaterial({
+            map: signTexture,
+            color: 0xe6ddd0,
+            transparent: false,
+            fog: false,
+            toneMapped: false,
+          });
+
+          const sign = new THREE.Group();
+          sign.position.set(0, openingHeight + 0.86, 0.2);
+          root.add(sign);
+
+          const signWidth = doorWidth * 0.78;
+          const signHeight = 0.62;
+          const signHousing = new THREE.Mesh(
+            new THREE.BoxGeometry(signWidth + 0.1, signHeight + 0.1, 0.14),
+            frameMaterial
+          );
+          signHousing.position.z = -0.02;
+          sign.add(signHousing);
+          const signBox = new THREE.Mesh(new THREE.PlaneGeometry(signWidth, signHeight), signMaterial);
+          signBox.position.z = 0.052;
+          sign.add(signBox);
+          // Brass drop rods tie the sign back to the cornice.
+          [-1, 1].forEach((s) => {
+            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), brassMaterial);
+            rod.position.set(s * signWidth * 0.4, -signHeight / 2 - 0.08, -0.04);
+            sign.add(rod);
+          });
+
+          function createArrowButton(delta, x) {
+            const button = new THREE.Mesh(
+              new THREE.BoxGeometry(0.36, 0.22, 0.1),
+              new THREE.MeshStandardMaterial({
+                color: 0x8a6432,
+                emissive: 0x4a2a10,
+                emissiveIntensity: 0.34,
+                metalness: 0.7,
+                roughness: 0.38,
+              })
+            );
+            button.position.set(x, 0.54, 0.08);
+            button.userData.action = 'cycle-sign';
+            button.userData.delta = delta;
+            button.userData.focusPosition = root.userData.focusPosition;
+            button.userData.lookPosition = root.userData.lookPosition;
+
+            const glyph = new THREE.Mesh(
+              new THREE.ConeGeometry(0.064, 0.16, 3),
+              new THREE.MeshStandardMaterial({
+                color: 0x24160d,
+                emissive: 0x000000,
+                emissiveIntensity: 0,
+                metalness: 0.08,
+                roughness: 0.36,
+              })
+            );
+            glyph.rotation.z = delta < 0 ? Math.PI / 2 : -Math.PI / 2;
+            glyph.position.z = 0.09;
+            button.add(glyph);
+
+            sign.add(button);
+            return button;
+          }
+
+          const leftArrow = createArrowButton(-1, -0.42);
+          const rightArrow = createArrowButton(1, 0.42);
+          const switchArrows = [leftArrow, rightArrow];
+
+          const sparks = [];
+          const sparkEmitters = [
+            new THREE.Vector3(-signWidth * 0.44, signHeight * 0.18, 0.17),
+            new THREE.Vector3(signWidth * 0.44, signHeight * 0.18, 0.17),
+            new THREE.Vector3(0, signHeight * 0.26, 0.17),
+          ];
+          // Sparks retired for the calmer hall; the array/emitters stay for the update contract.
+          const SPARK_COUNT = 0;
+          for (let sparkIndex = 0; sparkIndex < SPARK_COUNT; sparkIndex += 1) {
+            const sparkMaterial = new THREE.MeshBasicMaterial({
+              color: 0xffb17c,
+              transparent: true,
+              opacity: 0,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            });
+            const spark = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), sparkMaterial);
+            spark.position.copy(sparkEmitters[0]);
+            sign.add(spark);
+            sparks.push({
+              mesh: spark,
+              velocity: new THREE.Vector3(),
+              life: 0,
+              cooldown: Math.random() * 1.4,
+              emitterIndex: 0,
+            });
+          }
+
+          const variantCount = 4;
+          let signVariantIndex = 0;
+          const setSignVariant = (next) => {
+            signVariantIndex = (next + variantCount) % variantCount;
+            drawExitSign(signVariantIndex);
+          };
+
+          setSignVariant(0);
+
+          return {
+            root,
+            signMaterial,
+            roomLight,
+            doorSpot,
+            roomPlaneMaterial,
+            doorPivot,
+            doorClosedRotation: DOOR_CLOSED_ROTATION,
+            portalLight,
+            portalBloom,
+            opening: {
+              active: false,
+              completed: false,
+              progress: 0,
+            },
+            sparks,
+            sparkEmitters,
+            switchArrows,
+            flicker: {
+              timer: 0,
+              target: 0.44,
+              level: 0.44,
+            },
+            cycleSign(delta = 1) {
+              setSignVariant(signVariantIndex + delta);
+            },
+          };
+        }
+
+        function applyHoverSelection(cabinet) {
+          if (hoverCabinet === cabinet) return;
+          hoverCabinet = cabinet;
+          if (hoverCabinet) {
+            hoverLockState = 'panning';
+            hoverLockUntil = 0;
+          } else {
+            hoverLockState = 'idle';
+            hoverLockUntil = 0;
+          }
+          renderer.domElement.style.cursor = hoverCabinet ? 'pointer' : 'default';
+        }
+
+        function resetHoverState() {
+          hoverCabinet = null;
+          pendingHoverCabinet = null;
+          hoverLockState = 'idle';
+          hoverLockUntil = 0;
+          renderer.domElement.style.cursor = 'default';
+        }
+
+        function updateCabinetEmissive(deltaSeconds, now) {
+          const pulse = (Math.sin(now * 0.003) + 1) * 0.35 + 0.4;
+          cabinets.forEach((cabinet) => {
+            const screen = cabinet.getObjectByName('screen');
+            if (!screen) return;
+            // Gentle accent-tinted screen breathing; brighter only on hover.
+            const accent = cabinet.userData.accentColor || emissivePulse;
+            const level = cabinet === hoverCabinet && !activeCabinet ? 0.45 : 0.1 + pulse * 0.08;
+            screen.material.emissive.copy(accent).multiplyScalar(level);
+          });
+
+          cabinetActionButtons.forEach((button) => {
+            const base = button.userData.baseEmissive ?? 0.3;
+            button.material.emissiveIntensity = hoverCabinet === button ? base + 0.4 : base;
+          });
+
+          codexPedestals.forEach((pedestal, index) => {
+            const hovered = hoverCabinet === pedestal || isCodexPedestalBookTarget(pedestal, hoverCabinet);
+            const active = activeCabinet === pedestal || approachingCabinet === pedestal;
+            const shimmer = (Math.sin(now * 0.0037 + index * 1.4) + 1) * 0.2 + 0.18;
+            if (pedestal.userData.glowMaterial) {
+              pedestal.userData.glowMaterial.emissiveIntensity = hovered ? 0.95 : active ? 0.74 : 0.34 + shimmer;
+            }
+            if (pedestal.userData.plaqueMaterial) {
+              pedestal.userData.plaqueMaterial.emissiveIntensity = hovered ? 0.82 : active ? 0.6 : 0.26 + shimmer * 0.28;
+            }
+            const pageMaterials = pedestal.userData.bookPageMaterials || [];
+            pageMaterials.forEach((material) => {
+              material.emissiveIntensity = hovered ? 0.34 : active ? 0.22 : 0.1 + shimmer * 0.08;
+            });
+            const coverMaterials = pedestal.userData.bookCoverMaterials || [];
+            coverMaterials.forEach((material) => {
+              material.emissiveIntensity = hovered ? 0.34 : active ? 0.22 : 0.12 + shimmer * 0.08;
+            });
+          });
+
+          const signControlHovered =
+            !!(hoverCabinet && hoverCabinet.userData && hoverCabinet.userData.action === 'cycle-sign');
+          const doorActive =
+            hoverCabinet === exitDoor.root ||
+            activeCabinet === exitDoor.root ||
+            approachingCabinet === exitDoor.root ||
+            signControlHovered;
+
+          const flicker = exitDoor.flicker;
+          flicker.timer -= deltaSeconds;
+          if (flicker.timer <= 0) {
+            const roll = Math.random();
+            flicker.target = roll > 0.9 ? 0.14 : roll > 0.75 ? 0.24 : 0.38 + Math.random() * 0.16;
+            flicker.timer = roll > 0.9 ? 0.14 + Math.random() * 0.22 : 0.5 + Math.random() * 1.25;
+          }
+          const chase = Math.min(1, deltaSeconds * 3.1);
+          flicker.level += (flicker.target - flicker.level) * chase;
+          const glassLevel = flicker.level * (0.95 + Math.sin(now * 0.00047) * 0.05);
+          const openEase = 1 - Math.pow(1 - exitDoor.opening.progress, 3);
+
+          // Steady glass; a small brightness lift acknowledges hover/focus.
+          exitDoor.signMaterial.color.setScalar(doorActive ? 1 : 0.9 + glassLevel * 0.02);
+          exitDoor.doorPivot.rotation.y = THREE.MathUtils.lerp(exitDoor.doorClosedRotation, EXIT_DOOR_OPEN_ANGLE, openEase);
+          exitDoor.roomLight.intensity = 0.72;
+          exitDoor.doorSpot.intensity = 0;
+          exitDoor.roomPlaneMaterial.opacity = 0.24 + openEase * 0.08;
+          exitDoor.portalLight.material.opacity = openEase * EXIT_PORTAL_LIGHT_MAX_OPACITY;
+          exitDoor.portalBloom.material.opacity = openEase * EXIT_PORTAL_BLOOM_MAX_OPACITY;
+
+          exitDoor.switchArrows.forEach((arrow) => {
+            const hovered = hoverCabinet === arrow;
+            arrow.material.emissiveIntensity = hovered ? 0.82 : 0.34;
+          });
+
+          exitDoor.sparks.forEach((spark) => {
+            if (spark.life <= 0) {
+              spark.cooldown -= deltaSeconds;
+              if (spark.cooldown <= 0 && Math.random() < 0.17) {
+                spark.life = 0.16 + Math.random() * 0.24;
+                spark.cooldown = 0.45 + Math.random() * 1.2;
+                spark.emitterIndex = Math.floor(Math.random() * exitDoor.sparkEmitters.length);
+                spark.mesh.position.copy(exitDoor.sparkEmitters[spark.emitterIndex]);
+                const emitterX = exitDoor.sparkEmitters[spark.emitterIndex].x;
+                const horizontal =
+                  emitterX === 0
+                    ? (Math.random() - 0.5) * 0.45
+                    : Math.sign(emitterX) * (0.45 + Math.random() * 0.7);
+                spark.velocity.set(
+                  horizontal,
+                  0.3 + Math.random() * 0.7,
+                  0.45 + Math.random() * 0.45
+                );
+              }
+            }
+
+            if (spark.life > 0) {
+              spark.life -= deltaSeconds;
+              spark.mesh.position.addScaledVector(spark.velocity, deltaSeconds);
+              spark.velocity.y -= 1.1 * deltaSeconds;
+              spark.velocity.z *= 0.95;
+              spark.mesh.material.opacity = Math.max(0, spark.life / 0.35);
+            } else {
+              spark.mesh.material.opacity = 0;
+            }
+          });
+        }
+
+        function addCabinetScreen(cabinet, game, options = {}) {
+
+          const width = options.width ?? 1.9;
+          const height = options.height ?? 1.4;
+          const depth = options.depth ?? 0.2;
+          const x = options.x ?? 0;
+          const y = options.y ?? 2.4;
+          const z = options.z ?? 1;
+          const frameColor = options.frameColor ?? 0x05090f;
+          const emissiveColor = options.emissiveColor ?? 0x000000;
+          const emissiveIntensity = options.emissiveIntensity ?? 0.8;
+          const planeWidth = options.planeWidth ?? Math.max(0.4, width - 0.1);
+          const planeHeight = options.planeHeight ?? Math.max(0.3, height - 0.1);
+          const planeOffset = options.planeOffset ?? 0.11;
+
+          const screenMaterial = new THREE.MeshStandardMaterial({
+            color: frameColor,
+            emissive: emissiveColor,
+            emissiveIntensity,
+            transparent: true,
+          });
+          const screen = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), screenMaterial);
+          screen.position.set(x, y, z);
+          screen.name = 'screen';
+          cabinet.add(screen);
+
+          textureLoader.load(
+            game.thumbnail,
+            (texture) => {
+              texture.encoding = THREE.sRGBEncoding;
+              texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+              const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
+              const imagePlane = new THREE.Mesh(new THREE.PlaneGeometry(planeWidth, planeHeight), material);
+              imagePlane.position.set(x, y, z + depth * 0.5 + planeOffset);
+              cabinet.add(imagePlane);
+            },
+            undefined,
+            () => {
+              // Keep emissive-only screen if image fails.
+            }
+          );
+        }
+
+
+        function addCabinetActionPanel(cabinet, options = {}) {
+          const panelY = options.panelY ?? 1.52;
+          const panelZ = options.panelZ ?? 1.5;
+          const panelWidth = options.panelWidth ?? 1.9;
+          const panelHeight = options.panelHeight ?? 0.34;
+
+          const panel = new THREE.Mesh(
+            new THREE.BoxGeometry(panelWidth, panelHeight, 0.08),
+            new THREE.MeshStandardMaterial({ color: 0x1a120c, metalness: 0.1, roughness: 0.6 })
+          );
+          panel.position.set(0, panelY, panelZ);
+          cabinet.add(panel);
+
+          if (!cabinet.userData.actionButtons) {
+            cabinet.userData.actionButtons = [];
+          }
+
+          // Canvas aspect matches the label plane so lettering is not stretched.
+          function createLabelTexture(text, planeWidth, withBook = false) {
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round((88 * planeWidth) / 0.16);
+            canvas.height = 88;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = '#2a1a10';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.strokeStyle = '#c9a15f';
+              ctx.lineWidth = 4;
+              ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+              ctx.font = '700 38px Rajdhani, sans-serif';
+              ctx.textBaseline = 'middle';
+              const bookWidth = withBook ? 40 : 0;
+              const left = (canvas.width - ctx.measureText(text).width - bookWidth) / 2;
+              if (withBook) {
+                // Open brass book glyph.
+                const cx = left + 16;
+                const cy = canvas.height / 2;
+                ctx.fillStyle = '#d8b06a';
+                [-1, 1].forEach((s) => {
+                  ctx.beginPath();
+                  ctx.moveTo(cx, cy - 11);
+                  ctx.quadraticCurveTo(cx + s * 8, cy - 16, cx + s * 16, cy - 14);
+                  ctx.lineTo(cx + s * 16, cy + 14);
+                  ctx.quadraticCurveTo(cx + s * 8, cy + 12, cx, cy + 17);
+                  ctx.closePath();
+                  ctx.fill();
+                });
+                ctx.strokeStyle = '#2a1a10';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - 11);
+                ctx.lineTo(cx, cy + 17);
+                ctx.stroke();
+              }
+              ctx.fillStyle = '#f1e2c2';
+              ctx.textAlign = 'left';
+              ctx.fillText(text, left + bookWidth, canvas.height / 2 + 2);
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            texture.needsUpdate = true;
+            return texture;
+          }
+
+          const actionMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3a2618,
+            emissive: 0x4a2a12,
+            emissiveIntensity: 0.3,
+            metalness: 0.22,
+            roughness: 0.42,
+          });
+
+          const game = cabinet.userData.game;
+          // Cabinets with a registry guideUrl get PLAY | GUIDE | BACK; others keep PLAY | BACK.
+          const hasGuide = !!game.guideUrl;
+          const buttonWidth = hasGuide ? 0.56 : 0.82;
+          const labelWidth = buttonWidth - 0.1;
+
+          function createActionButton(action, text, x, options = {}) {
+            const material = options.material || actionMaterial.clone();
+            const button = new THREE.Mesh(new THREE.BoxGeometry(buttonWidth, 0.23, 0.1), material);
+            button.position.set(x, panelY, panelZ + 0.08);
+            button.userData.action = action;
+            button.userData.cabinet = cabinet;
+            button.userData.baseEmissive = material.emissiveIntensity;
+            button.visible = false;
+            cabinet.add(button);
+            const label = new THREE.Mesh(
+              new THREE.PlaneGeometry(labelWidth, 0.16),
+              new THREE.MeshBasicMaterial({ map: createLabelTexture(text, labelWidth, options.withBook), toneMapped: false, transparent: true })
+            );
+            label.position.set(0, 0, 0.055);
+            button.add(label);
+            cabinet.userData.actionButtons.push(button);
+            return button;
+          }
+
+          createActionButton(
+            game.comingSoon ? 'cabinet-coming-soon' : 'cabinet-play',
+            game.comingSoon ? 'COMING SOON' : 'PLAY',
+            hasGuide ? -0.62 : -0.48
+          );
+          if (hasGuide) {
+            createActionButton('cabinet-guide', 'GUIDE', 0, {
+              withBook: true,
+              material: new THREE.MeshStandardMaterial({
+                color: 0x8a6432,
+                emissive: 0x4a2a10,
+                emissiveIntensity: 0.34,
+                metalness: 0.7,
+                roughness: 0.38,
+              }),
+            });
+          }
+          createActionButton('cabinet-back', 'BACK', hasGuide ? 0.62 : 0.48);
+        }
+
+        function createPedestalLabelTexture(title, subtitle) {
+          const canvas = document.createElement('canvas');
+          canvas.width = 256;
+          canvas.height = 160;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = 'rgba(8, 11, 18, 0.9)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(194, 246, 255, 0.42)';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+            ctx.fillStyle = 'rgba(241, 214, 154, 0.95)';
+            ctx.font = '700 28px Orbitron, Rajdhani, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(title, canvas.width / 2, 62);
+            ctx.fillStyle = 'rgba(232, 247, 255, 0.92)';
+            ctx.font = '700 22px Orbitron, Rajdhani, sans-serif';
+            ctx.fillText(subtitle, canvas.width / 2, 108);
+          }
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function createCodexPageTexture(pageSide = 'left') {
+          const canvas = document.createElement('canvas');
+          canvas.width = 384;
+          canvas.height = 512;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const pageGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            pageGradient.addColorStop(0, 'rgba(248, 236, 205, 1)');
+            pageGradient.addColorStop(0.55, 'rgba(239, 223, 183, 1)');
+            pageGradient.addColorStop(1, 'rgba(225, 205, 158, 1)');
+            ctx.fillStyle = pageGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(94, 67, 34, 0.22)';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(16, 16, canvas.width - 32, canvas.height - 32);
+
+            const innerEdgeX = pageSide === 'left' ? canvas.width - 34 : 34;
+            const outerEdgeX = pageSide === 'left' ? 42 : canvas.width - 42;
+            ctx.fillStyle = 'rgba(91, 62, 28, 0.12)';
+            ctx.fillRect(innerEdgeX - 8, 30, 16, canvas.height - 60);
+            ctx.fillRect(outerEdgeX - 2, 46, 4, canvas.height - 92);
+
+            ctx.strokeStyle = 'rgba(132, 96, 48, 0.12)';
+            ctx.lineWidth = 2;
+            for (let y = 92; y < canvas.height - 56; y += 34) {
+              ctx.beginPath();
+              ctx.moveTo(48, y);
+              ctx.lineTo(canvas.width - 48, y);
+              ctx.stroke();
+            }
+          }
+          const texture = new THREE.CanvasTexture(canvas);
+          texture.encoding = THREE.sRGBEncoding;
+          texture.needsUpdate = true;
+          return texture;
+        }
+
+        function createCodexPedestal(game, side) {
+          const root = new THREE.Group();
+          root.userData.kind = 'codex-pedestal';
+          root.userData.url = game.guideUrl;
+
+          const accent = side === 'left' ? 0xffcf66 : 0x7ef1ff;
+          const pedestalMaterial = new THREE.MeshStandardMaterial({
+            color: 0x171d25,
+            metalness: 0.34,
+            roughness: 0.58,
+            emissive: 0x141a20,
+            emissiveIntensity: 0.18,
+          });
+          const glowMaterial = new THREE.MeshStandardMaterial({
+            color: 0x382510,
+            emissive: accent,
+            emissiveIntensity: 0.36,
+            metalness: 0.18,
+            roughness: 0.32,
+          });
+          const plaqueMaterial = new THREE.MeshStandardMaterial({
+            color: 0x10141b,
+            emissive: accent,
+            emissiveIntensity: 0.32,
+            metalness: 0.22,
+            roughness: 0.36,
+          });
+          const bookStandMaterial = new THREE.MeshStandardMaterial({
+            color: 0x362317,
+            emissive: 0x140d09,
+            emissiveIntensity: 0.14,
+            metalness: 0.12,
+            roughness: 0.72,
+          });
+          const spineMaterial = new THREE.MeshStandardMaterial({
+            color: 0x412719,
+            emissive: 0x180f0a,
+            emissiveIntensity: 0.16,
+            metalness: 0.12,
+            roughness: 0.66,
+          });
+          const coverMaterials = [
+            new THREE.MeshStandardMaterial({
+              color: 0x5d3623,
+              emissive: 0x1b100b,
+              emissiveIntensity: 0.14,
+              metalness: 0.08,
+              roughness: 0.74,
+            }),
+            new THREE.MeshStandardMaterial({
+              color: 0x6a4029,
+              emissive: 0x1d120c,
+              emissiveIntensity: 0.14,
+              metalness: 0.08,
+              roughness: 0.72,
+            }),
+          ];
+          const pageBlockMaterial = new THREE.MeshStandardMaterial({
+            color: 0xe9dcb9,
+            emissive: 0x1f140a,
+            emissiveIntensity: 0.12,
+            metalness: 0.02,
+            roughness: 0.92,
+          });
+          const leftPageSurfaceMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: createCodexPageTexture('left'),
+            emissive: 0x2a1908,
+            emissiveIntensity: 0.1,
+            metalness: 0.01,
+            roughness: 0.96,
+            side: THREE.DoubleSide,
+          });
+          const rightPageSurfaceMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            map: createCodexPageTexture('right'),
+            emissive: 0x2a1908,
+            emissiveIntensity: 0.1,
+            metalness: 0.01,
+            roughness: 0.96,
+            side: THREE.DoubleSide,
+          });
+          const pageShadowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x2d1b0d,
+            transparent: true,
+            opacity: 0.12,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const entryTargetMaterial = new THREE.MeshBasicMaterial({
+            color: accent,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.92, 0.22, 18), pedestalMaterial);
+          base.position.y = 0.11;
+          root.add(base);
+
+          const column = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.54, 1.05, 18), pedestalMaterial.clone());
+          column.position.y = 0.72;
+          root.add(column);
+
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.86, 0.68, 0.14, 18), pedestalMaterial.clone());
+          cap.position.y = 1.3;
+          root.add(cap);
+
+          const glowRing = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.05, 12, 28), glowMaterial);
+          glowRing.position.set(0, 1.08, 0);
+          glowRing.rotation.x = Math.PI / 2;
+          root.add(glowRing);
+
+          const plaque = new THREE.Mesh(
+            new THREE.BoxGeometry(0.88, 0.46, 0.05),
+            plaqueMaterial
+          );
+          plaque.position.set(0, 0.9, 0.49);
+          root.add(plaque);
+
+          const plaqueLabel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.78, 0.34),
+            new THREE.MeshBasicMaterial({
+              map: createPedestalLabelTexture('GAME', 'GUIDE'),
+              transparent: true,
+              toneMapped: false,
+            })
+          );
+          plaqueLabel.position.set(0, 0, 0.031);
+          plaque.add(plaqueLabel);
+
+          const bookStand = new THREE.Mesh(
+            new THREE.BoxGeometry(1.04, 0.08, 0.76),
+            bookStandMaterial
+          );
+          bookStand.position.set(0, 1.41, 0.04);
+          bookStand.rotation.x = Math.PI / 16;
+          root.add(bookStand);
+
+          const book = new THREE.Group();
+          book.position.set(0, 1.41, 0.04);
+          book.userData.action = 'codex-open';
+          book.userData.url = game.guideUrl;
+          book.userData.pedestal = root;
+
+          const bookTiltGroup = new THREE.Group();
+          bookTiltGroup.position.set(0, 0.03, 0);
+          book.add(bookTiltGroup);
+
+          const leftCover = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.03, 0.69), coverMaterials[0]);
+          leftCover.position.set(-0.25, 0, 0);
+          bookTiltGroup.add(leftCover);
+
+          const rightCover = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.03, 0.69), coverMaterials[1]);
+          rightCover.position.set(0.25, 0, 0);
+          bookTiltGroup.add(rightCover);
+
+          const leftPageBlock = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.61), pageBlockMaterial.clone());
+          leftPageBlock.position.set(-0.24, 0.032, 0);
+          bookTiltGroup.add(leftPageBlock);
+
+          const rightPageBlock = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.045, 0.61), pageBlockMaterial.clone());
+          rightPageBlock.position.set(0.24, 0.032, 0);
+          bookTiltGroup.add(rightPageBlock);
+
+          const spine = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.71), spineMaterial);
+          spine.position.set(0, 0.02, 0);
+          bookTiltGroup.add(spine);
+
+          const leftPageSurface = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.56), leftPageSurfaceMaterial);
+          leftPageSurface.position.set(-0.24, 0.057, 0);
+          leftPageSurface.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(leftPageSurface);
+
+          const rightPageSurface = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.56), rightPageSurfaceMaterial);
+          rightPageSurface.position.set(0.24, 0.057, 0);
+          rightPageSurface.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(rightPageSurface);
+
+          const gutterShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.56), pageShadowMaterial);
+          gutterShadow.position.set(0, 0.058, 0);
+          gutterShadow.rotation.x = -Math.PI / 2;
+          bookTiltGroup.add(gutterShadow);
+
+          const entryTarget = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.14), entryTargetMaterial);
+          entryTarget.position.set(0.24, 0.059, 0.12);
+          entryTarget.rotation.x = -Math.PI / 2;
+          entryTarget.userData.action = 'codex-open';
+          entryTarget.userData.url = game.guideUrl;
+          entryTarget.userData.pedestal = root;
+          bookTiltGroup.add(entryTarget);
+
+          root.add(book);
+
+          const bookTargets = [book, entryTarget];
+          const bookPageMaterials = [
+            leftPageBlock.material,
+            rightPageBlock.material,
+            leftPageSurfaceMaterial,
+            rightPageSurfaceMaterial,
+          ];
+          root.userData.book = book;
+          root.userData.bookTargets = bookTargets;
+          root.userData.bookEntryTarget = entryTarget;
+          root.userData.bookTiltGroup = bookTiltGroup;
+          root.userData.backButtonAnchor = plaque;
+          root.userData.glowMaterial = glowMaterial;
+          root.userData.plaqueMaterial = plaqueMaterial;
+          root.userData.bookPageMaterials = bookPageMaterials;
+          root.userData.bookCoverMaterials = [bookStandMaterial, spineMaterial, ...coverMaterials];
+
+          return root;
+        }
+
+        function createCabinet(game, side, index) {
+          const cabinet = new THREE.Group();
+          cabinet.userData.game = game;
+
+          buildHallCabinet(cabinet, game, getCabinetIdentity(game, index));
+          return cabinet;
+        }
+
+        // Each game gets its own lacquer, trim, and hand-lettered marquee/side art,
+        // all inside one shared cabinet silhouette so the hall reads as a set.
+        // Declared as a function so it is hoisted above the cabinet build loop.
+        function getCabinetIdentityTable() { return {
+          RaceGPT: {
+            body: 0x1f3b2c, trim: 0xd9c9a3, accent: 0xe8b64c, ink: '#f3e8cc', ground: '#1f3b2c',
+            font: 'italic 800', motif: 'checker', tagline: 'TIME ATTACK',
+          },
+          'OSRS Clone': {
+            body: 0x5a4127, trim: 0xc9a86a, accent: 0x8fb56a, ink: '#2e2013', ground: '#e6d3a8',
+            font: '700', serif: true, motif: 'shield', tagline: 'ADVENTURE',
+          },
+          'Sword Guys': {
+            body: 0x5b1c1a, trim: 0xd8b06a, accent: 0xe9d7b0, ink: '#f4e6c8', ground: '#5b1c1a',
+            font: '900', motif: 'swords', tagline: 'ARENA BRAWLER',
+          },
+          'Ghost Signal': {
+            body: 0x2f3a40, trim: 0x9aa7a8, accent: 0x9fd1c2, ink: '#cfe3dc', ground: '#2a3439',
+            font: '600', motif: 'wave', tagline: 'COMING SOON',
+          },
+          'Night Courier': {
+            body: 0x1d2640, trim: 0xb89a62, accent: 0xe9c46a, ink: '#efe2c0', ground: '#1b2238',
+            font: 'italic 700', motif: 'moon', tagline: 'COMING SOON',
+          },
+          'Rebound Relay': {
+            body: 0x253e49, trim: 0xd3b681, accent: 0xff8a5c, ink: '#fff1d9', ground: '#253e49',
+            font: 'italic 800', motif: 'rebound', tagline: '90 SECOND SCORE CHASE',
+          },
+        }; }
+
+        function getCabinetIdentity(game, index) {
+          const table = getCabinetIdentityTable();
+          const fallbacks = Object.values(table);
+          return table[game.name] || fallbacks[index % fallbacks.length];
+        }
+
+        function drawCabinetMotif(ctx, motif, cx, cy, size, ink, accent) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.strokeStyle = ink;
+          ctx.fillStyle = ink;
+          ctx.lineWidth = size * 0.07;
+          ctx.lineCap = 'round';
+          if (motif === 'checker') {
+            const cell = size / 4;
+            for (let r = 0; r < 3; r += 1) {
+              for (let c = 0; c < 8; c += 1) {
+                if ((r + c) % 2 === 0) ctx.fillRect(-cell * 4 + c * cell, -cell * 1.5 + r * cell, cell, cell);
+              }
+            }
+          } else if (motif === 'shield') {
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.4, -size * 0.45);
+            ctx.lineTo(size * 0.4, -size * 0.45);
+            ctx.quadraticCurveTo(size * 0.42, size * 0.25, 0, size * 0.5);
+            ctx.quadraticCurveTo(-size * 0.42, size * 0.25, -size * 0.4, -size * 0.45);
+            ctx.fillStyle = accent;
+            ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, -size * 0.3);
+            ctx.lineTo(0, size * 0.3);
+            ctx.moveTo(-size * 0.22, -size * 0.08);
+            ctx.lineTo(size * 0.22, -size * 0.08);
+            ctx.stroke();
+          } else if (motif === 'swords') {
+            [-1, 1].forEach((dir) => {
+              ctx.save();
+              ctx.rotate(dir * Math.PI / 4);
+              ctx.fillRect(-size * 0.04, -size * 0.55, size * 0.08, size * 0.8);
+              ctx.fillStyle = accent;
+              ctx.fillRect(-size * 0.2, size * 0.25, size * 0.4, size * 0.07);
+              ctx.fillRect(-size * 0.05, size * 0.32, size * 0.1, size * 0.2);
+              ctx.restore();
+            });
+          } else if (motif === 'rebound') {
+            ctx.beginPath();
+            ctx.moveTo(-size * 0.7, size * 0.35);
+            ctx.lineTo(0, -size * 0.35);
+            ctx.lineTo(size * 0.42, size * 0.08);
+            ctx.stroke();
+            ctx.fillStyle = accent;
+            ctx.beginPath();
+            ctx.arc(size * 0.55, size * 0.22, size * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (motif === 'wave') {
+            ctx.beginPath();
+            for (let i = 0; i <= 60; i += 1) {
+              const x = -size * 0.9 + (i / 60) * size * 1.8;
+              const y = Math.sin(i * 0.45) * size * 0.22 * Math.exp(-Math.abs(i - 30) / 22);
+              if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          } else if (motif === 'moon') {
+            ctx.fillStyle = accent;
+            ctx.beginPath();
+            ctx.arc(0, -size * 0.1, size * 0.34, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.beginPath();
+            ctx.arc(size * 0.14, -size * 0.18, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = ink;
+            for (let i = 0; i < 4; i += 1) ctx.fillRect(-size * 0.8 + i * size * 0.45, size * 0.42, size * 0.25, size * 0.05);
+          }
+          ctx.restore();
+        }
+
+        function createMarqueeTexture(game, id) {
+          return makeCanvasTexture(512, 112, (ctx, w, h) => {
+            ctx.fillStyle = id.ground;
+            ctx.fillRect(0, 0, w, h);
+            const shade = ctx.createLinearGradient(0, 0, 0, h);
+            shade.addColorStop(0, 'rgba(255,240,210,0.16)');
+            shade.addColorStop(1, 'rgba(0,0,0,0.28)');
+            ctx.fillStyle = shade;
+            ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = id.ink;
+            ctx.globalAlpha = 0.5;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(8, 8, w - 16, h - 16);
+            ctx.globalAlpha = 1;
+            drawCabinetMotif(ctx, id.motif, 58, h / 2, 64, id.ink, `#${id.accent.toString(16).padStart(6, '0')}`);
+            ctx.fillStyle = id.ink;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const family = id.serif ? 'Georgia, "Times New Roman", serif' : 'Rajdhani, "Arial Narrow", sans-serif';
+            let fontSize = 62;
+            ctx.font = `${id.font} ${fontSize}px ${family}`;
+            while (ctx.measureText(game.name).width > w - 170 && fontSize > 30) {
+              fontSize -= 2;
+              ctx.font = `${id.font} ${fontSize}px ${family}`;
+            }
+            ctx.fillText(game.name, w / 2 + 34, h / 2 - 8);
+            ctx.font = `600 16px Rajdhani, sans-serif`;
+            ctx.globalAlpha = 0.78;
+            ctx.fillText(id.tagline.split('').join(' '), w / 2 + 34, h - 22);
+            ctx.globalAlpha = 1;
+          });
+        }
+
+        function createSideArtTexture(game, id) {
+          return makeCanvasTexture(256, 384, (ctx, w, h) => {
+            ctx.clearRect(0, 0, w, h);
+            const accentCss = `#${id.accent.toString(16).padStart(6, '0')}`;
+            ctx.globalAlpha = 0.9;
+            drawCabinetMotif(ctx, id.motif, w / 2, h * 0.3, 150, id.ink === '#2e2013' ? '#e6d3a8' : id.ink, accentCss);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = id.ink === '#2e2013' ? '#e6d3a8' : id.ink;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const family = id.serif ? 'Georgia, serif' : 'Rajdhani, "Arial Narrow", sans-serif';
+            let fontSize = 54;
+            ctx.font = `${id.font} ${fontSize}px ${family}`;
+            while (ctx.measureText(game.name).width > w - 30 && fontSize > 26) {
+              fontSize -= 2;
+              ctx.font = `${id.font} ${fontSize}px ${family}`;
+            }
+            ctx.fillText(game.name, w / 2, h * 0.64);
+            ctx.fillStyle = accentCss;
+            ctx.fillRect(w * 0.2, h * 0.72, w * 0.6, 4);
+          });
+        }
+
+        function buildHallCabinet(cabinet, game, id) {
+          const dormant = !!game.comingSoon;
+          const bodyMaterial = new THREE.MeshStandardMaterial({ color: id.body, roughness: 0.48, metalness: 0.05 });
+          const sideMaterial = new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: 0.6, metalness: 0.02 });
+          const trimMaterial = new THREE.MeshStandardMaterial({ color: id.trim, roughness: 0.38, metalness: 0.65 });
+          const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x14100d, roughness: 0.7 });
+
+          // Side profile (z forward, y up): kick, control deck lip, upright screen face,
+          // marquee hood, sloped roof.
+          const profile = new THREE.Shape();
+          [[-0.95, 0], [1.1, 0], [1.1, 0.95], [1.55, 1.12], [1.55, 1.28], [1.08, 1.46],
+            [1.08, 3.2], [1.42, 3.3], [1.42, 3.92], [-0.95, 4.02]].forEach(([z, y], i) => {
+            if (i === 0) profile.moveTo(z, y); else profile.lineTo(z, y);
+          });
+          const extrude = (depth) => new THREE.ExtrudeGeometry(profile, { depth, bevelEnabled: false });
+
+          const body = new THREE.Mesh(extrude(2.36), bodyMaterial);
+          body.rotation.y = -Math.PI / 2;
+          body.position.x = 1.18;
+          cabinet.add(body);
+
+          [-1, 1].forEach((sideSign) => {
+            const panel = new THREE.Mesh(extrude(0.07), sideMaterial);
+            panel.rotation.y = -Math.PI / 2;
+            panel.position.x = sideSign > 0 ? 1.25 : -1.18;
+            cabinet.add(panel);
+
+            const art = new THREE.Mesh(
+              new THREE.PlaneGeometry(1.5, 2.25),
+              new THREE.MeshStandardMaterial({ map: createSideArtTexture(game, id), transparent: true, roughness: 0.55 })
+            );
+            art.rotation.y = sideSign * Math.PI / 2;
+            art.position.set(sideSign * 1.256, 2.35, 0.2);
+            cabinet.add(art);
+
+            // Brass T-molding along the upright edge.
+            const molding = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.74, 0.03), trimMaterial);
+            molding.position.set(sideSign * 1.22, 2.33, 1.1);
+            cabinet.add(molding);
+          });
+
+          // Marquee: backlit printed panel, dimmed when the cabinet is dormant.
+          const marqueeMaterial = new THREE.MeshBasicMaterial({
+            map: createMarqueeTexture(game, id),
+            color: dormant ? 0x6f665c : 0xe8ddcb,
+            toneMapped: false,
+          });
+          const marquee = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.5), marqueeMaterial);
+          marquee.position.set(0, 3.61, 1.425);
+          marquee.name = 'marquee';
+          cabinet.add(marquee);
+          const marqueeFrame = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.05, 0.08), trimMaterial);
+          marqueeFrame.position.set(0, 3.33, 1.42);
+          cabinet.add(marqueeFrame);
+          const marqueeFrameTop = marqueeFrame.clone();
+          marqueeFrameTop.position.y = 3.89;
+          cabinet.add(marqueeFrameTop);
+
+          // Screen recess and brass bezel.
+          const recess = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.62), darkMaterial);
+          recess.position.set(0, 2.45, 1.085);
+          cabinet.add(recess);
+          addCabinetScreen(cabinet, game, {
+            width: 1.84, height: 1.34, depth: 0.1, x: 0, y: 2.45, z: 1.1,
+            frameColor: 0x07080a, emissiveColor: id.accent, emissiveIntensity: 0.15,
+            planeWidth: 1.76, planeHeight: 1.26, planeOffset: 0.012,
+          });
+          [[0, 3.14, 2.0, 0.04], [0, 1.76, 2.0, 0.04]].forEach(([x, y, w, h]) => {
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.04), trimMaterial);
+            bar.position.set(x, y, 1.12);
+            cabinet.add(bar);
+          });
+          [-1, 1].forEach((s) => {
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.42, 0.04), trimMaterial);
+            bar.position.set(s * 0.98, 2.45, 1.12);
+            cabinet.add(bar);
+          });
+
+          // Coming-soon cabinets get a timber shutter band across the lower screen.
+          if (dormant) {
+            const band = new THREE.Mesh(
+              new THREE.PlaneGeometry(1.76, 0.26),
+              new THREE.MeshBasicMaterial({
+                map: makeCanvasTexture(512, 76, (ctx, w, h) => {
+                  ctx.fillStyle = '#2a1a10';
+                  ctx.fillRect(0, 0, w, h);
+                  ctx.fillStyle = '#e9d7b0';
+                  ctx.font = '700 40px Rajdhani, sans-serif';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText('C O M I N G   S O O N', w / 2, h / 2 + 2);
+                }),
+                toneMapped: false,
+              })
+            );
+            band.position.set(0, 2.0, 1.17);
+            cabinet.add(band);
+          }
+
+          addCabinetActionPanel(cabinet, { panelY: 1.6, panelZ: 1.22, panelWidth: 1.9 });
+
+          // Control deck hardware sits on the sloped deck (1.55,1.28)->(1.08,1.46).
+          const deckSlope = Math.atan2(1.46 - 1.28, 1.55 - 1.08);
+          const deck = new THREE.Group();
+          deck.position.set(0, 1.37, 1.32);
+          deck.rotation.x = -deckSlope;
+          cabinet.add(deck);
+          const deckPlate = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.02, 0.5), darkMaterial);
+          deck.add(deckPlate);
+          const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.2, 8), trimMaterial);
+          stick.position.set(-0.6, 0.1, 0);
+          deck.add(stick);
+          const ball = new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 12, 10),
+            new THREE.MeshStandardMaterial({ color: id.accent, roughness: 0.35 })
+          );
+          ball.position.set(-0.6, 0.22, 0);
+          deck.add(ball);
+          const buttonMaterial = new THREE.MeshStandardMaterial({ color: id.accent, roughness: 0.35, metalness: 0.1 });
+          const buttonGeometry = new THREE.CylinderGeometry(0.055, 0.055, 0.04, 14);
+          for (let b = 0; b < 4; b += 1) {
+            const button = new THREE.Mesh(buttonGeometry, b % 2 ? trimMaterial : buttonMaterial);
+            button.position.set(0.05 + b * 0.2, 0.03, (b % 2) * 0.08 - 0.04);
+            deck.add(button);
+          }
+
+          // Coin door with two warm-lit slots.
+          const coinDoor = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.5, 0.03), trimMaterial);
+          coinDoor.position.set(0, 0.55, 1.115);
+          cabinet.add(coinDoor);
+          const slotMaterial = new THREE.MeshBasicMaterial({ color: dormant ? 0x3a2a1c : 0xd9894a, toneMapped: false });
+          [-0.12, 0.12].forEach((x) => {
+            const slot = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.12), slotMaterial);
+            slot.position.set(x, 0.62, 1.132);
+            cabinet.add(slot);
+          });
+          const kick = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.12, 0.04), darkMaterial);
+          kick.position.set(0, 0.06, 1.12);
+          cabinet.add(kick);
+
+          cabinet.userData.accentColor = new THREE.Color(id.accent);
+        }
+
+        function getLookAnchorTarget(target) {
+          if (!target || !target.userData) return target;
+          if (['cabinet-play', 'cabinet-guide', 'cabinet-back', 'cabinet-coming-soon'].includes(target.userData.action)) {
+            return target.userData.cabinet || target;
+          }
+          if (target.userData.action === 'codex-open') {
+            return target.userData.pedestal || target;
+          }
+          return target;
+        }
+        let lastFrameTime = performance.now();
+        let lastRenderedAt = 0;
+        let animationFrameId = 0;
+
+        function animate() {
+          animationFrameId = requestAnimationFrame(animate);
+          const now = performance.now();
+          if (!engineFailed && renderer.getContext().isContextLost()) {
+            stopTouchInput();
+            engineFailed = true;
+            maybeToggleLayout();
+          }
+          if (document.hidden || layoutMode === 'directory' || engineFailed) {
+            lastFrameTime = now;
+            return;
+          }
+          if (usesTouchControls() && now - lastRenderedAt < 1000 / 30) return;
+          lastRenderedAt = now;
+          const deltaSeconds = Math.min((now - lastFrameTime) / 1000, 0.1);
+          lastFrameTime = now;
+
+          if (introClockStart === null) {
+            introClockStart = now;
+          }
+
+          let introActive = false;
+          introAnimations.forEach((animation) => {
+            if (animation.done) return;
+            const elapsed = now - introClockStart - animation.delay;
+            if (elapsed < 0) {
+              introActive = true;
+              return;
+            }
+            const progress = Math.min(1, elapsed / animation.duration);
+            const eased = easeOutCubic(progress);
+            if (typeof animation.apply === 'function') {
+              animation.apply(eased);
+            }
+            if (progress >= 1) {
+              animation.done = true;
+              if (typeof animation.finalize === 'function') {
+                animation.finalize();
+              }
+            } else {
+              introActive = true;
+            }
+          });
+
+          if (!introActive && !introDone) {
+            introDone = true;
+          }
+          if (!cabinetIntroDone && now - introClockStart >= cabinetIntroSettleMs) {
+            cabinetIntroDone = true;
+          }
+
+          const launching = !!launchSequence;
+          const cameraLocked = approachingCabinet || activeCabinet || launching;
+          if (launching) {
+            launchSequence.elapsed = Math.min(
+              CABINET_LAUNCH_DURATION_SECONDS,
+              launchSequence.elapsed + deltaSeconds
+            );
+            const raw = launchSequence.elapsed / CABINET_LAUNCH_DURATION_SECONDS;
+            const eased = 1 - Math.pow(1 - raw, 3);
+            rigGoal.lerpVectors(launchSequence.from, launchSequence.to, eased);
+            focusRigTarget.copy(launchSequence.to);
+            if (raw >= 1) {
+              const launchUrl = launchSequence.url;
+              launchSequence = null;
+              window.location.href = launchUrl;
+            }
+          } else if (!cameraLocked) {
+            const damping = Math.exp(-2.8 * deltaSeconds);
+            scrollVelocity *= damping;
+            if (Math.abs(scrollVelocity) < 0.00001) {
+              scrollVelocity = 0;
+            }
+            targetZ += (scrollVelocity + touchMove * 9) * deltaSeconds;
+            if (targetZ < minZ) {
+              targetZ = minZ;
+              scrollVelocity = Math.max(0, scrollVelocity);
+            } else if (targetZ > maxZ) {
+              targetZ = maxZ;
+              scrollVelocity = Math.min(0, scrollVelocity);
+            }
+            rigGoal.set(0, CAMERA_START_POSITION.y, targetZ);
+          } else {
+            rigGoal.copy(focusRigTarget);
+            rigGoal.y = CAMERA_START_POSITION.y;
+          }
+          cameraRig.position.lerp(rigGoal, 1 - Math.exp(-(usesTouchControls() ? 7 : 3.2) * deltaSeconds));
+          cameraRig.position.y = CAMERA_START_POSITION.y;
+          if (!cameraLocked) {
+            walkwayReturnPosition.set(0, CAMERA_START_POSITION.y, cameraRig.position.z);
+          }
+
+          if (approachingCabinet) {
+            const alignmentDistance = cameraRig.position.distanceTo(focusRigTarget);
+            if (alignmentDistance < APPROACH_ALIGNMENT_EPSILON) {
+              activeCabinet = approachingCabinet;
+              hoverCabinet = approachingCabinet;
+              approachingCabinet = null;
+            }
+          }
+
+          if (launchSequence) {
+            desiredLookTarget.copy(launchSequence.cabinet.position).setY(DEFAULT_LOOK_TARGET.y);
+          } else {
+            const lookTargetCabinet = getLookAnchorTarget(activeCabinet ?? hoverCabinet);
+            if (lookTargetCabinet) {
+              if (lookTargetCabinet.userData && lookTargetCabinet.userData.lookPosition) {
+                desiredLookTarget.copy(lookTargetCabinet.userData.lookPosition);
+              } else {
+                lookTargetCabinet.getWorldPosition(desiredLookTarget);
+                desiredLookTarget.y = DEFAULT_LOOK_TARGET.y;
+              }
+            } else {
+              desiredLookTarget.set(Math.sin(touchYaw) * 10, DEFAULT_LOOK_TARGET.y + Math.sin(touchPitch) * 10,
+                cameraRig.position.z - Math.cos(touchYaw) * 10);
+            }
+          }
+          const lookLerpSpeed = activeCabinet ? 0.2 : 0.08;
+          lookTarget.lerp(desiredLookTarget, lookLerpSpeed);
+
+          if (hoverLockState === 'panning' && hoverCabinet) {
+            const lookDelta = lookTarget.distanceTo(desiredLookTarget);
+            if (lookDelta < LOOK_TARGET_SETTLED_EPSILON) {
+              hoverLockState = 'hold';
+              hoverLockUntil = now + getHoverHoldDurationMs(hoverCabinet);
+            }
+          } else if (hoverLockState === 'hold' && now >= hoverLockUntil) {
+            hoverLockState = 'idle';
+            applyHoverSelection(pendingHoverCabinet);
+          }
+
+          camera.lookAt(lookTarget);
+
+          updateExitDoorOpen(deltaSeconds, now);
+          updateCabinetEmissive(deltaSeconds, now);
+          updateDeepField(deltaSeconds, now);
+          syncCabinetActionButtons();
+          syncInspectControls();
+
+          renderer.render(scene, camera);
+        }
+
+        animationFrameId = requestAnimationFrame(animate);
+        const onResize = () => {
+          stopTouchInput();
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.fov = usesTouchControls() && camera.aspect < 1 ? 80 : 60;
+          camera.updateProjectionMatrix();
+          updateRenderSize();
+        };
+        onResize();
+        syncInspectControls();
+
+        const onPageShow = (event) => {
+          if (event.persisted) {
+            applyReturnStateIfPresent();
+          }
+        };
+
+        window.addEventListener('resize', onResize);
+        window.addEventListener('pageshow', onPageShow);
+
+        return () => {
+          touchBindings.forEach((remove) => remove());
+          cancelAnimationFrame(animationFrameId);
+          window.removeEventListener('wheel', onWheel);
+          window.removeEventListener('keydown', onKeyDown);
+          window.removeEventListener('resize', onResize);
+          window.removeEventListener('pageshow', onPageShow);
+          renderer.domElement.removeEventListener('pointermove', onPointerMove);
+          renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
+          renderer.domElement.removeEventListener('click', onRendererClick);
+          renderer.domElement.style.cursor = 'default';
+          if (renderer.domElement.parentElement === sceneContainer) {
+            sceneContainer.removeChild(renderer.domElement);
+          }
+
+          scene.traverse((child) => {
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+              child.geometry.dispose();
+            }
+
+            const materials = Array.isArray(child.material)
+              ? child.material
+              : child.material
+              ? [child.material]
+              : [];
+
+            materials.forEach((material) => {
+              if (!material) return;
+              if (material.map && typeof material.map.dispose === 'function') {
+                material.map.dispose();
+              }
+              if (typeof material.dispose === 'function') {
+                material.dispose();
+              }
+            });
+          });
+
+          renderer.dispose();
+        };
+      }
+    </script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
