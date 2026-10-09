@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
 const vm = require('node:vm');
+const {withDeadline,closeOwnedQA}=require('./arcade-qa-lifecycle');
 
 // --check-fixtures parses served test instrumentation without a browser or server.
 const root = path.resolve(__dirname, '..');
@@ -16,6 +17,7 @@ function replaceOnce(source, needle, replacement, label) {
   return source.replace(needle,replacement);
 }
 function instrumentApp(source) {
+  const helpFunction=source.includes('function showHelp(')?'showHelp':'showWelcome';
   source=replaceOnce(source,'const $=id=>document.getElementById(id);',`
 let __arcadeLastDisposed=null,__arcadeDisposeCalls=0;
 const __arcadePageShows=[];
@@ -37,7 +39,7 @@ const $=id=>document.getElementById(id);`,'app DOM entry');
   }`,'dispose-before-navigation');
   return source+`
 // Exposed only by this test server, never by the shipped modules.
-window.arcadeTest={inspect,openDirectory,showHelp,startExplore,initialize,dispose,save,
+window.arcadeTest={inspect,openDirectory,${helpFunction},startExplore,initialize,dispose,save,
   get controller(){return controller;},get state(){return __arcadeSnapshot();},
   get lastDisposed(){return __arcadeLastDisposed;}};
 `;
@@ -80,6 +82,8 @@ function instrumentController(source) {
       __blocker=new THREE.Mesh(new THREE.BoxGeometry(.6,.6,.12),new THREE.MeshBasicMaterial({color:0x000000}));
       __blocker.position.copy(camera.position).lerp(anchor.position,.5);__blocker.lookAt(camera.position);scene.add(__blocker);renderOnce();},
     unblock(){if(!__blocker)return;scene.remove(__blocker);__blocker.geometry.dispose();__blocker.material.dispose();__blocker=null;renderOnce();},
+    freezeElapsed(){elapsed=0;renderOnce();},
+    graphics(){const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER),version:gl.getParameter(gl.VERSION)};},
     loseContext(){renderer.forceContextLoss();}
   };
   return {__test,player,pause,resume,capture,focusGame,dispose,`,'controller return');
@@ -255,10 +259,10 @@ async function checkCabinetCatalog(page) {
     assert.equal(await page.locator('#cabinet-guide').isVisible(),![3,4].includes(index));
     assert.equal(await page.locator('#coming-soon').isVisible(),[3,4].includes(index));
     if([3,4].includes(index)){assert.equal(await page.locator('#cabinet-play').getAttribute('href'),null);assert.equal(await page.locator('#cabinet-guide').getAttribute('href'),null);}
-    await page.getByRole('button',{name:'Next cabinet >',exact:true}).click();
+    await page.locator('#cabinet-next').click();
   }
   assert.equal(await page.evaluate(()=>window.arcadeTest.state.selected),0,'Next wraps in the established order');
-  await page.getByRole('button',{name:'< Previous cabinet',exact:true}).click();
+  await page.locator('#cabinet-previous').click();
   assert.equal(await page.evaluate(()=>window.arcadeTest.state.selected),5,'Previous wraps to Rebound Relay');
 }
 async function checkPauseAndDirectory(page,mobile) {
@@ -382,6 +386,7 @@ async function runCase(browser,localOrigin,mode) {
       await ready(page);assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore');
       assert.equal(await page.locator('#welcome,#explore').count(),0,'Direct entry has no welcome or mandatory Enter button');
       assert.equal(await page.evaluate(()=>document.pointerLockElement),null,'Loading never requests pointer lock');
+      console.log(`${mode}: renderer identity`,await page.evaluate(()=>window.arcadeTest.controller.__test.graphics()));
       if(mobile)await checkTouch(page,context);else await checkKeyboardAndPicking(page);
       await checkCabinetCatalog(page);await checkPauseAndDirectory(page,mobile);await capture('room');
       for(const index of mobile?[1]:[0,1,2,5])await inspectAndVisit(page,index,'guide',receipts,entry);
@@ -395,25 +400,33 @@ async function runCase(browser,localOrigin,mode) {
     }
     assert.deepEqual(unexpected,[],`${mode}: no external or unstubbed requests`);
     assert.deepEqual(errors,[],`${mode}: no unhandled browser errors`);console.log(`PASS ${mode}`);
-  } finally {await context.close();}
+  } finally {await withDeadline(context.close(),'QA context close');}
 }
 async function run() {
   checkFixtureSyntax();const selected=process.env.TEST_MODE?process.env.TEST_MODE.split(','):modes;
   for(const mode of selected)assert(modes.includes(mode),`Unknown TEST_MODE: ${mode}`);
-  let server,browser;
+  let server,browser,browserServer,browserProcess,port;const receipt={startedAt:new Date().toISOString(),cases:[],cleanup:{}};
   try {
     server=createFixtureServer();await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
-    const localOrigin=`http://127.0.0.1:${server.address().port}`,{chromium}=require('playwright');
+    port=server.address().port;const localOrigin=`http://127.0.0.1:${port}`,{chromium}=require('playwright');
     // Exactly one browser process; cases and contexts run sequentially.
-    browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
-    for(const mode of selected)await runCase(browser,localOrigin,mode);
+    browserServer=await chromium.launchServer({channel:process.env.BROWSER_CHANNEL||undefined,headless:true,args:['--enable-unsafe-swiftshader']});
+    browserProcess=browserServer.process();receipt.browserPid=browserProcess.pid;receipt.serverPort=port;
+    browser=await chromium.connect(browserServer.wsEndpoint());receipt.browserVersion=browser.version();
+    for(const mode of selected){await runCase(browser,localOrigin,mode);receipt.cases.push({mode,passed:true});}
+    receipt.passed=true;
+  } catch(error) {
+    receipt.passed=false;receipt.error=error.stack;throw error;
   } finally {
-    try{if(browser)await browser.close();}
-    finally{if(server){server.closeAllConnections?.();await new Promise(resolve=>server.close(resolve));}}
+    receipt.cleanup=await closeOwnedQA({browser,browserServer,browserProcess,server});receipt.endedAt=new Date().toISOString();
+    if(!receipt.cleanup.complete)receipt.passed=false;
+    if(process.env.ARTIFACT_DIR){fs.mkdirSync(process.env.ARTIFACT_DIR,{recursive:true});fs.writeFileSync(path.join(process.env.ARTIFACT_DIR,'browser-cleanup-receipt.json'),JSON.stringify(receipt,null,2));}
+    console.log('Owned browser/server cleanup:',receipt.cleanup);
   }
+  assert(receipt.cleanup.complete,'Owned QA resources must close');
 }
 if(require.main===module) {
   if(process.argv.includes('--check-fixtures')){try{checkFixtureSyntax();}catch(error){console.error(error);process.exitCode=1;}}
   else run().catch(error=>{console.error(error);process.exitCode=1;});
 }
-module.exports={instrumentApp,instrumentController,checkFixtureSyntax};
+module.exports={instrumentApp,instrumentController,checkFixtureSyntax,createFixtureServer,routeAll,ready,runCase};
