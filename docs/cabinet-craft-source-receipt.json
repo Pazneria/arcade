@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-10-09T20:33:23.052Z",
+  "recordedAt": "2026-10-09T20:49:03.065Z",
   "baseCommit": "e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5",
   "liveBase": "5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75",
   "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft",
@@ -9,7 +9,7 @@
   "collaborators": [
     {
       "kind": "RaceGPT menu",
-      "commit": "15dec9dd764d927c2b8d547d85fad5dc8d9c8fc9",
+      "commit": "71a32a3b26df0aa6172ee9abe047573266527e8a",
       "source": "C:/Users/jmore/Documents/Codex/2026-10-09/task-30/racegpt-title/src/cabinet",
       "target": "assets/cabinet-menu",
       "files": [
@@ -83,8 +83,8 @@
     },
     {
       "file": "assets/cabinet-menu/racegpt-menu.js",
-      "sha256": "28d2251672c3b4ad97e2c5e15f044f2ddb54905a8d57eacb68602d976b9830e3",
-      "bytes": 15555
+      "sha256": "2f35d3b8a4ba46296184b4bcef8f4b4dc4d737736e1f5033202b43d4278d7828",
+      "bytes": 14812
     },
     {
       "file": "assets/cabinet-menu/track-art.js",
@@ -119,7 +119,17 @@
     "launched": true
   },
   "graphicsRun": true,
-  "renderedAcceptance": "focused direct-launch/return follow-up passed; physical small-copy craft acceptance open",
+  "renderedAcceptance": "previous direct-launch/return flow validated; current portrait menu pending standing review clearance",
+  "standingRefinement": {
+    "sourceCommit": "71a32a3b26df0aa6172ee9abe047573266527e8a",
+    "cpuChecked": true,
+    "graphicsAccepted": false,
+    "design": {
+      "width": 960,
+      "height": 1280
+    },
+    "report": "docs/cabinet-menu/standing-readability-refinement.md"
+  },
   "renderedReview": {
     "sourceCommit": "f472c95d80daf453c6e237ba549f085b04bd248f",
     "nativeCommit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",

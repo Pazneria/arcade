@@ -5,7 +5,7 @@ const hash=file=>crypto.createHash('sha256').update(normalized(file)).digest('he
 const sourceFiles=['assets/arcade-app.js','assets/arcade-controller.js','assets/arcade-cabinet.js','assets/arcade-scene.js','assets/arcade-screen-projection.js','assets/arcade-menu.js','assets/arcade-session.js','assets/arcade.css','index.html',
   'assets/cabinet-menu/racegpt-menu.js','assets/cabinet-menu/track-art.js','assets/token-entry/token-entry.js','assets/token-entry/entry-session.js','assets/token-entry/token-prop.js'];
 const collaborators=[
-  {kind:'RaceGPT menu',commit:'15dec9dd764d927c2b8d547d85fad5dc8d9c8fc9',source:'C:/Users/jmore/Documents/Codex/2026-10-09/task-30/racegpt-title/src/cabinet',target:'assets/cabinet-menu',files:['racegpt-menu.js','track-art.js']},
+  {kind:'RaceGPT menu',commit:'71a32a3b26df0aa6172ee9abe047573266527e8a',source:'C:/Users/jmore/Documents/Codex/2026-10-09/task-30/racegpt-title/src/cabinet',target:'assets/cabinet-menu',files:['racegpt-menu.js','track-art.js']},
   {kind:'Token entry',commit:'651c25e1caacc98e9f2c6fc131149c3e91248f5c',source:'C:/Users/jmore/Documents/Codex/2026-10-09/task-31/token-entry/assets/token-entry',target:'assets/token-entry',files:['token-entry.js','entry-session.js','token-prop.js']},
 ];
 for(const owner of collaborators)for(const file of owner.files)assert.equal(hash(path.join(root,owner.target,file)),hash(path.join(owner.source,file)),`${owner.kind} copied source must remain unchanged`);
@@ -17,7 +17,8 @@ const receipt={schemaVersion:1,recordedAt:new Date().toISOString(),baseCommit:ba
   nativeIntegration:{checkout:path.join(root,'..','racegpt-cabinet-bridge'),commit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.join(root,'..','racegpt-cabinet-bridge'),encoding:'utf8'}).trim(),protocol:'racegpt-v1 ready/start/started; paired host/native integration required',standaloneMenuPreserved:true},
   sourceFiles:sourceFiles.map(file=>({file,sha256:hash(path.join(root,file)),bytes:Buffer.byteLength(normalized(path.join(root,file)))})),protectedDiff:[],
   cpuSuite:{command:'npm test',result:'passed',log:'docs/cabinet-craft-cpu.txt'},reviewHarness:{file:'scripts/review-cabinet-craft.cjs',syntaxChecked:true,launched:!!review},
-  graphicsRun:!!review,renderedAcceptance:review?'focused direct-launch/return follow-up passed; physical small-copy craft acceptance open':'pending coordinated parent slot',
+  graphicsRun:!!review,renderedAcceptance:'previous direct-launch/return flow validated; current portrait menu pending standing review clearance',
+  standingRefinement:{sourceCommit:'71a32a3b26df0aa6172ee9abe047573266527e8a',cpuChecked:true,graphicsAccepted:false,design:{width:960,height:1280},report:'docs/cabinet-menu/standing-readability-refinement.md'},
   renderedReview:review?{sourceCommit:review.sourceCommit,nativeCommit:review.nativeCommit,followUpPassed:review.passed,cleanupComplete:review.cleanup.complete,endedAt:review.endedAt,report:'docs/cabinet-craft-rendered-review.md'}:null,
   libraryUpload:{status:'blocked by automatic approval review; no upload ran',fileIds:[]},published:false,merged:false,softwareInstalled:false,existingBrowserFocused:false,localhost5418Touched:false};
 fs.writeFileSync(path.join(root,'docs/cabinet-craft-source-receipt.json'),JSON.stringify(receipt,null,2)+'\n');

@@ -3,6 +3,7 @@ const root=path.resolve(__dirname,'..'),url=source=>'data:text/javascript;base64
 async function run(){
   const track=url(fs.readFileSync(path.join(root,'assets/cabinet-menu/track-art.js'),'utf8'));
   const menu=url(fs.readFileSync(path.join(root,'assets/cabinet-menu/racegpt-menu.js'),'utf8').replace("'./track-art.js'",JSON.stringify(track)));
+  const {MENU_HOTSPOTS,CANCEL_HOTSPOT}=await import(menu);
   const source=fs.readFileSync(path.join(root,'assets/arcade-menu.js'),'utf8').replace("'./cabinet-menu/racegpt-menu.js'",JSON.stringify(menu));
   const {createCabinetMenu}=await import(url(source));
   let focus=null,starts=0,cancels=0,backs=0,draws=0;
@@ -18,10 +19,14 @@ async function run(){
   globalThis.matchMedia=()=>({matches:true});
   const display=createCabinetMenu({canvas,hotspots,native,document:{createElement:()=>new Node()},onStart:(selection,attempt)=>{starts++;assert.equal(selection.trackId,display.state.trackId);assert(attempt.signal);},onCancel:()=>cancels++,onBack:()=>backs++});
   display.mount({name:'RaceGPT'});assert.equal(native.hidden,true);assert.equal(hotspots.children.length,6);display.focus();assert.equal(focus.dataset.action,'start');
-  const start=focus;display.pointer({u:.4,v:.81,type:'move'});assert.equal(focus,start,'Hover does not rebuild or steal the native focused control');
+  for(const r of MENU_HOTSPOTS){const button=hotspots.children.find(b=>b.dataset.action===r.id);assert.equal(button.style.left,r.u*100+'%');assert.equal(button.style.top,r.v*100+'%');assert.equal(button.style.width,r.width*100+'%');assert.equal(button.style.height,r.height*100+'%');}
+  const startRegion=MENU_HOTSPOTS.find(r=>r.id==='start'),start=focus;
+  display.pointer({u:startRegion.u+startRegion.width/2,v:startRegion.v+startRegion.height/2,type:'move'});assert.equal(focus,start,'Hover does not rebuild or steal the native focused control');
   const key={code:'ArrowRight',preventDefault(){this.defaultPrevented=true;}};display.key(key);assert.equal(display.state.index,1);assert(key.defaultPrevented);assert.equal(focus,start);
   start.click();start.click();assert.equal(starts,1);assert.equal(display.state.phase,'loading');
-  const cancel=hotspots.children.find(b=>b.dataset.action==='cancel');assert.equal(cancel.hidden,false);cancel.click();assert.equal(cancels,1);assert.equal(display.state.phase,'menu');
+  const cancel=hotspots.children.find(b=>b.dataset.action==='cancel');assert.equal(cancel.hidden,false);
+  assert.equal(cancel.style.top,CANCEL_HOTSPOT.v*100+'%');assert(startRegion.v+startRegion.height<CANCEL_HOTSPOT.v,'Repeated Start cannot hit the separate Cancel target');
+  cancel.click();assert.equal(cancels,1);assert.equal(display.state.phase,'menu');
   start.click();const attempt=display.state.requestId;assert(display.error(attempt,'failure'));assert.equal(display.state.phase,'error');assert.equal(start.hidden,false);
   start.click();assert(display.ready(display.state.requestId));assert.equal(display.state.phase,'playing');display.cancel();
   hotspots.children.find(b=>b.dataset.action==='back').click();assert.equal(backs,1);

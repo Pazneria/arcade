@@ -1,17 +1,19 @@
 import { TRACKS } from './track-art.js';
 export { TRACKS };
 
-export const DESIGN = Object.freeze({width: 1280, height: 960});
+// The actual standing projection is ~140x174, not the flat 4:3 preview.
+// A portrait logical composition restores glyph proportions after projection.
+export const DESIGN = Object.freeze({width: 960, height: 1280});
 const rect = (id, x, y, w, h, label) => Object.freeze({
   id, label, u: x / DESIGN.width, v: y / DESIGN.height,
   width: w / DESIGN.width, height: h / DESIGN.height
 });
 export const MENU_HOTSPOTS = Object.freeze([
-  ...TRACKS.map((track, i) => rect(track.id, 64 + i * 292, 584, 276, 116, track.name)),
-  rect('start', 64, 728, 852, 108, 'Start run'),
-  rect('back', 940, 728, 276, 108, 'Back to arcade')
+  ...TRACKS.map((track, i) => rect(track.id, 48 + i * 222, 588, 198, 120, track.name)),
+  rect('start', 48, 740, 864, 184, 'Start run'),
+  rect('back', 48, 1176, 864, 80, 'Back to arcade')
 ]);
-export const CANCEL_HOTSPOT = rect('cancel', 940, 728, 276, 108, 'Cancel loading');
+export const CANCEL_HOTSPOT = rect('cancel', 48, 1176, 864, 80, 'Cancel loading');
 
 /** No listeners, timers, storage, DOM, RAF, navigation, audio or game instances. */
 export function createMenu({onStart = () => {}, onBack = () => {}, onChange = () => {},
@@ -162,8 +164,9 @@ export function createRaceGptLaunchUrl(baseUrl, selection) {
 const C = Object.freeze({ink:'#07171e', panel:'#102b35', white:'#f2f4df', muted:'#a8c5c8',
   line:'#345560', amber:'#ffcc52', orange:'#ee5936', blue:'#64b9cf'});
 const FONT = '"Arial Black", "Segoe UI", Arial, sans-serif';
-function text(ctx, value, x, y, size, color = C.white, weight = 800, align = 'left') {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+const CONDENSED = '"Arial Narrow", "Bahnschrift", "Segoe UI", Arial, sans-serif';
+function text(ctx, value, x, y, size, color = C.white, weight = 800, align = 'left', family = FONT) {
+  ctx.font = `${weight} ${size}px ${family}`;
   ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
   ctx.fillText(value, x, y);
 }
@@ -184,9 +187,9 @@ function ring(ctx, x,y,r,color,width) {
   ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
 }
 function route(ctx, track, time, reducedMotion) {
-  const ox=1108, oy=424, span=194;
+  const ox=758, oy=354, span=218;
   const points=track.route.map(([x,y])=>[ox+x*span,oy+y*span]);
-  line(ctx,points,C.ink,17); line(ctx,points,C.muted,9); line(ctx,points,C.panel,3);
+  line(ctx,points,C.ink,21); line(ctx,points,C.white,12); line(ctx,points,C.panel,4);
   for(const [x,y] of track.gates) {
     const px=ox+x*span, py=oy+y*span;
     box(ctx,px-8,py-8,16,16,C.orange); box(ctx,px-3,py-3,6,6,C.white);
@@ -203,7 +206,7 @@ function route(ctx, track, time, reducedMotion) {
 // Silver wedge, dark glass, four wheels and rear wing: the native procedural car.
 // Painter's projection is Canvas2D artwork; no camera, 3D renderer, or game loop.
 function car(ctx) {
-  ctx.save(); ctx.translate(344,455); ctx.rotate(-0.07);
+  ctx.save(); ctx.translate(290,379); ctx.scale(0.94,0.94); ctx.rotate(-0.07);
   ctx.beginPath();ctx.ellipse(0,44,245,36,0,0,Math.PI*2);ctx.fillStyle='#041116';ctx.fill();
   const wheel=(x,y)=>{
     ctx.beginPath();ctx.ellipse(x,y,29,43,-0.1,0,Math.PI*2);ctx.fillStyle='#061015';ctx.fill();
@@ -238,9 +241,10 @@ function car(ctx) {
   line(ctx,[[-191,40],[-175,51]],C.orange,7);
   ctx.restore();
 }
-function keycap(ctx,label,x,y,w=68) {
-  box(ctx,x,y,w,43,C.panel);line(ctx,[[x,y+43],[x,y],[x+w,y],[x+w,y+43]],C.muted,2);
-  text(ctx,label,x+w/2,y+31,25,C.white,800,'center');
+function outline(ctx,r,color=C.white,width=8,inset=-8) {
+  ctx.strokeStyle=color;ctx.lineWidth=width;
+  ctx.strokeRect(r.u*DESIGN.width+inset,r.v*DESIGN.height+inset,
+    r.width*DESIGN.width-inset*2,r.height*DESIGN.height-inset*2);
 }
 
 /** Pure paint. Time is milliseconds from the host; updates at 10–15 Hz suffice. */
@@ -250,79 +254,57 @@ export function draw(ctx,{width=ctx.canvas.width,height=ctx.canvas.height,time=0
   const view=state ?? {phase:'menu',index:0,trackId:TRACKS[0].id,focus:'start'};
   const track=TRACKS.find(track=>track.id===view.trackId) ?? TRACKS[0];
   const selected=TRACKS.indexOf(track);
-  ctx.save();ctx.setTransform(width/1280,0,0,height/960,0,0);
-  box(ctx,0,0,1280,960,C.ink);
-  // Fixed geometry, broad colors and safe gutters survive standing perspective.
-  const bg=ctx.createLinearGradient(0,250,1100,610);
+  ctx.save();ctx.setTransform(width/DESIGN.width,0,0,height/DESIGN.height,0,0);
+  box(ctx,0,0,960,1280,C.ink);
+  // Deliberately sparse at the measured standing footprint. No tiny metadata.
+  const bg=ctx.createLinearGradient(0,240,960,476);
   bg.addColorStop(0,'#184454');bg.addColorStop(1,'#0d252e');
-  polygon(ctx,[[0,280],[1280,244],[1280,561],[0,561]],bg);
-  polygon(ctx,[[0,361],[629,275],[764,538],[0,544]],'#13333e');
-  polygon(ctx,[[-40,562],[478,285],[564,285],[54,562]],C.orange);
-  polygon(ctx,[[94,562],[605,285],[624,285],[116,562]],'#9d3d2a');
-  for(let i=0;i<8;i++)line(ctx,[[735+i*61,290],[643+i*61,553]],'#20424d',2);
-  box(ctx,64,44,12,23,C.amber);
-  text(ctx,'PRIVATE TEST FACILITY',91,65,25,C.muted);
-  text(ctx,'TIME ATTACK',1216,65,25,C.amber,800,'right');
-  ctx.save();ctx.translate(63,234);ctx.transform(1,0,-0.16,1,0,0);
-  text(ctx,'RACE',0,0,158,C.white,900);
+  box(ctx,0,240,960,236,bg);
+  polygon(ctx,[[-40,476],[370,240],[475,240],[65,476]],C.orange);
+  polygon(ctx,[[118,476],[527,240],[547,240],[139,476]],'#9d3d2a');
+  for(let i=0;i<5;i++)line(ctx,[[623+i*66,248],[553+i*66,470]],'#20424d',3);
+  ctx.save();ctx.translate(47,154);ctx.transform(1,0,-0.16,1,0,0);
+  text(ctx,'RACE',0,0,124,C.white,900);
   const wordWidth=ctx.measureText('RACE').width;
-  text(ctx,'GPT',wordWidth+10,0,158,C.amber,900);
+  text(ctx,'GPT',wordWidth+8,0,124,C.amber,900);
   ctx.restore();
-  checker(ctx,1096,118,20,6,3);
-  text(ctx,'ONE CAR. ONE CLEAN RUN.',64,286,32,C.white);
-  car(ctx);
-  box(ctx,732,320,2,209,C.line);
-  text(ctx,track.label.toUpperCase(),778,341,23,C.muted);
-  const names=[['BANKED','SHAKEDOWN'],['HIGH SPEED','ROUTE'],['TECHNICAL','BOWL'],['JUMP','SPEEDCHECK']];
-  text(ctx,names[selected][0],778,402,26,C.white);
-  text(ctx,names[selected][1],778,438,26,C.white);
-  route(ctx,track,time,reducedMotion);
-  text(ctx,`${track.checkpoints} CHECKPOINT${track.checkpoints>1?'S':''}`,778,485,22,C.muted);
-  text(ctx,'MODEL GHOST',778,541,22,C.amber);
-  for(let i=0;i<4;i++) {
-    const t=TRACKS[i],x=64+i*292,active=i===selected;
-    box(ctx,x,584,276,116,active?C.amber:C.panel);
-    box(ctx,x,584,276,5,active?C.white:C.line);
-    text(ctx,String(i+1).padStart(2,'0'),x+17,645,40,active?C.ink:C.muted,900);
-    text(ctx,`TRACK ${String.fromCharCode(65+i)}`,x+82,627,27,active?C.ink:C.white);
-    text(ctx,t.hint,x+17,678,20,active?C.ink:C.muted);
-    if(view.focus===t.id || view.hover===t.id) {
-      ctx.strokeStyle=C.white;ctx.lineWidth=4;ctx.strokeRect(x-5,579,286,126);
-    }
-  }
+  checker(ctx,852,62,20,3,3);
   const loading=view.phase==='loading', playing=view.phase==='playing', error=view.phase==='error';
+  text(ctx,error?'START FAILED':'TIME ATTACK',480,222,error?72:56,error?C.orange:C.amber,900,'center');
+  car(ctx);
+  box(ctx,586,260,4,194,C.line);
+  route(ctx,track,time,reducedMotion);
+  text(ctx,`TRACK ${String.fromCharCode(65+selected)}`,480,563,104,C.white,900,'center');
+  for(let i=0;i<4;i++) {
+    const t=TRACKS[i],x=48+i*222,active=i===selected;
+    box(ctx,x,588,198,120,active?C.amber:'#194853');
+    text(ctx,String.fromCharCode(65+i),x+99,686,108,active?C.ink:C.white,900,'center');
+    if(view.focus===t.id || view.hover===t.id) {
+      outline(ctx,MENU_HOTSPOTS[i]);
+    }
+  }
   if(loading || playing) {
-    box(ctx,64,728,852,108,C.panel);
-    text(ctx,loading?'PREPARING YOUR RUN':'RUN READY',96,798,42,C.white);
-    box(ctx,940,728,276,108,C.panel);
-    text(ctx,loading?'CANCEL':'READY',1078,791,32,C.amber,800,'center');
-    if(loading && (view.focus==='cancel' || view.hover==='cancel')) {
-      ctx.strokeStyle=C.white;ctx.lineWidth=4;ctx.strokeRect(934,722,288,120);
-    }
-    box(ctx,64,830,1152,6,C.line);
+    box(ctx,48,740,864,184,C.panel);
+    text(ctx,loading?'LOADING':'READY',480,852,112,C.white,900,'center');
+    box(ctx,48,916,864,8,C.line);
     const progress=reducedMotion?0.5:(Math.sin(time/900)+1)/2;
-    box(ctx,playing?64:64+progress*976,830,playing?1152:176,6,C.amber);
+    box(ctx,playing?48:48+progress*684,916,playing?864:180,8,C.amber);
   } else {
-    box(ctx,64,728,852,108,C.amber);
-    box(ctx,64,728,10,108,C.white);
-    text(ctx,error?'RETRY RUN':'START RUN',96,800,52,C.ink,900);
-    text(ctx,'ENTER  →',872,796,30,C.ink,800,'right');
-    box(ctx,940,728,276,108,C.panel);
-    text(ctx,'BACK',1078,795,35,C.white,800,'center');
-    for(const r of MENU_HOTSPOTS.slice(4)) if(view.focus===r.id || view.hover===r.id) {
-      ctx.strokeStyle=C.white;ctx.lineWidth=4;
-      ctx.strokeRect(r.u*1280-6,r.v*960-6,r.width*1280+12,r.height*960+12);
-    }
+    box(ctx,48,740,864,184,C.amber);
+    text(ctx,error?'RETRY':'START',480,842,124,C.ink,900,'center');
+    text(ctx,'ENTER',480,904,72,C.ink,900,'center',CONDENSED);
+    if(view.focus==='start' || view.hover==='start')outline(ctx,MENU_HOTSPOTS[4]);
   }
-  if(error) {
-    text(ctx,'START FAILED — TRY AGAIN',64,875,22,C.orange);
-  } else {
-    text(ctx,'←  →  CHOOSE TRACK',64,875,22,C.muted);
-    text(ctx,'ESC  BACK',1216,875,22,C.muted,800,'right');
+  // The three essential controls stay visible; condensed type fits safe gutters.
+  for(const [i,key,label] of [[0,'W','GAS'],[1,'A D','STEER'],[2,'SPACE','BRAKE']]) {
+    const x=48+i*296;
+    box(ctx,x,964,272,104,C.panel);
+    text(ctx,key,x+136,1046,key==='SPACE'?76:92,C.white,900,'center',CONDENSED);
+    text(ctx,label,x+136,1140,76,C.white,900,'center',CONDENSED);
   }
-  keycap(ctx,'W / ↑',64,899,100);text(ctx,'GAS',176,929,24,C.white);
-  keycap(ctx,'A D / ← →',333,899,169);text(ctx,'STEER',514,929,24,C.white);
-  keycap(ctx,'SPACE',738,899,125);text(ctx,'BRAKE',875,929,24,C.white);
-  text(ctx,'R  RESET',1216,929,23,C.muted,800,'right');
+  box(ctx,48,1176,864,80,C.panel);
+  text(ctx,playing?'READY':loading?'ESC  CANCEL':'ESC  BACK',480,1238,84,C.white,900,'center',CONDENSED);
+  const back=loading?CANCEL_HOTSPOT:MENU_HOTSPOTS[5];
+  if(!playing && (view.focus===back.id || view.hover===back.id))outline(ctx,back);
   ctx.restore();
 }

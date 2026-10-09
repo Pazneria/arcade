@@ -69,6 +69,13 @@ async function run(){
       assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-projected'),'true');await shot('01-standing-physical-menu');
       await page.keyboard.press('ArrowRight');await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
       assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('02-selected-track');
+      for(const [i,id] of ['banked-shakedown','test-track-b','technical-bowl','jump-speedcheck'].entries()){
+        await page.locator('#cabinet-hotspots [data-action="'+id+'"]').click();
+        assert.equal(await page.locator('#cabinet-hotspots [data-action="'+id+'"]').getAttribute('aria-pressed'),'true');
+        await shot('02-track-'+String.fromCharCode(97+i));
+      }
+      await page.keyboard.press('ArrowLeft');assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');
+      assert.equal(await page.locator('#cabinet-hotspots [data-action="start"]').evaluate(button=>button===document.activeElement),true,'Arrow navigation synchronizes native Start focus');
       if(!process.argv.includes('--return-only')){
       let release;gate={promise:new Promise(resolve=>release=resolve),release,requested:false};
       await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='inserting');
