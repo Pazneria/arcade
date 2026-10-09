@@ -46,7 +46,7 @@ async function run(){
     .replace("import('./vendor/three.module.js')",'__loadEngine()')
     .replace("import('./arcade-scene.js')",'Promise.resolve({createArcadeScene:__createScene})')
     .replace("import('./arcade-controller.js')",'Promise.resolve({createArcadeController:__createController})')+
-    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,selected};}};';
+    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,controllerActive:!!controller?.active,selected};}};';
   function harness({failure=null,holdEngine=false,reduced=false,handoff=false}={}){
     const q=scheduler(reduced),nodes=new Map(),steps=Array.from({length:4},()=>new Surface()),win=new Surface(),doc=new Surface();
     for(const match of html.matchAll(/\bid="([^"]+)"/g))nodes.set(match[1],new Surface());
@@ -75,7 +75,7 @@ async function run(){
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
       __createController(THREE,renderer,world,options){stats.controllers++;let disposed=false;const canvas=renderer.domElement;get('scene-container').canvas=canvas;
-        const c={active:false,resume(){this.active=true;stats.resumes++;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},
+        const c={active:false,resume(){if(doc.hidden)return;this.active=true;stats.resumes++;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},
           dispose(){if(disposed)return;disposed=true;this.pause();stats.controllerDisposals++;world.dispose();renderer.dispose();renderer.forceContextLoss();get('scene-container').canvas=null;}};
         if(failure==='first-render'){c.dispose();throw Error('Injected first-render failure');}return c;
       },MutationObserver:Observer};
@@ -141,6 +141,12 @@ async function run(){
   {
     const h=harness({handoff:true});await h.q.until(()=>h.stats.handoffReady===1);await h.app.navigate('/');await h.q.flush();
     assert.equal(h.stats.resumes,0,'A cancelled fade cannot resume disposed controls');assert.equal(h.stats.controllerDisposals,1);assert.equal(h.q.timers.size,0);assert.equal(h.observers.size,0);
+  }
+  {
+    const h=harness({handoff:true});await h.q.until(()=>h.stats.handoffReady===1);h.doc.hidden=true;h.doc.hasFocus=()=>false;h.q.expire();await h.q.flush();
+    assert.equal(h.app.state.mode,'paused');assert.equal(h.app.state.controllerActive,false);assert.equal(h.get('scene-container').canvas.focused,undefined,'Hidden reveal defers focus');
+    h.doc.hidden=false;h.doc.emit('visibilitychange');assert.equal(h.app.state.mode,'paused','An unfocused visible page waits for focus');
+    h.doc.hasFocus=()=>true;h.win.emit('focus');await h.ready();assert.equal(h.app.state.controllerActive,true);assert.equal(h.stats.resumes,1);assert.equal(h.get('scene-container').canvas.focused,true);assert.equal(h.stats.captures,0);
   }
   {
     const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.finishHandoff();assert.equal(h.get('site-nav').inert,false);h.releaseEngine();await h.ready();assert.equal(h.stats.resumes,1);assert.equal(h.stats.handoffReady,0,'Accessibility removal does not reveal a second cover');

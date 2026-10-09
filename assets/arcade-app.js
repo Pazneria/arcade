@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 const games=buildArcadeCatalog(location,window.ArcadeCodexLinks);
 const controls=$('controls'),directory=$('mobile-fallback'),actions=$('cabinet-actions'),status=$('load-status');
 const loading=createLoadingScreen({root:$('scene-loading'),status,steps:[...document.querySelectorAll('.loading-steps li')]});
-let controller=null,failed=false,mode='loading',selected=-1,loadPromise=null,generation=0,pending=null;
+let controller=null,failed=false,mode='loading',selected=-1,loadPromise=null,generation=0,pending=null,pendingSceneFocus=false;
 const handoff=window.pazneriaRoomHandoff;
 let freshHandoff=!!(handoff?.active&&handoff.room==='arcade'&&handoff.camera==='default-entry-v1'),handoffWait=null,handoffObserver=null;
 const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','mobile-fallback','touch-controls'].map($);
@@ -37,7 +37,7 @@ function showMode(next) {
 function showHelp() {if(mode==='loading')dispose();controller?.pause();loading.hide();showMode('help');$('close-controls').focus();}
 function openDirectory() {if(mode==='loading')dispose();controller?.pause();loading.hide();showMode('directory');$('return-to-3d').hidden=failed;$('directory-title').tabIndex=-1;$('directory-title').focus();}
 function releasePending() {const owned=pending;pending=null;owned?.world?.dispose();owned?.renderer.dispose();owned?.renderer.forceContextLoss();}
-function dispose() {generation++;cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
+function dispose() {generation++;pendingSceneFocus=false;cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
 async function navigate(url,index=null) {
   if(index!==null)save(index);else clearReturnState(storage());
   loading.begin();status.textContent='Leaving Arcade';showMode('loading');
@@ -91,7 +91,11 @@ async function initialize() {
     } finally {if(token===generation)loadPromise=null;}
   })();return loadPromise;
 }
-function startExplore(focus=false) {if(!controller)return;showMode('explore');controller.resume();if(focus)$('scene-container').querySelector('canvas')?.focus({preventScroll:true});}
+function startExplore(focus=false) {
+  if(!controller)return;pendingSceneFocus||=focus;controller.resume();
+  showMode(controller.active?'explore':'paused');
+  if(controller.active&&pendingSceneFocus){pendingSceneFocus=false;$('scene-container').querySelector('canvas')?.focus({preventScroll:true});}
+}
 function returnToScene() {if(controller)startExplore(true);else if(failed)openDirectory();else {showMode('loading');initialize();}}
 for(const [index,game] of games.entries()) {
   const card=document.createElement('article');card.className='fallback-card';const title=document.createElement('h2');title.textContent=game.name;
