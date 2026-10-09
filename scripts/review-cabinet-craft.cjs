@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..'),site='https://pazneria.github.io';
 const out=path.resolve(process.env.ARCADE_REVIEW_OUTPUT||path.join(root,'..','cabinet-rendered-review'));
 const nativeRoot=process.env.ARCADE_RACEGPT_DIST||path.join(root,'..','racegpt-cabinet-bridge','dist');
 const playwrightRoot=process.env.ARCADE_PLAYWRIGHT_DIR||'C:/Users/jmore/Documents/Codex/2026-10-08/task-15/arcade-derivative/node_modules/playwright';
-const receipt={kind:'targeted integration review; no benchmark or holistic arrival claim',graphicsRun:false,startedAt:new Date().toISOString(),sourceCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),nativeRoot,nativeCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.dirname(nativeRoot),encoding:'utf8'}).trim(),events:[],errors:[],consoleMessages:[],blocked:[],screenshots:[],cleanup:null};
+const receipt={kind:'targeted integration review; no benchmark or holistic arrival claim',variant:process.argv.includes('--return-only')?'return follow-up (delay/cancel covered by first run)':'full targeted flow',graphicsRun:false,startedAt:new Date().toISOString(),sourceCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),nativeRoot,nativeCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.dirname(nativeRoot),encoding:'utf8'}).trim(),events:[],errors:[],consoleMessages:[],blocked:[],screenshots:[],cleanup:null};
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
 const mime=file=>({'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml'})[path.extname(file)]||'application/octet-stream';
 function asset(base,relative){const file=path.resolve(base,relative);return file.startsWith(path.resolve(base)+path.sep)&&fs.existsSync(file)&&fs.statSync(file).isFile()?file:null;}
@@ -69,6 +69,7 @@ async function run(){
       assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-projected'),'true');await shot('01-standing-physical-menu');
       await page.keyboard.press('ArrowRight');await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
       assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('02-selected-track');
+      if(!process.argv.includes('--return-only')){
       let release;gate={promise:new Promise(resolve=>release=resolve),release,requested:false};
       await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='inserting');
       await page.waitForTimeout(160);await shot('03-token-in-standing-view');assert.equal(await page.locator('#game-frame iframe').evaluate(f=>f.inert),true);
@@ -77,7 +78,9 @@ async function run(){
       await page.keyboard.press('Escape');assert.equal(await phase(),'explore');assert.equal(await page.locator('#game-frame iframe').count(),0);gate.release();gate=null;
       await page.waitForTimeout(120);assert.equal(await phase(),'explore');
       await page.locator('#open-games').click();await page.getByRole('button',{name:'View RaceGPT cabinet',exact:true}).click();
-      await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();await page.locator('#cabinet-hotspots [data-action="start"]').click();
+      await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
+      }
+      await page.locator('#cabinet-hotspots [data-action="start"]').click();
       await page.waitForFunction(()=>window.arcadeTest.state.mode==='play',{},{timeout:30000});assert.equal(await page.locator('#game-frame iframe').count(),1);
       assert.equal(new URL(await page.locator('#game-frame iframe').getAttribute('src')).searchParams.get('track'),'technical-bowl');
       const game=page.frames().find(f=>f.url().startsWith(site+'/racegpt/'));assert(game);
@@ -96,12 +99,17 @@ async function run(){
       await page.setViewportSize({width:1707,height:923});await page.locator('#game-expand').click();assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');await shot('07-fit-same-game-to-cabinet');
       await page.locator('#game-back').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
       assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),true);
-      receipt.events.push({standingCamera:camera,cancelAndLateLoad:true,nativeTrack:'technical-bowl',nativeInputSeconds:12,resizeRetainsDocument:true,returnRemovesFrame:true});
+      await page.mouse.move(800,450);const returnedYaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);await page.mouse.move(840,450);
+      assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),returnedYaw,'Mouse look resumes after Back');
+      // A trusted Back click deliberately captures mouse look. Escape releases
+      // it before interacting with navigation, exactly as the room controls say.
+      await page.keyboard.press('Escape');
+      receipt.events.push({standingCamera:camera,cancelAndLateLoad:!process.argv.includes('--return-only'),nativeTrack:'technical-bowl',nativeInputSeconds:12,resizeRetainsDocument:true,returnRemovesFrame:true});
       await page.locator('#open-games').click();await page.getByRole('button',{name:'View Sword Guys cabinet',exact:true}).click();await shot('08-generic-physical-menu');
       await page.keyboard.press('Escape');await page.locator('#open-games').click();await page.getByRole('button',{name:'View Ghost Signal cabinet',exact:true}).click();assert(await page.locator('#coming-soon').isVisible());await shot('09-coming-soon-cabinet');await page.keyboard.press('Escape');
       assert.deepEqual(receipt.errors,[]);receipt.passed=true;
     }
-    await withDeadline(checks(),'Bounded integration review',150000);
+    await withDeadline(checks(),'Bounded integration review',Math.min(150000,Number(process.env.ARCADE_REVIEW_TIMEOUT_MS)||150000));
   }catch(error){receipt.passed=false;receipt.error=error.stack;throw error;}
   finally{
     gate?.release();if(context)await withDeadline(context.close(),'Owned context close',10000).catch(error=>receipt.errors.push(error.message));

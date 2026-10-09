@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-10-09T20:19:04.689Z",
+  "recordedAt": "2026-10-09T20:33:23.052Z",
   "baseCommit": "e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5",
   "liveBase": "5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75",
   "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft",
@@ -116,10 +116,22 @@
   "reviewHarness": {
     "file": "scripts/review-cabinet-craft.cjs",
     "syntaxChecked": true,
-    "launched": false
+    "launched": true
   },
-  "graphicsRun": false,
-  "renderedAcceptance": "pending coordinated parent slot",
+  "graphicsRun": true,
+  "renderedAcceptance": "focused direct-launch/return follow-up passed; physical small-copy craft acceptance open",
+  "renderedReview": {
+    "sourceCommit": "f472c95d80daf453c6e237ba549f085b04bd248f",
+    "nativeCommit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+    "followUpPassed": true,
+    "cleanupComplete": true,
+    "endedAt": "2026-10-09T20:24:14.277Z",
+    "report": "docs/cabinet-craft-rendered-review.md"
+  },
+  "libraryUpload": {
+    "status": "blocked by automatic approval review; no upload ran",
+    "fileIds": []
+  },
   "published": false,
   "merged": false,
   "softwareInstalled": false,

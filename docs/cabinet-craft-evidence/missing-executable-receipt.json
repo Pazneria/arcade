@@ -1,0 +1,22 @@
+{
+  "kind": "targeted integration review; no benchmark or holistic arrival claim",
+  "graphicsRun": true,
+  "startedAt": "2026-10-09T20:19:22.876Z",
+  "sourceCommit": "f472c95d80daf453c6e237ba549f085b04bd248f",
+  "nativeRoot": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge\\dist",
+  "nativeCommit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+  "events": [],
+  "errors": [],
+  "consoleMessages": [],
+  "blocked": [],
+  "screenshots": [],
+  "cleanup": {
+    "browserRootExited": true,
+    "serverClosed": true,
+    "complete": true,
+    "errors": []
+  },
+  "passed": false,
+  "error": "Error: Executable doesn't exist at C:\\Users\\jmore\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1243\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝ Failed to launch browser.\n    at executablePathOrDie (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:33180:19)\n    at Object.executablePathOrDie (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:33211:49)\n    at Chromium._prepareToLaunch (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:39787:43)\n    at async Chromium._launchProcess (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:39799:26)\n    at async Chromium._innerLaunch (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:39712:86)\n    at async Chromium._innerLaunchWithRetries (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:39699:18)\n    at async C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:57198:22\n    at async _ProgressController.run (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:12374:27)\n    at async BrowserServerLauncherImpl.launchServer (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:57189:21)\n    at async BrowserType2.launchServer (C:\\Users\\jmore\\Documents\\Codex\\2026-10-08\\task-15\\arcade-derivative\\node_modules\\playwright-core\\lib\\coreBundle.js:63318:16)",
+  "endedAt": "2026-10-09T20:19:23.817Z"
+}
