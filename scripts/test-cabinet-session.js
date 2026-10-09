@@ -22,7 +22,7 @@ async function run(){
     const view=new Surface(),host=new Surface(),back=new Surface(),doc={defaultView:view,baseURI:'https://pazneria.github.io/arcade/',hidden:false,hasFocus:()=>true,activeElement:null};
     doc.createElement=()=>{const frame=new Surface();frame.doc=doc;frame.contentWindow=new Surface();frame.messages=[];frame.contentWindow.postMessage=(data,origin)=>frame.messages.push({data,origin});return frame;};back.doc=doc;
     const timers=new Map(),states=[],events=[];let timer=0;
-    const game=createCabinetGame({host,document:doc,onState:s=>states.push(s),onEscape(){}},{setTimer:fn=>{timers.set(++timer,fn);return timer;},clearTimer:id=>timers.delete(id)});
+    const game=createCabinetGame({host,document:doc,onState:s=>states.push(s),onEscape(){events.push('back');session.cancel();},onMenu(){events.push('menu');session.cancel();}},{setTimer:fn=>{timers.set(++timer,fn);return timer;},clearTimer:id=>timers.delete(id)});
     const token=createEntrySession();
     const session=createCabinetSession({game,tokenFor:()=>token,onStart:()=>{events.push('start');back.focus();},onReady:()=>events.push('ready'),onError:()=>events.push('error')});
     return {host,back,doc,view,game,token,session,states,events,timers};
@@ -65,6 +65,13 @@ async function run(){
     assert.equal(frame.messages.filter(m=>m.data.type==='racegpt:cabinet:start').length,1,'Countdown starts only after both barriers');
     assert.equal(h.session.start(bridged),launch);reply(h,frame,'started');assert.equal(await launch,true);assert.equal(frame.inert,false);assert.deepEqual(h.events,['start','ready']);
     h.session.cancel();assert.equal(h.view.listeners.get('message').size,0);assert.equal(h.timers.size,0);
+  }
+  for(const destination of ['back','menu']){
+    const h=fixture(),launch=h.session.start(bridged),frame=h.host.children[0];
+    reply(h,frame,destination);assert.equal(h.host.children.length,1,'Native return is unavailable until the verified run starts');
+    frame.emit('load');reply(h,frame,'ready');h.token.update(.92);await flush();reply(h,frame,'started');assert.equal(await launch,true);
+    reply(h,frame,destination,{origin:'https://wrong.example'});assert.equal(h.host.children.length,1);
+    reply(h,frame,destination);assert.equal(h.host.children.length,0);assert.equal(h.session.active,false);assert.deepEqual(h.events,['start','ready',destination]);
   }
   {
     const h=fixture(),launch=h.session.start(bridged),frame=h.host.children[0];frame.emit('load');reply(h,frame,'ready');h.token.update(.92);await flush();

@@ -104,7 +104,16 @@ async function run(){
       await page.locator('#game-frame iframe').evaluate(f=>f.dataset.reviewIdentity='one-document');
       await page.setViewportSize({width:390,height:844});await page.waitForTimeout(180);assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');await shot('06-narrow-play-viewport');
       await page.setViewportSize({width:1707,height:923});await page.locator('#game-expand').click();assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');await shot('07-fit-same-game-to-cabinet');
-      await page.locator('#game-back').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
+      if(process.argv.includes('--native-return')){
+        await page.locator('#game-expand').click();await page.setViewportSize({width:390,height:844});
+        await game.getByRole('button',{name:'Pause run',exact:true}).click();await game.waitForFunction(()=>window.__raceGptDebug?.mode==='paused');
+        await game.locator('#pause-menu-button').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect');
+        assert.equal(await page.locator('#game-frame iframe').count(),0);assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('07b-native-return-to-physical-menu');
+        await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='play');
+        const restarted=page.frames().find(f=>f.url().startsWith(site+'/racegpt/'));assert(restarted);await restarted.getByRole('button',{name:'Pause run',exact:true}).click();await restarted.waitForFunction(()=>window.__raceGptDebug?.mode==='paused');
+        await restarted.locator('#pause-return-button').click();receipt.nativeReturns={physicalMenu:true,selectedTrackRetained:true,restartedFromMenu:true,aisle:true};
+      }else await page.locator('#game-back').click();
+      await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
       assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),true);
       await page.mouse.move(800,450);const returnedYaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);await page.mouse.move(840,450);
       assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),returnedYaw,'Mouse look resumes after Back');

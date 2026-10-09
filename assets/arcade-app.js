@@ -17,7 +17,7 @@ let screenMap=null,cabinetMenu=null;
 const tokens=new Map();
 const tokenFactories=new Map();
 const directoryButtons=[];
-const cabinetGame=createCabinetGame({host:$('game-frame'),onEscape:()=>returnToScene(),onState:showGameOpening});
+const cabinetGame=createCabinetGame({host:$('game-frame'),onEscape:()=>returnToScene(),onMenu:returnToCabinetMenu,onState:showGameOpening});
 const cabinetSession=createCabinetSession({game:cabinetGame,tokenFor:()=>{if(!tokens.has(selected)&&tokenFactories.has(selected))tokens.set(selected,tokenFactories.get(selected)());return tokens.get(selected);},
   onStart:()=>{showMode('inserting');$('game-back').focus({preventScroll:true});startPresentation();},
   onReady:attempt=>{controller?.stopPresentation?.();cabinetMenu?.ready(attempt.requestId);showMode('play');setGameExpanded(true);},
@@ -64,6 +64,7 @@ function layoutScreen(rect){
 }
 function startPresentation(){controller?.present?.((dt,time)=>{cabinetMenu?.update(dt,time);tokens.get(selected)?.update(dt);});}
 function cancelLaunch(){cabinetSession.cancel();if(mode==='inserting'){showMode('inspect');startPresentation();cabinetMenu?.focus();}}
+function returnToCabinetMenu(){if(!controller)return;cabinetMenu?.cancel();controller.pause();showMode('inspect');cabinetMenu?.focus();startPresentation();}
 function syncHandoff() {
   const covered=!!(handoff?.active&&handoff.room==='arcade');
   handoffTargets.forEach(element=>{element.inert=covered;});

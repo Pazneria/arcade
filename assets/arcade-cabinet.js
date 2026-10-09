@@ -1,6 +1,6 @@
 // Native controls and a single game document on the scene's screen anchor.
 // Games retain their own routes and storage. No game code or rendering lives here.
-export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=globalThis.document}, {
+export function createCabinetGame({host,onEscape,onMenu=onEscape,onState=()=>{},document:doc=globalThis.document}, {
   setTimer=(callback,ms)=>setTimeout(callback,ms),clearTimer=id=>clearTimeout(id),slowAfterMs=10000,
 }={}) {
   const view=doc.defaultView||globalThis.window;
@@ -61,6 +61,8 @@ export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=glo
     const data=event.data;
     if(!data||data.version!==1||data.session!==bridge.id||data.trackId!==bridge.trackId)return;
     if(data.type==='racegpt:cabinet:error'){failed();return;}
+    if(data.type==='racegpt:cabinet:back'&&bridge.started){onEscape();return;}
+    if(data.type==='racegpt:cabinet:menu'&&bridge.started){onMenu();return;}
     if(data.type==='racegpt:cabinet:ready'){bridge.engineReady=true;prepared();}
     if(data.type==='racegpt:cabinet:started'&&bridge.startPromise){bridge.started=true;clearWait();bridge.resolveStart?.(true);bridge.resolveStart=null;bridge.rejectStart=null;}
   }
