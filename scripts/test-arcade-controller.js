@@ -62,6 +62,7 @@ function harness(THREE, createArcadeController, failureStage = null, callbacks =
   const create = () => createArcadeController(THREE, renderer, world, {
     container: { append(node) { children.add(node); } }, onTarget() {}, onInspect() {}, onHome: callbacks.onHome || (() => {}),
     onPause() { pauses.push(true); }, onFailure(error) { failures.push(error); },
+    onScreenLayout:callbacks.onScreenLayout,
   });
   return { create, renderer, world, stats, canvas, window: windowSurface, document: documentSurface,
     children, frames, pauses, failures,
@@ -80,6 +81,7 @@ async function run() {
   const source = fs.readFileSync(path.join(root, 'assets/arcade-controller.js'), 'utf8')
     .replace(/(['"])\.\/arcade-motion\.js\1/g, JSON.stringify(motionUrl));
   const { createArcadeController } = await import(moduleUrl(source));
+  const {createSlidingExits}=await import(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-exits.js'),'utf8')));
   const { navigation } = await require('./load-arcade-modules')();
 
   {
@@ -91,6 +93,17 @@ async function run() {
     h.canvas.emit('pointerdown',{button:0,pointerId:1,clientX:20,clientY:20});await Promise.resolve();
     assert.equal(h.stats.pointerRequests,1,'A primary scene click deliberately requests pointer lock');
     controller.dispose();
+  }
+  {
+    const h=harness(THREE,createArcadeController),controller=h.create();
+    controller.resume();Object.assign(controller.player,{x:1,z:-5,yaw:.7,pitch:.1,crouch:true});const aisle={...controller.player};
+    controller.focusGame(0);assert.equal(controller.active,false);assert.equal(h.frames.size,0);
+    controller.focusGame(0);controller.returnToAisle();assert.deepEqual(controller.player,aisle,'Changing selections retains the original aisle pose');
+    controller.resume({freeLook:true});const yaw=controller.player.yaw;
+    h.canvas.emit('pointermove',{pointerId:1,pointerType:'mouse',movementX:30,movementY:10});assert(controller.player.yaw<yaw,'Return enables mouse look without an extra click');
+    const afterMouse=controller.player.yaw;h.canvas.emit('pointermove',{pointerId:2,pointerType:'touch',movementX:30});assert.equal(controller.player.yaw,afterMouse,'Touch still requires deliberate drag');
+    h.document.emit('pointerlockchange');assert.equal(controller.active,true,'An unrelated frame unlock cannot pause the aisle');
+    controller.pause();const stopped=controller.player.yaw;h.canvas.emit('pointermove',{pointerId:1,pointerType:'mouse',movementX:30});assert.equal(controller.player.yaw,stopped);controller.dispose();
   }
   for(const interruption of ['pause','dispose','pause-then-resume']){
     const h=harness(THREE,createArcadeController),controller=h.create();let grant;
@@ -134,6 +147,21 @@ async function run() {
     assert.equal(h.stats.rendererDisposals, 1);
     assert.equal(h.stats.contextLosses, 1);
     assert.deepEqual(h.stats.animationLoops, [null]);
+  }
+
+  for(const [id,x,z,yaw] of [['home-entrance',0,-.95,Math.PI],['home-exit',-2.75,-10,0]]) {
+    const visited=[];let controller;
+    const h=harness(THREE,createArcadeController,null,{onHome:()=>{visited.push('/');assert.equal(h.frames.size,0);assert.equal(h.document.pointerLockElement,null);}});
+    h.world.exits=createSlidingExits();h.world.colliders.push(...h.world.exits.colliders);
+    controller=h.create();Object.assign(controller.player,{x,z,yaw});controller.resume();h.tick(100);
+    for(let i=1;i<13;i++)h.tick(100+i*50);
+    assert.deepEqual(visited,[],`${id}: opening alone cannot navigate`);
+    h.window.emit('keydown',{code:'KeyW'});h.document.hasFocus=()=>false;h.tick(750);
+    assert.equal(controller.active,false);assert.deepEqual(visited,[],'Focus loss pauses before movement and departure');
+    h.document.hasFocus=()=>true;controller.resume();h.window.emit('keydown',{code:'KeyW'});h.window.emit('keydown',{code:'ShiftLeft'});
+    for(let i=0;i<30&&controller.active;i++)h.tick(800+i*50);
+    assert.deepEqual(visited,['/']);assert.equal(h.frames.size,0);controller.resume();assert.equal(controller.active,false,'Departure cannot resume or dispatch twice');
+    h.window.emit('keydown',{code:'KeyE'});assert.deepEqual(visited,['/']);controller.dispose();assert.equal(h.listenerCount,0);
   }
 
   {
@@ -213,4 +241,4 @@ async function run() {
 }
 
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { run };
+module.exports = { run, harness };

@@ -83,6 +83,7 @@ function instrumentController(source) {
       __blocker.position.copy(camera.position).lerp(anchor.position,.5);__blocker.lookAt(camera.position);scene.add(__blocker);renderOnce();},
     unblock(){if(!__blocker)return;scene.remove(__blocker);__blocker.geometry.dispose();__blocker.material.dispose();__blocker=null;renderOnce();},
     freezeElapsed(){elapsed=0;renderOnce();},
+    camera(){return {position:camera.position.toArray(),pitch:camera.rotation.x,yaw:camera.rotation.y,order:camera.rotation.order,fov:camera.fov,near:camera.near,far:camera.far,aspect:camera.aspect};},
     graphics(){const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER),version:gl.getParameter(gl.VERSION)};},
     loseContext(){renderer.forceContextLoss();}
   };
@@ -192,7 +193,23 @@ async function inspectAndVisit(page,index,action,receipts,entry) {
   await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);
   const link=page.locator(action==='guide'?'#cabinet-guide':'#cabinet-play'),destination=await link.getAttribute('href');
   const count=receipts.length,pages=page.context().pages().length;
-  await link.focus();await page.keyboard.press('Enter');await page.waitForURL(destination,{waitUntil:'domcontentloaded'});
+  await link.focus();await page.keyboard.press('Enter');
+  if(action==='play') {
+    await page.waitForFunction(()=>window.arcadeTest.state.mode==='play');
+    assert.equal(page.url(),entry,'Playing on a cabinet preserves the Arcade route');
+    const frame=page.locator('#cabinet-game iframe');assert.equal(await frame.getAttribute('src'),destination);
+    await page.frameLocator('#cabinet-game iframe').getByRole('heading',{name:'Test destination',exact:true}).waitFor();
+    assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-aligned'),'true');
+    const before=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot());assert.equal(before.active,false);assert.equal(before.raf,0);
+    await page.waitForTimeout(100);assert.equal((await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot())).renderCount,before.renderCount,'Arcade does not render behind the game');
+    if(new URL(destination).origin===new URL(entry).origin) {
+      await page.frameLocator('#cabinet-game iframe').locator('body').press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await frame.count(),0,'Child Escape removes its game document');
+      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();
+    }
+    await page.getByRole('button',{name:'Back to aisle',exact:true}).click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await frame.count(),0,'Back removes the game document');
+    await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();await page.locator('#game-full-page').click();
+  }
+  await page.waitForURL(destination,{waitUntil:'domcontentloaded'});
   assert.equal(page.context().pages().length,pages,'Cabinet action stays in the same tab');
   assert.equal(await page.getByRole('heading',{name:'Test destination',exact:true}).count(),1);
   assert.equal(receipts.length,count+1);assertDisposed(receipts.at(-1),`${action} ${names[index]}`);

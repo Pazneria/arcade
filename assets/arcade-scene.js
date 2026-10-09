@@ -1,5 +1,7 @@
 // Derivative of completed Claude12 / starlite-arcade-claude. See arcade-source.json.
 // Authored source is preserved at its pinned Lab commit; this module is separate.
+import {createSlidingExits} from './arcade-exits.js';
+import { CABINET_LAYOUT, paintMarquee, paintSideSignature, buildLoungeProps } from './arcade-art.js';
 export function createArcadeScene(THREE, renderer, games) {
 const titles = games.map(g => g.name.toUpperCase());
 const TAU = Math.PI * 2;
@@ -23,6 +25,13 @@ const dynRoot = new THREE.Group();    // animated / special objects
 scene.add(staticRoot, dynRoot);
 
 const colliders = [];
+const doorPanels = new Map();
+const exits = createSlidingExits((spec,open)=>doorPanels.get(spec.id)?.forEach((group,index)=>{group.position.x=spec.panels[index].travel*open;}));
+colliders.push(...exits.colliders);
+function doorPanel(id) {
+  const group=new THREE.Group();dynRoot.add(group);
+  if(!doorPanels.has(id))doorPanels.set(id,[]);doorPanels.get(id).push(group);return group;
+}
 function addCollider(x0, z0, x1, z1) {
   colliders.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1) });
 }
@@ -156,6 +165,8 @@ function mergeStatic(root) {
 const geometryCache = new Map(), textureCache = new Map();
 let environmentTarget, disposed = false;
 const anchors = [], targetMeshes = [];
+const cabinetScreens = new WeakMap();
+const sideSignatures = new WeakMap();
 function shortTitle(title) { const words=title.split(' '), middle=Math.ceil(words.length/2);return words.slice(0,middle).join(' ')+'\n'+words.slice(middle).join(' '); }
 function cachedGeometry(key, create) { if (!geometryCache.has(key)) geometryCache.set(key, create()); return geometryCache.get(key); }
 function reuseStaticMaterials(root) {
@@ -180,12 +191,18 @@ function addGameAnchor(object, gameIndex) {
   const position = new THREE.Vector3(0, 1.2, depth / 2 + 0.1).applyMatrix4(object.matrixWorld);
   const approach = new THREE.Vector3(0, 0, depth / 2 + 1.05).applyMatrix4(object.matrixWorld);
   const anchor = { id: 'game-' + gameIndex, gameIndex, position, approach, yaw: object.rotation.y, kind: 'game' };
+  const surface=cabinetScreens.get(object);
+  if(surface) {
+    const {frame,width,height,cy,z}=surface;frame.updateMatrixWorld(true);
+    const at=(x,y)=>new THREE.Vector3(x,y+cy,z).applyMatrix4(frame.matrixWorld);
+    anchor.screen={width,height,center:at(0,0),normal:new THREE.Vector3(0,0,1).transformDirection(frame.matrixWorld),up:new THREE.Vector3(0,1,0).transformDirection(frame.matrixWorld),
+      corners:[at(-width/2,height/2),at(width/2,height/2),at(-width/2,-height/2),at(width/2,-height/2)]};
+  }
   anchors.push(anchor);
   const hit = new THREE.Mesh(new THREE.BoxGeometry(width + 0.08, 2.0, depth + 0.2), new THREE.MeshBasicMaterial({visible:false}));
   hit.position.set(0, 1, 0.06); object.add(hit); hit.userData.keep = true; hit.userData.anchor = anchor; targetMeshes.push(hit);
-  // Small explicit launch title on each control deck, keeping the original cabinet art.
-  const title = labelTexture([titles[gameIndex], games[gameIndex].comingSoon ? 'COMING SOON' : 'PLAY / GUIDE'], '#fff3cf', '#17101e', 512, 128, 32);
-  mesh(new THREE.PlaneGeometry(width * 0.88, 0.16), new THREE.MeshBasicMaterial({map:title}), object, 0, 0.72, depth / 2 + 0.105);
+  // Identity belongs to the backlit marquee and painted shoulder. The former
+  // floating cream launch cards duplicated those titles and hid cabinet art.
 }
 function addExitAnchor(id, x, z, width) {
   const anchor = {id, kind:'home', position:new THREE.Vector3(x, 1.3, z)};
@@ -194,6 +211,7 @@ function addExitAnchor(id, x, z, width) {
 }
 function dispose() {
   if(disposed)return;disposed=true;
+  exits.dispose();doorPanels.clear();
   const geometries = new Set(geometryCache.values()), materials = new Set(), textures = new Set(allTextures);
   scene.traverse(o => { if (o.geometry) geometries.add(o.geometry); for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) { materials.add(m); for (const value of Object.values(m)) if (value?.isTexture) textures.add(value); } });
   geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); environmentTarget?.dispose(); scene.clear(); geometryCache.clear(); textureCache.clear();
@@ -327,49 +345,10 @@ function starfield(g, w, h, n, seed, alpha = 1) {
 }
 
 // --- Marquees (backlit translucent) -------------------------------------------
-function marqueeTextureRaw(key) {
-  const G = GAMES[key], c = G.c, W = 1024, H = 256, cv = cnv(W, H), g = cv.getContext('2d');
-  const bg = g.createLinearGradient(0, 0, 0, H);
-  if (key === 'crater') { bg.addColorStop(0, '#2a0e3a'); bg.addColorStop(0.65, '#a8301f'); bg.addColorStop(1, '#ffb347'); }
-  else if (key === 'nomads') { bg.addColorStop(0, '#05041a'); bg.addColorStop(0.6, '#3a1170'); bg.addColorStop(1, '#ff3fa4'); }
-  else if (key === 'tide') { bg.addColorStop(0, '#7af7ee'); bg.addColorStop(0.5, '#1a9db0'); bg.addColorStop(1, '#063047'); }
-  else if (key === 'kite') { bg.addColorStop(0, '#3b1650'); bg.addColorStop(0.55, '#ff5e8a'); bg.addColorStop(1, '#ffc25a'); }
-  else { bg.addColorStop(0, '#040a24'); bg.addColorStop(0.7, '#0e2a5c'); bg.addColorStop(1, '#1f6f9a'); }
-  g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  if (key === 'crater') {
-    starfield(g, W, 120, 90, 11);
-    g.fillStyle = '#ffd59a'; g.beginPath(); g.arc(880, 70, 46, 0, TAU); g.fill();
-    g.fillStyle = '#5a1f2a'; g.beginPath(); g.moveTo(0, 230); for (let x = 0; x <= W; x += 32) g.lineTo(x, 200 - Math.abs(Math.sin(x * 0.013)) * 40); g.lineTo(W, H); g.lineTo(0, H); g.fill();
-    drawBuggy(g, 150, 200, 48, c);
-  } else if (key === 'nomads') {
-    starfield(g, W, H, 160, 12);
-    for (let i = 0; i < 6; i++) { const rg = g.createRadialGradient(150 + i * 160, 120 + (i % 2) * 40, 0, 150 + i * 160, 120, 140); rg.addColorStop(0, 'rgba(255,63,164,0.35)'); rg.addColorStop(1, 'rgba(123,60,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, W, H); }
-    drawShip(g, 110, 140, 52, c[2], -0.4); drawShip(g, 920, 120, 40, c[0], 0.5); drawShip(g, 980, 200, 22, c[4], 0.3);
-  } else if (key === 'tide') {
-    g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 6;
-    for (let k = 0; k < 6; k++) { g.beginPath(); for (let x = 0; x <= W; x += 16) g.lineTo(x, 40 + k * 40 + Math.sin(x * 0.02 + k) * 10); g.stroke(); }
-    for (let i = 0; i < 28; i++) { g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = 3; g.beginPath(); g.arc((i * 137) % W, (i * 71) % H, 4 + (i % 4) * 3, 0, TAU); g.stroke(); }
-    drawCrab(g, 120, 160, 52, c); drawCrab(g, 915, 170, 40, ['#ffd27a', '#ff9e3d', '#fff', '#06283a']);
-  } else if (key === 'kite') {
-    g.fillStyle = '#ffe9a8'; g.beginPath(); g.arc(512, 250, 110, Math.PI, 0); g.fill();
-    g.fillStyle = 'rgba(255,94,138,0.9)'; for (let k = 0; k < 5; k++) g.fillRect(380, 170 + k * 18, 264, 5 + k);
-    for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(255,240,230,0.35)'; g.beginPath(); g.ellipse(80 + i * 180, 60 + (i % 3) * 30, 70, 18, 0, 0, TAU); g.fill(); }
-    drawKite(g, 110, 100, 52, '#e2384d', '#ffd23f', -0.3, true); drawKite(g, 915, 95, 50, '#39a0ff', '#ffffff', 0.35, true);
-  } else {
-    starfield(g, W, H, 140, 14);
-    g.fillStyle = '#fff8dc'; g.beginPath(); g.arc(120, 80, 50, 0, TAU); g.fill();
-    g.fillStyle = '#0a1638'; g.beginPath(); g.arc(140, 70, 44, 0, TAU); g.fill();
-    g.fillStyle = '#0b3a5c'; g.fillRect(0, 210, W, 46);
-    g.strokeStyle = 'rgba(160,230,255,0.45)'; g.lineWidth = 3;
-    for (let k = 0; k < 4; k++) { g.beginPath(); for (let x = 0; x <= W; x += 12) g.lineTo(x, 218 + k * 10 + Math.sin(x * 0.05 + k * 2) * 3); g.stroke(); }
-    drawLighthouse(g, 930, 225, 62, c);
-  }
-  const lines = G.title.length > 13 && W ? [G.title] : [G.title];
-  logoText(g, lines[0], W / 2, H * 0.47, key === 'light' ? 92 : 104, c[4] || '#fff', c[0], c[3], { maxW: 700, glow: 'rgba(0,0,0,0.6)' });
-  g.font = `bold 20px ${FONT}`; g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,0.85)';
-  g.fillText(G.bank === 'STARLITE' ? '★ STARLITE ORIGINAL · 2-PLAYER DELUXE ★' : `${G.bank} AMUSEMENTS`, W / 2, H - 24);
-  // inner frame line
-  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 4; g.strokeRect(10, 10, W - 20, H - 20);
+function marqueeTextureRaw(key, aspect = 3) {
+  const G = GAMES[key], H = 256, W = Math.round(H * aspect), cv = cnv(W, H), g = cv.getContext('2d');
+  paintMarquee(g, G, W, H);
+  grain(g, W, H, 4, 17);
   return tex(cv, { aniso: 8 });
 }
 
@@ -451,6 +430,7 @@ function sideArtTextureRaw(key, uMin, uMax, vMax) {
   }
   for (let i = 0; i < 26; i++) { const x = W - r() * 40 * r(), y = Y(0.3 + r() * 1.4); g.fillStyle = 'rgba(25,18,14,0.75)'; g.beginPath(); g.ellipse(x, y, 3 + r() * 7, 2 + r() * 4, r(), 0, TAU); g.fill(); }
   for (let i = 0; i < 40; i++) { const x = r() * W, y = r() * H; g.strokeStyle = 'rgba(255,255,255,0.08)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 120, y + (r() - 0.5) * 30); g.stroke(); }
+  paintSideSignature(g, G, uMin, uMax, vMax, W, H);
   grain(g, W, H, 10, 9);
   return tex(cv, { aniso: 8 });
 }
@@ -805,7 +785,7 @@ function marqueeTexture(...args) { const key = 'marqueeTexture:' + JSON.stringif
 
 function sideArtTexture(...args) { const key = 'sideArtTexture:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, sideArtTextureRaw(...args)); return textureCache.get(key); }
 
-function cpoTexture(...args) { const key = 'cpoTexture:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, cpoTextureRaw(...args)); return textureCache.get(key); }
+function cpoTexture(...args) { const key = 'cpoTexture:' + JSON.stringify(args); if (!textureCache.has(key)) textureCache.set(key, cpoTextureRaw(...args)); return textureCache.get(key); }
 
 function screenSheet(...args) { const key = 'screenSheet:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, screenSheetRaw(...args)); return textureCache.get(key); }
 
@@ -1177,6 +1157,32 @@ function sidePanels(parent, shape, W, D, thick, artL, artR, trim, bevel = 0.005)
   geo.rotateY(-Math.PI / 2); geo.translate(0, 0, -D / 2);
   mesh(geo, [artL, trim], parent, -W / 2 + thick + bevel, 0, 0);
   mesh(geo, [artR, trim], parent, W / 2 - bevel, 0, 0);
+  // The shared extrusion reverses lettering on its outward +x cap. Reuse a
+  // small crop of the authored signature at the same physical shoulder; leave
+  // both full illustrations and the narrow upper silhouettes unchanged.
+  const signature = sideSignatures.get(artR);
+  if (signature) {
+    // Clip the small opaque crop to the real profile, including the curved
+    // feature shoulder. Reflect only its viewing direction, never its placement.
+    let points = shape.getPoints(18).map(p => [p.x,p.y]);
+    for (const [axis,bound,greater] of [[0,signature.u-signature.width/2,true],[0,signature.u+signature.width/2,false],
+      [1,signature.y-signature.height/2,true],[1,signature.y+signature.height/2,false]]) {
+      const output = [], inside = p => greater ? p[axis]>=bound : p[axis]<=bound;
+      for (let i=0;i<points.length;i++) {
+        const a=points[i],b=points[(i+1)%points.length],ai=inside(a),bi=inside(b);
+        if (ai) output.push(a);
+        if (ai!==bi) {const t=(bound-a[axis])/(b[axis]-a[axis]);output.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);}
+      }
+      points=output;
+    }
+    const decalShape = new THREE.Shape(points.map(([u,v]) => new THREE.Vector2(signature.u-u,v-signature.y)));
+    const decalGeometry = new THREE.ShapeGeometry(decalShape),position=decalGeometry.attributes.position,uv=decalGeometry.attributes.uv;
+    for (let i=0;i<position.count;i++) uv.setXY(i,position.getX(i)/signature.width+.5,position.getY(i)/signature.height+.5);
+    const decal = mesh(decalGeometry,
+      signature.material, parent, W / 2 + .003, signature.y, signature.u - D / 2, 0, Math.PI / 2);
+    decal.name = 'readable-cabinet-side';
+    decal.userData.signature = {title:signature.title,width:signature.width,height:signature.height};
+  }
   return thick + 2 * bevel;
 }
 function artMaterials(key, uMin, uMax, vMax) {
@@ -1184,6 +1190,18 @@ function artMaterials(key, uMin, uMax, vMax) {
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   t.repeat.set(1 / (uMax - uMin), 1 / vMax); t.offset.set(-uMin / (uMax - uMin), 0);
   const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.42, metalness: 0.0 });
+  if (!sideSignatures.has(t)) {
+    const G = GAMES[key], range = uMax - uMin, W = t.image.width, H = t.image.height;
+    const u = G.bank === 'STARLITE' ? .22 : .245, v = G.bank === 'STARLITE' ? 1.70 : 1.67;
+    const span = G.bank === 'STARLITE' ? .46 : .42, scaleY = range / vMax * H / W;
+    const sw = span / range * W + 30, sh = 182 * scaleY;
+    const cv = cnv(512, 128);
+    cv.getContext('2d').drawImage(t.image,(u-uMin)/range*W-sw/2,(1-v/vMax)*H-86*scaleY,sw,sh,0,0,512,128);
+    const map = tex(cv,{aniso:8});
+    sideSignatures.set(t,{title:G.title,u,y:v-5*range/W,width:sw/W*range,height:sh/H*vMax,
+      material:new THREE.MeshStandardMaterial({map,roughness:.42,metalness:0.0})});
+  }
+  sideSignatures.set(m,sideSignatures.get(t));
   return [m, m];
 }
 function addCoinDoor(parent, x, y, z, s = 1, insertCol = '#c0101a') {
@@ -1233,6 +1251,8 @@ function addControls(frame, L, layout, style) {
 }
 function screenAssembly(parent, D, p0, p1, innerW, key, ow, oh, cy, light, offset, glassOut = 0.006) {
   const f = frameAt(parent, D, p0, p1, 0), len = f.userData.len;
+  // A small functional surface anchor follows cabinet placement and screen tilt.
+  cabinetScreens.set(parent,{frame:f,width:ow-.02,height:oh-.02,cy,z:glassOut+.002});
   // bezel card with a rounded opening
   const sh = new THREE.Shape(); sh.moveTo(-innerW / 2, -len / 2); sh.lineTo(innerW / 2, -len / 2); sh.lineTo(innerW / 2, len / 2); sh.lineTo(-innerW / 2, len / 2); sh.closePath();
   sh.holes.push(roundRectShape(ow, oh, 0.03, 0, cy, new THREE.Path()));
@@ -1261,7 +1281,7 @@ function screenAssembly(parent, D, p0, p1, innerW, key, ow, oh, cy, light, offse
 function marqueePanel(parent, D, p0, p1, innerW, key, intensity = 1.6) {
   const f = frameAt(parent, D, p0, p1, 0), len = f.userData.len;
   box(innerW, len, 0.02, M.matte, f, 0, 0, -0.03);
-  mesh(new THREE.PlaneGeometry(innerW, len - 0.02), emissiveMat(marqueeTexture(key), intensity), f, 0, 0, -0.004);
+  mesh(new THREE.PlaneGeometry(innerW, len - 0.02), emissiveMat(marqueeTexture(key, innerW / (len - 0.02)), intensity), f, 0, 0, -0.004);
   box(innerW, 0.016, 0.012, M.chrome, f, 0, len / 2 - 0.008, 0.002);
   box(innerW, 0.016, 0.012, M.chrome, f, 0, -len / 2 + 0.008, 0.002);
   mesh(new THREE.PlaneGeometry(innerW, len - 0.02), M.glass, f, 0, 0, 0.0);
@@ -1468,7 +1488,7 @@ function buildLighthouse(offset) {
   mesh(ag, [navy, M.gold], hdr, 0, 0, 0);
   const inset = new THREE.Shape(); const iw = hw - 0.05;
   inset.moveTo(-iw / 2, 0.02); inset.lineTo(iw / 2, 0.02); inset.lineTo(iw / 2, archH - 0.005); inset.quadraticCurveTo(0, archPk - 0.05, -iw / 2, archH - 0.005); inset.closePath();
-  const mt = marqueeTexture('light'); mt.repeat.set(1 / iw, 1 / 0.34); mt.offset.set(0.5, -0.02 / 0.34);
+  const mt = marqueeTexture('light', iw / 0.34); mt.repeat.set(1 / iw, 1 / 0.34); mt.offset.set(0.5, -0.02 / 0.34);
   mesh(new THREE.ShapeGeometry(inset, 32), emissiveMat(mt, 2.0), hdr, 0, 0, 0.2345);
   // chase bulbs following the arch
   const pts = [];
@@ -1596,8 +1616,8 @@ function buildRoom() {
   spots.push([0, -0.55, 1.0, 0.9]);
   for (let z = -1; z > -8.2; z -= 0.35) spots.push([Math.sin(z * 1.3) * 0.25, z, 0.8, 0.22]);
   for (let a = 0; a < TAU; a += 0.2) spots.push([Math.cos(a) * 1.35, -9.25 + Math.sin(a) * 1.35, 0.5, 0.26]);
-  for (const z of [-4.0, -4.66]) spots.push([-2.4, z, 0.45, 0.75], [-2.55, z, 0.3, 0.5]);
-  for (const z of [-6.5, -7.26]) spots.push([2.25, z, 0.45, 0.75], [2.4, z, 0.3, 0.5]);
+  for (const z of CABINET_LAYOUT.left) spots.push([-2.4, z, 0.45, 0.75], [-2.55, z, 0.3, 0.5]);
+  for (const z of CABINET_LAYOUT.right) spots.push([2.25, z, 0.45, 0.75], [2.4, z, 0.3, 0.5]);
   spots.push([0, -7.95, 0.7, 0.85], [-0.4, -7.95, 0.4, 0.6], [0.4, -7.95, 0.4, 0.6]);
   for (let x = 0.3; x < 4.4; x += 0.35) spots.push([x, -3.0 - Math.sin(x) * 0.25, 0.6, 0.2]);
   spots.push([4.2, -3.2, 0.6, 0.7], [4.15, -4.3, 0.35, 0.6]);
@@ -1606,6 +1626,7 @@ function buildRoom() {
   const carpet = carpetMaterial(wear);
   carpet.map.repeat.set(9.9 / 1.7, 11 / 1.7);
   mesh(new THREE.PlaneGeometry(9.9, 11), carpet, staticRoot, 1.35, 0, -5.5, -Math.PI / 2);
+  mesh(new THREE.PlaneGeometry(1, .65), carpet, staticRoot, -2.75, 0, -11.325, -Math.PI / 2);
   // --- ceilings
   const cg = new THREE.PlaneGeometry(x1 - x0, z1 - z0); scaleUV(cg, (x1 - x0) / 1.2, (z1 - z0) / 1.2);
   mesh(cg, M.ceil, staticRoot, 0, h, (z0 + z1) / 2, Math.PI / 2);
@@ -1619,7 +1640,9 @@ function buildRoom() {
   }
   // --- walls (room on the left of travel direction => normal points inward)
   wallStrip(x0, z1, x0, z0, 0, h, 0);                       // left
-  wallStrip(x0, z0, x1, z0, 0, h, 11);                      // far
+  wallStrip(x0, z0, -3.25, z0, 0, h, 11);                  // rear exit opening
+  wallStrip(-3.25, z0, -2.25, z0, 2.2, h, 11.35, false);
+  wallStrip(-2.25, z0, x1, z0, 0, h, 12.35);
   wallStrip(x1, z0, x1, ALC.z0, 0, h, 18.2);                // right, back part
   wallStrip(x1, ALC.z0, x1, ALC.z1, ALC.h, h, 24.3, false); // header over the alcove
   wallStrip(x1, ALC.z1, x1, z1, 0, h, 27.7);                // right, front part
@@ -1637,7 +1660,13 @@ function buildRoom() {
   box(0.06, 0.06, ALC.z1 - ALC.z0 + 0.06, M.alu, staticRoot, x1 - 0.01, ALC.h - 0.03, (ALC.z0 + ALC.z1) / 2);
   for (const z of [ALC.z0, ALC.z1]) box(0.06, ALC.h, 0.06, M.alu, staticRoot, x1, ALC.h / 2, z);
   // colliders for the shell
-  addCollider(-6, 0, 8, 2); addCollider(-6, -13, 8, z0); addCollider(-6, -13, x0, 2);
+  addCollider(-6, 0, -1, 2);addCollider(1, 0, 8, 2);
+  addCollider(-6, -13, -3.25, z0);addCollider(-2.25, -13, 8, z0);
+  addCollider(-6, -13, x0, 2);
+  // Short landing boundaries also contain a failed/blocked navigation attempt.
+  addCollider(-1, .65, 1, 2);addCollider(-3.25, -13, -2.25, -11.65);
+  addCollider(-1.04,-.06,-.96,.06);addCollider(.96,-.06,1.04,.06);
+  addCollider(-3.25,-11.02,-3.2,-10.96);addCollider(-2.3,-11.02,-2.25,-10.96);
   addCollider(x1, -13, 8, ALC.z0); addCollider(x1, ALC.z1, 8, 2); addCollider(ALC.x1, -13, 8, 2);
 
   buildEntrance();
@@ -1657,21 +1686,22 @@ function buildEntrance() {
   // door frame
   const fr = M.alu, z = 0;
   box(0.08, 2.3, 0.12, fr, staticRoot, -1.0, 1.15, z); box(0.08, 2.3, 0.12, fr, staticRoot, 1.0, 1.15, z);
-  box(2.08, 0.08, 0.12, fr, staticRoot, 0, 2.25, z); box(0.04, 2.22, 0.1, fr, staticRoot, 0, 1.11, z);
+  box(2.08, 0.08, 0.12, fr, staticRoot, 0, 2.25, z);
   for (const sx of [-1, 1]) {
-    const cx = sx * 0.5;
-    box(0.9, 0.12, 0.05, fr, staticRoot, cx, 0.06, z); box(0.9, 0.06, 0.05, fr, staticRoot, cx, 2.18, z);
-    box(0.05, 2.2, 0.05, fr, staticRoot, cx - 0.45 * sx * -1 + 0.0, 1.1, z);
-    mesh(new THREE.PlaneGeometry(0.88, 2.0), M.glass, staticRoot, cx, 1.12, z - 0.01, 0, Math.PI, 0);
+    const cx = sx * 0.5, panel=doorPanel('home-entrance');
+    box(0.9, 0.12, 0.05, fr, panel, cx, 0.06, z); box(0.9, 0.06, 0.05, fr, panel, cx, 2.18, z);
+    box(0.05, 2.2, 0.05, fr, panel, cx + 0.45 * sx, 1.1, z);
+    box(0.02, 2.22, 0.1, fr, panel, sx*.01, 1.11, z);
+    mesh(new THREE.PlaneGeometry(0.88, 2.0), M.glass, panel, cx, 1.12, z - 0.01, 0, Math.PI, 0);
     // push bar
-    box(0.62, 0.035, 0.035, M.chrome, staticRoot, cx, 1.02, z - 0.08);
-    for (const bx of [-0.3, 0.3]) box(0.03, 0.04, 0.07, M.chrome, staticRoot, cx + bx, 1.02, z - 0.045);
+    box(0.62, 0.035, 0.035, M.chrome, panel, cx, 1.02, z - 0.08);
+    for (const bx of [-0.3, 0.3]) box(0.03, 0.04, 0.07, M.chrome, panel, cx + bx, 1.02, z - 0.045);
     // kick plate
-    box(0.86, 0.22, 0.004, M.steel, staticRoot, cx, 0.24, z - 0.03);
+    box(0.86, 0.22, 0.004, M.steel, panel, cx, 0.24, z - 0.03);
   }
   // hours decal (reads correctly from outside, mirrored from inside)
   const hours = new THREE.MeshBasicMaterial({ map: (() => { const t = labelTexture(['STARLITE ARCADE', 'OPEN DAILY 2PM – 11PM', 'TOKENS · PRIZES · FUN'], 'rgba(0,0,0,0)', 'rgba(255,255,255,0.9)', 512, 160, 28); return t; })(), transparent: true, depthWrite: false });
-  mesh(new THREE.PlaneGeometry(0.6, 0.19), hours, staticRoot, -0.5, 1.55, -0.02, 0, Math.PI, 0);
+  mesh(new THREE.PlaneGeometry(0.6, 0.19), hours, doorPanels.get('home-entrance')[0], -0.5, 1.55, -0.02, 0, Math.PI, 0);
   // window
   box(1.9, 0.08, 0.14, fr, staticRoot, 2.3, 0.95, 0); box(1.9, 0.08, 0.14, fr, staticRoot, 2.3, 2.35, 0);
   box(0.08, 1.48, 0.14, fr, staticRoot, 1.4, 1.65, 0); box(0.08, 1.48, 0.14, fr, staticRoot, 3.2, 1.65, 0); box(0.04, 1.4, 0.1, fr, staticRoot, 2.3, 1.65, 0);
@@ -1897,18 +1927,9 @@ function buildProps() {
   mesh(new THREE.TorusGeometry(0.19, 0.012, 8, 24), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.4 }), g, -3.3, 0.62, -8.4, Math.PI / 2);
   blobShadow(g, 0.6, 0.6, -8.4).position.x = -3.3;
   addCollider(-3.6, -8.65, -3.08, -8.15);
-  // bench by the entrance
-  const bx = -2.55, bz = -0.32;
-  box(1.3, 0.05, 0.38, M.wood, g, bx, 0.45, bz);
-  for (const sx of [-0.55, 0.55]) { box(0.05, 0.43, 0.32, M.steel, g, bx + sx, 0.215, bz); }
-  box(1.3, 0.3, 0.04, M.wood, g, bx, 0.75, -0.06);
-  blobShadow(g, 1.6, 0.6, bz).position.x = bx;
-  addCollider(bx - 0.7, -0.55, bx + 0.7, 0);
-  // potted plant in the corner
-  cyl(0.17, 0.13, 0.36, 20, new THREE.MeshStandardMaterial({ color: 0xc8643a, roughness: 0.7 }), g, -3.32, 0.18, -0.95);
-  const leaf = new THREE.MeshStandardMaterial({ color: 0x2f7a3a, roughness: 0.55, side: THREE.DoubleSide });
-  for (let i = 0; i < 14; i++) { const a = i / 14 * TAU + r(), l = 0.35 + r() * 0.3; const lm = mesh(new THREE.PlaneGeometry(0.09, l), leaf, g, -3.32 + Math.cos(a) * 0.08, 0.36 + l * 0.45, -0.95 + Math.sin(a) * 0.08, 0, -a, 0); lm.rotateX(0.35 + r() * 0.3); }
-  blobShadow(g, 0.5, 0.5, -0.95).position.x = -3.32;
+  // Art geometry stays inside the existing prop collision footprints.
+  buildLoungeProps({THREE, root:g, M, mesh, box, cyl, blobShadow, cachedGeometry});
+  addCollider(-3.25, -0.55, -1.85, 0);
   addCollider(-3.6, -1.15, -3.1, -0.75);
   // fire extinguisher
   cyl(0.075, 0.075, 0.45, 18, new THREE.MeshStandardMaterial({ color: 0xc81010, roughness: 0.3 }), g, 3.48, 0.75, -0.8);
@@ -1916,11 +1937,13 @@ function buildProps() {
   box(0.02, 0.3, 0.15, M.steel, g, 3.59, 0.85, -0.8);
   // exit door on the far wall
   const ex = -2.75, zf = ROOM.z0 + 0.01;
-  box(1.0, 2.2, 0.06, M.alu, g, ex, 1.1, zf);
-  box(0.9, 2.1, 0.05, new THREE.MeshStandardMaterial({ color: 0x3a3c48, roughness: 0.5, metalness: 0.4 }), g, ex, 1.05, zf + 0.02);
-  box(0.75, 0.05, 0.05, M.chrome, g, ex, 1.0, zf + 0.08);
-  for (const sx of [-0.36, 0.36]) box(0.05, 0.08, 0.06, M.darkMetal, g, ex + sx, 1.0, zf + 0.06);
-  box(0.8, 0.18, 0.004, new THREE.MeshStandardMaterial({ color: 0x808088, roughness: 0.5, metalness: 0.6 }), g, ex, 0.15, zf + 0.047);
+  for(const sx of [-.475,.475])box(.05,2.2,.06,M.alu,g,ex+sx,1.1,zf);
+  box(1,.05,.06,M.alu,g,ex,2.175,zf);
+  const exitPanel=doorPanel('home-exit');
+  box(0.9, 2.1, 0.05, new THREE.MeshStandardMaterial({ color: 0x3a3c48, roughness: 0.5, metalness: 0.4 }), exitPanel, ex, 1.05, zf + 0.02);
+  box(0.75, 0.05, 0.05, M.chrome, exitPanel, ex, 1.0, zf + 0.08);
+  for (const sx of [-0.36, 0.36]) box(0.05, 0.08, 0.06, M.darkMetal, exitPanel, ex + sx, 1.0, zf + 0.06);
+  box(0.8, 0.18, 0.004, new THREE.MeshStandardMaterial({ color: 0x808088, roughness: 0.5, metalness: 0.6 }), exitPanel, ex, 0.15, zf + 0.047);
   const exitT = labelTexture(['EXIT'], '#0b3a18', '#7dff9a', 256, 96, 64);
   box(0.36, 0.14, 0.06, new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 }), g, ex, 2.4, zf + 0.03);
   mesh(new THREE.PlaneGeometry(0.32, 0.11), new THREE.MeshBasicMaterial({ map: exitT, color: new THREE.Color(1.6, 1.6, 1.6) }), g, ex, 2.4, zf + 0.062);
@@ -1973,18 +1996,18 @@ function build() {
   // Bank A (left wall, facing +x): Volt-Tek classics
   const a1 = buildVoltTek('crater', 0.0, ['yellow', 'orange', 'red'], 'red');
   const a2 = buildVoltTek('nomads', 5.3, ['pink', 'purple', 'teal'], 'black');
-  [[a1, -4.0], [a2, -4.68]].forEach(([c, z]) => { c.position.set(ROOM.x0 + 0.03 + c.userData.D / 2, 0, z); c.rotation.y = Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
+  [[a1, CABINET_LAYOUT.left[0]], [a2, CABINET_LAYOUT.left[1]]].forEach(([c, z]) => { c.position.set(ROOM.x0 + 0.03 + c.userData.D / 2, 0, z); c.rotation.y = Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
   // Bank B (right wall, facing -x): Wavecrest curves
   const b1 = buildWavecrest('tide', 2.1, ['teal', 'pink', 'yellow', 'white'], ['teal', 'pink', 'yellow', 'white']);
   const b2 = buildWavecrest('kite', 8.7, ['red', 'yellow', 'orange', 'white'], ['blue', 'white', 'teal', 'purple']);
-  [[b1, -6.5], [b2, -7.28]].forEach(([c, z]) => { c.position.set(ROOM.x1 - 0.03 - c.userData.D / 2, 0, z); c.rotation.y = -Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
+  [[b1, CABINET_LAYOUT.right[0]], [b2, CABINET_LAYOUT.right[1]]].forEach(([c, z]) => { c.position.set(ROOM.x1 - 0.03 - c.userData.D / 2, 0, z); c.rotation.y = -Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
   // feature cabinet at the far end, on axis with the entrance
   feature = buildLighthouse(3.7);
-  feature.position.set(0, 0, -9.25); staticRoot.add(feature);
+  feature.position.set(0, 0, CABINET_LAYOUT.feature); staticRoot.add(feature);
   GAMES.nomads.title = titles[4]; GAMES.nomads.short = shortTitle(titles[4]);
   const extra = buildVoltTek('nomads', 11.2, ['pink', 'purple', 'teal'], 'black');
   GAMES.nomads.title = titles[1]; GAMES.nomads.short = shortTitle(titles[1]);
-  extra.position.set(ROOM.x0 + 0.03 + extra.userData.D / 2, 0, -5.36); extra.rotation.y = Math.PI / 2; staticRoot.add(extra);
+  extra.position.set(ROOM.x0 + 0.03 + extra.userData.D / 2, 0, CABINET_LAYOUT.left[2]); extra.rotation.y = Math.PI / 2; staticRoot.add(extra);
   // Current catalog indices stay stable independently of scene order.
   const slots = [cabinets[0], cabinets[1], cabinets[2], cabinets[3], extra, feature];
   slots.forEach((object, gameIndex) => addGameAnchor(object, gameIndex));
@@ -1997,7 +2020,7 @@ function build() {
   addLocalCollider(feature, -dw / 2, dz0, dw / 2, dz1);
   for (const c of [...cabinets, feature]) if (c.userData.light) screenLights.push([c.userData.light, c.userData.light.intensity, screenLights.length * 2.1]);
   // one shared screen-glow light per bank (keeps the per-pixel light count low)
-  for (const [col, x, z] of [[0xe07ab8, ROOM.x0 + 1.25, -4.34], [0x7ad8d0, ROOM.x1 - 1.3, -6.89]]) {
+  for (const [col, x, z] of [[0xe07ab8, ROOM.x0 + 1.25, CABINET_LAYOUT.left[1]], [0x7ad8d0, ROOM.x1 - 1.3, (CABINET_LAYOUT.right[0] + CABINET_LAYOUT.right[1]) / 2]]) {
     const l = new THREE.PointLight(col, 3.2, 3.6, 2); l.position.set(x, 1.3, z); scene.add(l);
     screenLights.push([l, l.intensity, Math.random() * 10]);
   }
@@ -2035,6 +2058,6 @@ function animate(t, dt) {
 
 try {
 const calls = build();
-return {scene, camera, colliders, anchors, targetMeshes, animate, textures:allTextures, calls, dispose};
+return {scene, camera, colliders, anchors, targetMeshes, exits, animate, textures:allTextures, calls, dispose};
 } catch(error) { dispose(); throw error; }
 }

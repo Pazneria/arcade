@@ -58,8 +58,10 @@ async function extras(browser,origin,receipt,observeOwned){
     await page.mouse.click(640,400);await page.waitForFunction(()=>document.pointerLockElement===document.querySelector('canvas'),{},{timeout:5000});
     await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='help');assert.equal(await page.evaluate(()=>document.pointerLockElement),null);
     assert.equal(await page.evaluate(()=>document.activeElement.id),'close-controls');await screenshot(page,'controls');
-    await page.getByRole('button',{name:'Back to arcade',exact:true}).click();assert.equal(await page.evaluate(()=>document.pointerLockElement),null);
-    await page.mouse.click(640,400);await page.waitForFunction(()=>document.pointerLockElement!==null);await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='help');
+    await page.getByRole('button',{name:'Back to arcade',exact:true}).click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');
+    receipt.backPointerLock=await page.evaluate(()=>document.pointerLockElement===document.querySelector('canvas'));
+    await page.mouse.move(640,400);const yaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);await page.mouse.move(680,400);await page.waitForFunction(yaw=>window.arcadeTest.controller.player.yaw!==yaw,yaw);
+    await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='help');
     await page.keyboard.down('Escape');await page.keyboard.down('Escape');await page.keyboard.down('Escape');assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore');await page.keyboard.up('Escape');
     receipt.directEntryPointerAndHelp=true;receipt.currentImages=await sceneImages(page,'current');assert.deepEqual(errors,[]);assert.deepEqual(unexpected,[]);
   }finally{if(context)await withDeadline(context.close(),'Loading context close');}
@@ -117,3 +119,4 @@ async function main(){
   assert(receipt.cleanup.complete,'Owned QA resources must close');
 }
 if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={descendants,alive};

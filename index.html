@@ -159,14 +159,19 @@
       <h1 id="controls-title">Controls</h1>
       <p class="instructions">WASD / arrows to move · mouse to look · E or click to inspect<br>Shift to move faster · C to crouch · R to return to the entrance · Escape for controls</p>
       <p class="touch-instructions">Hold to move · drag to look · tap a nearby cabinet</p>
-      <p class="instructions">Click the scene for mouse look. Escape releases the mouse.</p>
+      <p class="instructions">Click the scene for locked mouse look. Escape releases the mouse. Back restores mouse look; move the mouse inside the scene if locking is unavailable.</p>
+      <p>Approach either exit to open it, then walk through to return Home. E/tap and Home / Exit also work.</p>
       <div class="actions"><button id="close-controls" type="button">Back to arcade</button><button id="controls-games" type="button">Browse games</button></div>
     </section>
     <section id="cabinet-actions" class="panel" aria-labelledby="cabinet-title" hidden>
+      <div id="cabinet-menu">
       <h2 id="cabinet-title"></h2><p id="cabinet-description"></p>
       <div class="actions"><a id="cabinet-play" hidden>Play</a><a id="cabinet-guide" hidden>Guide</a><span id="coming-soon" hidden>Coming soon</span><button id="cabinet-back" type="button">Back to aisle</button></div>
       <div class="actions"><button id="cabinet-previous" type="button">‹ Previous cabinet</button><button id="cabinet-next" type="button">Next cabinet ›</button></div>
+      </div>
+      <div id="cabinet-game" hidden></div>
     </section>
+    <div id="game-actions" class="game-actions" aria-label="Game controls" hidden><button id="game-back" type="button">Back to aisle</button><a id="game-full-page">Open full page</a><span>Escape returns to the aisle. Full page is available if the game needs more room.</span></div>
     <section id="mobile-fallback" aria-labelledby="directory-title" hidden>
       <h1 id="directory-title">Games</h1><p id="directory-message" role="status" aria-live="polite">Choose a game.</p>
       <div class="actions"><button id="return-to-3d" type="button" hidden>Return to 3D arcade</button><button id="retry-loading" type="button" hidden>Retry loading</button><a href="/">Home</a><a href="/">Exit Arcade</a></div>
