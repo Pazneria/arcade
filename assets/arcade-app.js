@@ -7,6 +7,7 @@ import {createCabinetMenu} from './arcade-menu.js';
 import {createTokenEntry} from './token-entry/token-entry.js';
 import {createCabinetSession} from './arcade-session.js';
 import {isCabinetMode,exitOnOutsidePress,canCaptureOnExit} from './arcade-interaction.js';
+import {createApprovedCabinetArt} from './cabinet-menu/approved-art.js';
 
 const $=id=>document.getElementById(id);
 const games=buildArcadeCatalog(location,window.ArcadeCodexLinks);
@@ -14,7 +15,7 @@ const controls=$('controls'),directory=$('mobile-fallback'),actions=$('cabinet-a
 const loading=createLoadingScreen({root:$('scene-loading'),status,steps:[...document.querySelectorAll('.loading-steps li')]});
 let controller=null,failed=false,mode='loading',selected=-1,loadPromise=null,generation=0,pending=null,pendingSceneFocus=false;
 let navigationObserver=null;
-let screenMap=null,cabinetMenu=null;
+let screenMap=null,cabinetMenu=null,approvedArt=null;
 const tokens=new Map();
 const tokenFactories=new Map();
 const directoryButtons=[];
@@ -68,7 +69,7 @@ function cancelLaunch(){cabinetSession.cancel();if(mode==='inserting'){showMode(
 function returnToCabinetMenu(){if(!controller)return;cabinetMenu?.cancel();controller.pause();showMode('inspect');cabinetMenu?.focus();startPresentation();}
 function syncHandoff() {
   const covered=!!(handoff?.active&&handoff.room==='arcade');
-  handoffTargets.forEach(element=>{element.inert=covered||(element===$('site-nav')&&isCabinetMode(mode));});
+  handoffTargets.forEach(element=>{element.inert=covered||(element===$('site-nav')&&element.hidden);});
   if(covered)return;
   handoffObserver?.disconnect();handoffObserver=null;
   const wait=handoffWait;handoffWait=null;wait?.resolve(wait.token===generation&&mode==='loading'&&!!controller);
@@ -89,7 +90,7 @@ function showMode(next) {
   if(!['inspect','inserting'].includes(next))controller?.stopPresentation?.();
   mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='inserting';
   $('cabinet-menu').hidden=false;$('cabinet-game').hidden=!['play','inserting'].includes(next);
-  $('site-nav').hidden=isCabinetMode(next);$('site-nav').inert=isCabinetMode(next);
+  $('site-nav').hidden=!['help','directory'].includes(next);$('site-nav').inert=$('site-nav').hidden;
   $('cabinet-lifecycle-status').hidden=next!=='inserting';updateRecovery();
   $('scene-container').setAttribute('aria-busy',String(next==='loading'));
   $('reticle').hidden=next!=='explore';$('target-hint').hidden=true;
@@ -136,7 +137,8 @@ async function initialize() {
     loading.begin();
     try {
       if(!await loading.stage(0,'Loading engine')||token!==generation)return null;
-      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js'),import('./arcade-controller.js')]);
+      approvedArt??=createApprovedCabinetArt();
+      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js'),import('./arcade-controller.js'),approvedArt.ready]);
       if(token!==generation)return null;
       if(!await loading.stage(1,'Building scene')||token!==generation)return null;
       const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',stencil:false});pending={renderer,world:null};
@@ -153,7 +155,7 @@ async function initialize() {
       });
       const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
       for(const anchor of world.anchors||[])if(anchor.kind==='game'&&anchor.tokenMount)tokenFactories.set(anchor.gameIndex,()=>createTokenEntry({THREE,parent:anchor.tokenMount.parent,mount:anchor.tokenMount,reducedMotion:()=>reducedMotion.matches}));
-      cabinetMenu=createCabinetMenu({canvas:$('cabinet-display'),hotspots:$('cabinet-hotspots'),native:$('cabinet-native'),onStart:playCabinet,onBack:returnToScene,onCancel:cancelLaunch});
+      cabinetMenu=createCabinetMenu({canvas:$('cabinet-display'),hotspots:$('cabinet-hotspots'),native:$('cabinet-native'),onStart:playCabinet,onBack:returnToScene,onCancel:cancelLaunch,art:approvedArt});
       if(!await loading.stage(3,'Opening Arcade')||token!==generation)return null;
       $('return-to-3d').hidden=false;$('retry-loading').hidden=true;
       if(defaultEntry){
@@ -216,7 +218,7 @@ for(const [id,direction] of [['touch-forward',1],['touch-backward',-1]]) {
   const button=$(id);button.addEventListener('pointerdown',e=>{if(!controller||mode!=='explore')return;e.preventDefault();button.setPointerCapture(e.pointerId);controller.setTouchMove(direction);});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>controller?.setTouchMove(0));
 }
-window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','inserting','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene(e);}else if(['inspect','inserting'].includes(mode)&&actions.contains?.(e.target))cabinetMenu?.key(e);});window.addEventListener('pagehide',()=>dispose({leaving:true}));
+window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['loading','inspect','inserting','play','help'].includes(mode)){e.preventDefault();if(!e.repeat){if(mode==='loading')showHelp();else returnToScene(e);}}else if(['inspect','inserting'].includes(mode)&&actions.contains?.(e.target))cabinetMenu?.key(e);});window.addEventListener('pagehide',()=>dispose({leaving:true}));
 window.addEventListener('pageshow',e=>{if(e.persisted){observeNavigation();failed=false;showMode('loading');initialize();}});
 function resumeVisible() {if(mode==='paused'&&!document.hidden&&document.hasFocus())startExplore();}
 window.addEventListener('focus',()=>{resumeVisible();if(mode==='inspect')startPresentation();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&['play','inserting'].includes(mode))returnToScene();else if(!document.hidden&&mode==='inspect')startPresentation();resumeVisible();});

@@ -58,6 +58,7 @@ async function run(){
     const q=scheduler(reduced),nodes=new Map(),steps=Array.from({length:4},()=>new Surface()),win=new Surface(),doc=new Surface();
     for(const match of html.matchAll(/\bid="([^"]+)"/g))nodes.set(match[1],new Surface());
     const get=id=>nodes.get(id),stats={engines:0,renderers:0,worlds:0,compiles:0,controllers:0,resumes:0,captures:0,worldDisposals:0,rendererDisposals:0,contextLosses:0,controllerDisposals:0,reloads:0,navigations:[],stages:[],handoffReady:0,handoffFails:0,restoredCabinets:0};
+    get('site-nav').hidden=true;get('site-nav').inert=true;
     get('cabinet-actions').append(get('cabinet-native'),get('cabinet-hotspots'),get('cabinet-display'),get('cabinet-recovery'),get('cabinet-lifecycle-status'));
     get('cabinet-native').append(get('cabinet-play'),get('cabinet-screen-back'),get('cabinet-guide'));
     get('cabinet-recovery').append(get('game-retry'),get('game-full-page'));
@@ -86,6 +87,7 @@ async function run(){
       buildArcadeCatalog:catalog.buildArcadeCatalog,...navigation,
       createCabinetGame:options=>createCabinetGame({...options,document:doc},q.options),placeCabinetScreen,createCabinetSession,screenProjection,...interaction,
       createCabinetMenu:()=>({enabled:false,mount(){},update(){},dispose(){},cancel(){},focus(){},ready(){},error(){}}),createTokenEntry:()=>{throw Error('Fixture has no token geometry');},
+      createApprovedCabinetArt:()=>({ready:failure==='art'?Promise.reject(Error('Missing approved artwork')):Promise.resolve()}),
       createLoadingScreen:elements=>createLoadingScreen(elements,q.options),
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
@@ -105,7 +107,7 @@ async function run(){
     assert.equal(h.get('site-nav').hidden,true);assert.equal(h.get('site-nav').inert,true,'Hidden webpage navigation cannot take keyboard focus in cabinet mode');
     assert(!/id="(?:cabinet-browse|game-actions|game-back|game-expand|cabinet-previous|cabinet-next)"/.test(html),'No viewport cabinet bars remain');
     assert(h.get('cabinet-actions').contains(h.get('cabinet-guide')));assert(h.get('cabinet-actions').contains(h.get('game-retry')));
-    const back=h.get('cabinet-screen-back');back.emit('click',{isTrusted:true});assert.equal(h.app.state.mode,'explore');assert.equal(h.get('site-nav').hidden,false);assert.equal(h.get('site-nav').inert,false);
+    const back=h.get('cabinet-screen-back');back.emit('click',{isTrusted:true});assert.equal(h.app.state.mode,'explore');assert.equal(h.get('site-nav').hidden,true);assert.equal(h.get('site-nav').inert,true);
     assert(/id="cabinet-title"[^>]*aria-live="polite"/.test(html),'The newly selected game is announced without stealing button focus');
   }
   {
@@ -135,7 +137,7 @@ async function run(){
     await h.app.navigate('/');assert.equal(h.stats.navigations[0].destination,'/');assert.equal(h.stats.navigations[0].canvas,false);assert.equal(h.stats.navigations[0].frames,0);assert.equal(h.stats.navigations[0].timers,0);
     assert.equal(h.get('scene-loading').hidden,false,'Navigation covers the released canvas');assert.equal(h.stats.controllerDisposals,1);
   }
-  for(const failure of ['import','renderer','compile','first-render']){
+  for(const failure of ['import','art','renderer','compile','first-render']){
     const h=harness({failure});await h.ready();assert.equal(h.app.state.failed,true);assert.equal(h.app.state.mode,'directory');assert.equal(h.app.state.pending,false);assert.equal(h.app.state.hasController,false);
     assert.equal(h.get('retry-loading').hidden,false);assert.match(h.get('directory-message').textContent,/Retry/);assert.equal(h.q.frames.size,0);assert.equal(h.q.timers.size,0);
     if(['compile','first-render'].includes(failure)){assert.equal(h.stats.worldDisposals,1);assert.equal(h.stats.rendererDisposals,1);assert.equal(h.stats.contextLosses,1);}
@@ -144,6 +146,11 @@ async function run(){
   {
     const h=harness({holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.win.emit('pagehide');h.releaseEngine();for(let i=0;i<6;i++)await h.q.frame();
     assert.equal(h.stats.renderers,0,'Cancelled imports cannot create resources after leaving');assert.equal(h.q.frames.size,0);
+  }
+  {
+    const h=harness({holdEngine:true});await h.q.until(()=>h.stats.engines===1);const escape=h.win.emit('keydown',{code:'Escape'});
+    assert(escape.defaultPrevented);assert.equal(h.app.state.mode,'help');assert.equal(h.get('site-nav').hidden,false,'Explicit keyboard help exposes navigation without default room chrome');
+    h.releaseEngine();for(let i=0;i<6;i++)await h.q.frame();assert.equal(h.stats.renderers,0,'Late loading cannot reopen graphics after keyboard help');h.app.openDirectory();assert.equal(h.app.state.mode,'directory');
   }
   {
     const h=harness();await h.stage('Preparing graphics');await h.app.navigate('/library/');for(let i=0;i<8;i++)await h.q.frame();
@@ -168,7 +175,7 @@ async function run(){
     assert.equal(h.get('scene-loading').hidden,true,'Handoff reveals no normal loading indicator');
     if(!reduced){assert.equal(h.app.state.mode,'loading');assert.equal(h.stats.resumes,0);assert.equal(h.get('scene-container').inert,true);h.win.emit('focus');assert.equal(h.stats.resumes,0);h.q.expire();}
     await h.ready();assert.equal(h.app.state.mode,'explore');assert.equal(h.stats.restoredCabinets,0);assert.equal(h.stats.captures,0);
-    assert.equal(h.get('scene-container').canvas.focused,true,'Scene receives focus only after cover removal');assert.equal(h.get('site-nav').inert,false);assert.equal(h.observers.size,0);
+    assert.equal(h.get('scene-container').canvas.focused,true,'Scene receives focus only after cover removal');assert.equal(h.get('site-nav').inert,true,'Default room has no webpage bar');assert.equal(h.observers.size,0);
     assert.equal(h.storage.getItem('arcade:return-state:v1'),remembered);assert.equal(h.storage.getItem('arcade:preferences'),'unchanged');
     h.win.emit('pagehide');h.win.emit('pageshow',{persisted:true});await h.ready();assert.equal(h.app.state.mode,'inspect');assert.equal(h.stats.handoffReady,1,'Back cannot replay the one-shot handoff');
   }
@@ -177,7 +184,7 @@ async function run(){
   }
   {
     const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.win.emit('pagehide');h.releaseEngine();for(let i=0;i<6;i++)await h.q.frame();
-    assert.equal(h.stats.handoffFails,1);assert.equal(h.stats.renderers,0);assert.equal(h.observers.size,0);assert.equal(h.get('site-nav').inert,false);
+    assert.equal(h.stats.handoffFails,1);assert.equal(h.stats.renderers,0);assert.equal(h.observers.size,0);assert.equal(h.get('site-nav').inert,true);
   }
   {
     const h=harness({handoff:true});await h.q.until(()=>h.stats.handoffReady===1);await h.app.navigate('/');await h.q.flush();
@@ -190,7 +197,7 @@ async function run(){
     h.doc.hasFocus=()=>true;h.win.emit('focus');await h.ready();assert.equal(h.app.state.controllerActive,true);assert.equal(h.stats.resumes,1);assert.equal(h.get('scene-container').canvas.focused,true);assert.equal(h.stats.captures,0);
   }
   {
-    const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.finishHandoff();assert.equal(h.get('site-nav').inert,false);h.releaseEngine();await h.ready();assert.equal(h.stats.resumes,1);assert.equal(h.stats.handoffReady,0,'Accessibility removal does not reveal a second cover');
+    const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.finishHandoff();assert.equal(h.get('site-nav').inert,true);h.releaseEngine();await h.ready();assert.equal(h.stats.resumes,1);assert.equal(h.stats.handoffReady,0,'Accessibility removal does not reveal a second cover');
   }
   {
     const h=harness();await h.ready();h.app.inspect(0);h.get('cabinet-play').emit('click');
@@ -224,7 +231,7 @@ async function run(){
     const stale=h.get('game-frame').children[0];
     h.doc.emit('pointerdown',{target:h.get('cabinet-play'),clientX:100,clientY:100,isTrusted:true});assert.equal(h.app.state.mode,phase,'Physical screen clicks do not exit');
     h.stats.cabinetHit=true;h.doc.emit('pointerdown',{clientX:200,clientY:200,isTrusted:true});assert.equal(h.app.state.mode,phase,'Other parts of the selected physical cabinet remain inside');
-    h.stats.cabinetHit=false;const outside=h.doc.emit('pointerdown',{clientX:10,clientY:10,isTrusted:true});assert(outside.defaultPrevented);assert.equal(h.app.state.mode,'explore');assert.equal(h.stats.captures,1,'Outside press requests capture within the same trusted gesture');assert.equal(h.stats.freeLook,true);assert.equal(h.get('site-nav').hidden,false);assert.equal(h.get('game-frame').children.length,0);assert.equal(h.q.timers.size,0);
+    h.stats.cabinetHit=false;const outside=h.doc.emit('pointerdown',{clientX:10,clientY:10,isTrusted:true});assert(outside.defaultPrevented);assert.equal(h.app.state.mode,'explore');assert.equal(h.stats.captures,1,'Outside press requests capture within the same trusted gesture');assert.equal(h.stats.freeLook,true);assert.equal(h.get('site-nav').hidden,true);assert.equal(h.get('game-frame').children.length,0);assert.equal(h.q.timers.size,0);
     stale?.emit('load');await h.q.flush();assert.equal(h.app.state.mode,'explore','Old load cannot undo outside exit');
     h.doc.emit('pointerdown',{clientX:10,clientY:10,isTrusted:true});assert.equal(h.stats.captures,1,'An ordinary aisle press is not a second interaction exit');
   }

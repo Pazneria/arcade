@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "status": "CPU source ready; final rendered review pending clearance",
+  "recordedAt": "2026-10-09T22:20:40.3130800Z",
+  "branch": "craft/cabinet-proof-v2",
+  "inputBaseCommit": "6ab7c061ea66b35409ca4e706860ffb8ed555a27",
+  "nativeCommit": "f29bae6c6df9d8b0e2c80a93193f1f7a10e32110",
+  "approvedDirectionSource": "C:/Users/jmore/Documents/Codex/2026-10-09/task-43/proof-v2",
+  "directionApproval": "Jordan approved revised still; implementation authorized, publication not authorized",
+  "approvedCourseCByteExact": true,
+  "screenPlane": [
+    992,
+    1152
+  ],
+  "hotspots": "assets/cabinet-menu/approved-art.js",
+  "sourceHashes": [
+    {
+      "file": "assets/arcade-app.js",
+      "bytes": 19619,
+      "sha256": "f0e12e67fbab44cce9d3552c6c9eb34ca488d272179ff374e5c857493a8a20d2"
+    },
+    {
+      "file": "assets/arcade-menu.js",
+      "bytes": 4147,
+      "sha256": "5f19c97f010df7ea4d7dcd4e7e683781bb44165b5f30939f1a1449db6e1ea4a3"
+    },
+    {
+      "file": "assets/arcade.css",
+      "bytes": 9215,
+      "sha256": "80c036c297ce075833c9597fcaedd3cb8a9892a832e8477560a89901700b21d2"
+    },
+    {
+      "file": "index.html",
+      "bytes": 11311,
+      "sha256": "9ca6e029a60c0f221366e15741ad772facef914ff286892b26654d99ee84f1c8"
+    },
+    {
+      "file": "assets/cabinet-menu/approved-art.js",
+      "bytes": 1856,
+      "sha256": "42e7104e6d4d8f04653640e8a6bb314d49cbbf721526d4fa6013b2f1ecfc213e"
+    },
+    {
+      "file": "scripts/build-cabinet-proof-v2.cjs",
+      "bytes": 4915,
+      "sha256": "deb22775e0f993aa4e734ceccc116c685328a7e83d2cfdcc96cb35b6f45463b0"
+    }
+  ],
+  "assets": [
+    {
+      "file": "course-a.png",
+      "bytes": 56706,
+      "sha256": "69bdce2802857014c9bbdb081e52c8123075d03eb381466ab9aac19491df0cec"
+    },
+    {
+      "file": "course-b.png",
+      "bytes": 85345,
+      "sha256": "9c4edf67d0f59a61597f68dc729213631cf6c296fec15d0dff9362c9d13bf0e5"
+    },
+    {
+      "file": "course-c.png",
+      "bytes": 69707,
+      "sha256": "3093f657363c7c7f21b9713e56935623c7cc5917e12b3cb81cc86ae5898204f2"
+    },
+    {
+      "file": "course-d.png",
+      "bytes": 57780,
+      "sha256": "325c90e5f64fc9da05b4f949ee6d5ae1bb18106faa0e080c72dd6cd97aaab648"
+    },
+    {
+      "file": "loading-prompt.png",
+      "bytes": 2947,
+      "sha256": "9894d5280e84a0b7b3acf0f3bfd0e0834e94106e20ca8ae26b590937953e1f98"
+    },
+    {
+      "file": "error-prompt.png",
+      "bytes": 2746,
+      "sha256": "b132e2fa4c06b9451c193b90183636d21290baa5e7d9d031bbba78513f7bb8b0"
+    }
+  ],
+  "cpuSuite": {
+    "passed": true,
+    "log": "docs/cabinet-proof-v2-cpu.txt",
+    "command": "npm test"
+  },
+  "nativeBridgeTypecheckBuild": "passed; reused unchanged f29bae6 input bridge",
+  "glyphRuntime": "bitmap only; no browser font calls",
+  "defaultWebpageChrome": false,
+  "nativeLeaveTarget": false,
+  "actualPhysicalButtonsBound": false,
+  "protectedDiff": [],
+  "graphicsRun": false,
+  "graphicsLease": "released; no new lease held",
+  "renderedAcceptance": "pending coordinated slot",
+  "designerMessageStatus": "local thread tool failed; supplied template/notes used for mechanical variants",
+  "report": "docs/cabinet-proof-v2-integration.md",
+  "published": false,
+  "merged": false,
+  "softwareInstalled": false,
+  "port5418Touched": false
+}

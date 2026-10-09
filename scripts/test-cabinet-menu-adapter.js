@@ -35,6 +35,18 @@ async function run(){
   display.update(.016,1200);assert(draws>0,'Adapter invokes the actual renderer without a browser');
   const launch=new URL(display.launchUrl('https://pazneria.github.io/racegpt/?from=arcade&autoplay=1',{trackId:'technical-bowl'}));assert.equal(launch.searchParams.get('track'),'technical-bowl');assert.equal(launch.searchParams.get('from'),'arcade');assert(!launch.searchParams.has('autoplay'));
   display.mount({name:'Sword Guys'});assert.equal(native.hidden,false);assert.equal(canvas.hidden,true);assert.equal(hotspots.children.length,0);display.dispose();
+  const {createApprovedCabinetArt,HOTSPOTS}=await import(url(fs.readFileSync(path.join(root,'assets/cabinet-menu/approved-art.js'),'utf8')));
+  const art=createApprovedCabinetArt({loadImage:async src=>({src})});await art.ready;
+  const approvedHotspots=new Node();let approvedStarts=0;
+  ctx.drawImage=()=>draws++;
+  const approved=createCabinetMenu({canvas,hotspots:approvedHotspots,native,art,document:{createElement:()=>new Node()},onStart:()=>approvedStarts++,onCancel(){},onBack(){assert.fail('Approved screen has no Leave target');}});
+  approved.mount({name:'RaceGPT'});assert.equal(approvedHotspots.children.length,5);assert(!approvedHotspots.children.some(b=>['back','cancel'].includes(b.dataset.action)));
+  for(const r of HOTSPOTS){const button=approvedHotspots.children.find(b=>b.dataset.action===r.id);assert.equal(button.style.left,r.u*100+'%');assert.equal(button.style.width,r.width*100+'%');}
+  approved.pointer({u:HOTSPOTS[1].u,v:HOTSPOTS[1].v+.01,type:'move'});assert.equal(approved.state.hover,HOTSPOTS[1].id,'Shared quarter edge resolves to the same right-hand native target');
+  approvedHotspots.children[2].click();assert.equal(approved.state.trackId,'technical-bowl');approved.focus();const approvedStart=focus;
+  assert.equal(approved.key({code:'ArrowUp'}),false,'No hidden Leave target is part of keyboard navigation');
+  approvedStart.click();approved.focus();assert.equal(focus,approvedStart);assert.equal(approvedStart.attrs['aria-disabled'],'true');approvedStart.click();assert.equal(approvedStarts,1);
+  approved.error(approved.state.requestId,'fail');assert.equal(approvedStart.attrs['aria-label'],'Try again');approvedStart.click();assert.equal(approvedStarts,2);approved.cancel();approved.update(0,0);approved.dispose();
   console.log('Cabinet CPU menu adapter checks passed: actual craft renderer, native focus/hotspots, keyboard track choice, repeat/cancel/error/ready and canonical launch query.');
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,15 @@
+REVISED STILL -- ARCADE CABINET / COURSE C
+
+Changes from the first proof:
+The layout is now a centred attract/select composition rather than a left-aligned settings panel. Condensed italic cream lettering echoes the cabinet's period marquee at restrained width. Paired chamfered amber rules, short speed strokes, and a small diamond establish a graphic family with the real cabinet frame. These elements were drawn as original vectors.
+
+The actual course C route is the main image. A-D are the only choice labels, and a cut-corner amber marker distinguishes C. PRESS START is a direct arcade prompt between two small pointers, not a rectangular form button. ARCADE, Time attack, Technical bowl, TRACK, Controls and Leave have all been removed. There is no fine print to read.
+
+The warm cream/amber/burgundy palette belongs to the photographed room and sits beside the unchanged OSRS cabinet. The physical marquee remains larger and louder than the screen identity. No oversized slab lettering or teal racing-brand page elements return.
+
+Flat art: 992 x 1152px, physical aspect 31:36. The screenshot's unchanged screen footprint is approximately 146 x 170px. Context: 1080 x 850px at exactly 1:1, cropped from the supplied 1707 x 923 screenshot at x625/y0. This excludes the areas obscured by the old top/bottom menus. No obscured room pixels were invented, and this is not a fresh full-viewport capture. The comparison uses the first proof and the revision at equal native pixel scale.
+
+Proposed interaction, for the functional integrator after visual review:
+Clicking the cabinet releases the cursor, at the same camera. Each A-D letter has a full quarter-width selection hit area across the course row; the visible amber marker shows selection. The PRESS START prompt is clickable over the wide bottom region. Joystick left/right and the existing white 1-player button may provide equivalent course selection and start, if mapped by the integrator. No extra physical labels are needed. Clicking outside the cabinet or pressing Escape restores room look; there is no on-screen Leave control. Detailed driving controls can appear within the game/controls state rather than on this attract screen.
+
+No runtime or source integration is included. No browser, GPU, installation, publication, camera change, frozen-artifact change or 5418 modification occurred. The CPU pixel comparison finds zero changed pixels outside the screen plus its interpolation fringe. Human visual acceptance and later functional validation remain pending.

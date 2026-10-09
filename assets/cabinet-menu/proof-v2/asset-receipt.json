@@ -1,0 +1,43 @@
+{
+  "source": "task-43/proof-v2; owner-approved still",
+  "dimensions": [
+    992,
+    1152
+  ],
+  "approvedCourseCByteExact": true,
+  "normalLayoutUnchanged": true,
+  "variants": "canonical routes/selection only; loading/error replace only the original prompt text",
+  "browserOrGpu": false,
+  "files": [
+    {
+      "file": "course-a.png",
+      "bytes": 56706,
+      "sha256": "69bdce2802857014c9bbdb081e52c8123075d03eb381466ab9aac19491df0cec"
+    },
+    {
+      "file": "course-b.png",
+      "bytes": 85345,
+      "sha256": "9c4edf67d0f59a61597f68dc729213631cf6c296fec15d0dff9362c9d13bf0e5"
+    },
+    {
+      "file": "course-c.png",
+      "bytes": 69707,
+      "sha256": "3093f657363c7c7f21b9713e56935623c7cc5917e12b3cb81cc86ae5898204f2"
+    },
+    {
+      "file": "course-d.png",
+      "bytes": 57780,
+      "sha256": "325c90e5f64fc9da05b4f949ee6d5ae1bb18106faa0e080c72dd6cd97aaab648"
+    },
+    {
+      "file": "loading-prompt.png",
+      "bytes": 2947,
+      "sha256": "9894d5280e84a0b7b3acf0f3bfd0e0834e94106e20ca8ae26b590937953e1f98"
+    },
+    {
+      "file": "error-prompt.png",
+      "bytes": 2746,
+      "sha256": "b132e2fa4c06b9451c193b90183636d21290baa5e7d9d031bbba78513f7bb8b0"
+    }
+  ]
+}

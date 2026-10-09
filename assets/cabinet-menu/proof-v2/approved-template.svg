@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="992" height="1152" viewBox="0 0 992 1152">
+<rect width="992" height="1152" fill="#190f19"/>
+<path d="M84 38H908L954 84V1068L908 1114H84L38 1068V84Z" stroke="#735044" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M92 62H900L930 92V1060L900 1090H92L62 1060V92Z" stroke="#d9a65e" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M396 87h67m66 0h67" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M482 87l14 -12l14 12l-14 12Z" stroke="#d9a65e" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="496" y="192" font-family="Arial Narrow" font-size="96" font-weight="700" font-style="italic" text-anchor="middle" letter-spacing="3" fill="#f0dfbb">RACEGPT</text>
+<path d="M112 146h62" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M818 146h62" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M112 159h76" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M804 159h76" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M112 172h90" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M790 172h90" stroke="#d9a65e" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="496" y="275" font-family="Arial Narrow" font-size="52" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="6" fill="#d9a65e">COURSE SELECT</text>
+<path d="M197 365v-27h27" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M768 338h27v27" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M197 681v27h27" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M768 708h27v-27" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 267.72,532.07 L 267.49,516.45 L 267.30,500.84 L 267.44,485.19 L 270.66,470.00 L 275.59,455.18 L 276.90,439.99 L 269.96,426.01 L 263.01,412.03 L 265.11,397.12 L 272.29,383.23 L 280.91,370.28 L 291.30,358.63 L 302.43,347.68 L 315.30,339.15 L 330.86,338.50 L 346.42,339.85 L 361.66,343.02 L 374.99,351.13 L 387.34,360.68 L 398.98,371.02 L 407.79,383.79 L 413.94,398.14 L 418.88,412.92 L 419.58,428.20 L 412.87,442.27 L 405.79,456.20 L 402.95,470.98 L 411.80,483.79 L 422.42,495.21 L 434.82,504.57 L 448.56,498.38 L 460.77,488.64 L 473.45,479.60 L 487.85,481.18 L 500.57,490.27 L 512.59,500.19 L 524.38,510.49 L 535.89,521.02 L 547.07,531.93 L 557.88,543.20 L 567.43,555.50 L 574.05,569.62 L 579.69,584.21 L 584.35,599.07 L 586.07,614.50 L 581.46,629.41 L 575.36,643.76 L 568.37,657.69 L 560.12,670.97 L 548.19,680.90 L 534.72,688.77 L 520.79,695.85 L 506.44,701.96 L 491.34,705.50 L 475.87,703.54 L 460.63,700.14 L 445.58,695.95 L 430.76,691.01 L 417.02,683.83 L 405.79,672.98 L 395.63,661.14 L 386.26,648.65 L 378.76,635.00 L 377.18,619.53 L 377.60,603.92 L 379.04,588.35 L 382.44,573.16 L 389.62,559.32 L 397.82,546.04 L 406.91,533.32 L 418.83,524.42 L 433.42,529.83 L 447.54,536.49 L 461.98,536.72 L 471.86,524.66 L 480.86,511.89 L 490.18,499.35 L 503.22,492.74 L 518.46,496.09 L 533.60,499.82 L 548.47,496.88 L 561.70,488.59 L 574.47,479.64 L 587.10,470.46 L 599.03,460.40 L 610.72,450.05 L 622.70,440.04 L 636.21,432.58 L 651.12,436.96 L 665.38,443.25 L 680.34,447.49 L 693.76,439.90 L 705.69,429.88 L 717.29,419.44 L 728.99,409.05" stroke="#3c2530" stroke-width="30" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 267.72,532.07 L 267.49,516.45 L 267.30,500.84 L 267.44,485.19 L 270.66,470.00 L 275.59,455.18 L 276.90,439.99 L 269.96,426.01 L 263.01,412.03 L 265.11,397.12 L 272.29,383.23 L 280.91,370.28 L 291.30,358.63 L 302.43,347.68 L 315.30,339.15 L 330.86,338.50 L 346.42,339.85 L 361.66,343.02 L 374.99,351.13 L 387.34,360.68 L 398.98,371.02 L 407.79,383.79 L 413.94,398.14 L 418.88,412.92 L 419.58,428.20 L 412.87,442.27 L 405.79,456.20 L 402.95,470.98 L 411.80,483.79 L 422.42,495.21 L 434.82,504.57 L 448.56,498.38 L 460.77,488.64 L 473.45,479.60 L 487.85,481.18 L 500.57,490.27 L 512.59,500.19 L 524.38,510.49 L 535.89,521.02 L 547.07,531.93 L 557.88,543.20 L 567.43,555.50 L 574.05,569.62 L 579.69,584.21 L 584.35,599.07 L 586.07,614.50 L 581.46,629.41 L 575.36,643.76 L 568.37,657.69 L 560.12,670.97 L 548.19,680.90 L 534.72,688.77 L 520.79,695.85 L 506.44,701.96 L 491.34,705.50 L 475.87,703.54 L 460.63,700.14 L 445.58,695.95 L 430.76,691.01 L 417.02,683.83 L 405.79,672.98 L 395.63,661.14 L 386.26,648.65 L 378.76,635.00 L 377.18,619.53 L 377.60,603.92 L 379.04,588.35 L 382.44,573.16 L 389.62,559.32 L 397.82,546.04 L 406.91,533.32 L 418.83,524.42 L 433.42,529.83 L 447.54,536.49 L 461.98,536.72 L 471.86,524.66 L 480.86,511.89 L 490.18,499.35 L 503.22,492.74 L 518.46,496.09 L 533.60,499.82 L 548.47,496.88 L 561.70,488.59 L 574.47,479.64 L 587.10,470.46 L 599.03,460.40 L 610.72,450.05 L 622.70,440.04 L 636.21,432.58 L 651.12,436.96 L 665.38,443.25 L 680.34,447.49 L 693.76,439.90 L 705.69,429.88 L 717.29,419.44 L 728.99,409.05" stroke="#f0dfbb" stroke-width="8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M477.03,467.97l10,10l-10,10l-10,-10Z" fill="#d9a65e" stroke="#190f19" stroke-width="3"/>
+<path d="M392.83,543.97l10,10l-10,10l-10,-10Z" fill="#d9a65e" stroke="#190f19" stroke-width="3"/>
+<path d="M267.72 519.07l-12 25h24Z" fill="#d9a65e" stroke="#190f19" stroke-width="3"/>
+<rect x="716.99" y="397.05" width="8" height="8" fill="#f0dfbb"/>
+<rect x="716.99" y="413.05" width="8" height="8" fill="#f0dfbb"/>
+<rect x="724.99" y="405.05" width="8" height="8" fill="#f0dfbb"/>
+<rect x="732.99" y="397.05" width="8" height="8" fill="#f0dfbb"/>
+<rect x="732.99" y="413.05" width="8" height="8" fill="#f0dfbb"/>
+<path d="M177 892h86" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="220" y="867" font-family="Arial Narrow" font-size="78" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="0" fill="#f0dfbb">A</text>
+<path d="M361 892h86" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="404" y="867" font-family="Arial Narrow" font-size="78" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="0" fill="#f0dfbb">B</text>
+<path d="M522 778h117l15 15v82l-15 15h-117Z" fill="#d9a65e"/>
+<path d="M509 765h138l20 20v98l-20 20h-138" stroke="#d9a65e" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="588" y="867" font-family="Arial Narrow" font-size="78" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="0" fill="#190f19">C</text>
+<path d="M729 892h86" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="772" y="867" font-family="Arial Narrow" font-size="78" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="0" fill="#f0dfbb">D</text>
+<path d="M124 963h744" stroke="#735044" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+<text x="496" y="1034" font-family="Arial Narrow" font-size="64" font-weight="700" font-style="normal" text-anchor="middle" letter-spacing="4" fill="#f0dfbb">PRESS START</text>
+<path d="M211 999l17 13l-17 13Z M781 999l-17 13l17 13Z" fill="#d9a65e"/>
+</svg>

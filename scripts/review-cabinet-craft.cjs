@@ -125,7 +125,7 @@ async function run(){
       await page.keyboard.press('Escape');
       receipt.events.push({standingCamera:camera,cancelAndLateLoad:!process.argv.includes('--return-only'),nativeTrack:'technical-bowl',nativeInputSeconds:12,resizeRetainsDocument:true,returnRemovesFrame:true});
       await page.locator('#open-games').click();await page.getByRole('button',{name:'View Sword Guys cabinet',exact:true}).click();await shot('08-generic-physical-menu');
-      await page.keyboard.press('Escape');await page.locator('#open-games').click();await page.getByRole('button',{name:'View Ghost Signal cabinet',exact:true}).click();assert(await page.locator('#coming-soon').isVisible());await shot('09-coming-soon-cabinet');await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');await page.keyboard.press('Escape');await page.locator('#open-games').click();await page.getByRole('button',{name:'View Ghost Signal cabinet',exact:true}).click();assert(await page.locator('#coming-soon').isVisible());await shot('09-coming-soon-cabinet');await page.keyboard.press('Escape');
       assert.deepEqual(receipt.errors,[]);receipt.passed=true;
     }
     await withDeadline(checks(),'Bounded integration review',Math.min(150000,Number(process.env.ARCADE_REVIEW_TIMEOUT_MS)||150000));
