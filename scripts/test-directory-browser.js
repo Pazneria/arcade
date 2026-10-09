@@ -37,7 +37,7 @@ const $=id=>document.getElementById(id);`,'app DOM entry');
   }`,'dispose-before-navigation');
   return source+`
 // Exposed only by this test server, never by the shipped modules.
-window.arcadeTest={inspect,openDirectory,showWelcome,startExplore,initialize,dispose,save,
+window.arcadeTest={inspect,openDirectory,showHelp,startExplore,initialize,dispose,save,
   get controller(){return controller;},get state(){return __arcadeSnapshot();},
   get lastDisposed(){return __arcadeLastDisposed;}};
 `;
@@ -161,13 +161,17 @@ async function assertDirectory(page,failed,published=false) {
   assert.equal(await page.locator('a[href*="example.com"],a[href="undefined"]').count(),0);
 }
 async function ready(page) {
-  await page.waitForFunction(()=>window.arcadeTest?.state.hasController&&!window.arcadeTest.state.failed,{},{timeout:90000});
+  await page.waitForFunction(()=>window.arcadeTest?.state.hasController&&!window.arcadeTest.state.failed&&window.arcadeTest.state.mode!=='loading',{},{timeout:90000});
+  await page.waitForFunction(()=>document.getElementById('scene-loading').hidden);
   assert.equal(await page.locator('#scene-container canvas').count(),1);
 }
 async function start(page) {
   if(await page.locator('#cabinet-actions').isVisible())await page.getByRole('button',{name:'Back to aisle',exact:true}).click();
   if(await page.locator('#mobile-fallback').isVisible())await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
-  await page.getByRole('button',{name:'Explore arcade',exact:true}).click();
+  if(await page.locator('#controls').isVisible())await page.getByRole('button',{name:'Back to arcade',exact:true}).click();
+  if(await page.evaluate(()=>window.arcadeTest.state.mode==='paused')) {
+    await page.getByRole('button',{name:'Controls',exact:true}).click();await page.getByRole('button',{name:'Back to arcade',exact:true}).click();
+  }
   await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore'&&window.arcadeTest.controller.active);
 }
 function assertDisposed(receipt,label) {
@@ -223,7 +227,7 @@ async function checkKeyboardAndPicking(page) {
   await page.keyboard.press('c');await page.waitForFunction(()=>window.arcadeTest.controller.player.eye<1.5);
   await page.keyboard.press('r');assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.crouch),false);
   await page.keyboard.down('w');await page.evaluate(()=>window.dispatchEvent(new Event('blur')));await page.keyboard.up('w');
-  await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+  await page.waitForFunction(()=>window.arcadeTest.state.mode==='paused');
   assert.deepEqual(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().keys),[],'Blur cancels held keys');
   await start(page);const resetZ=await page.evaluate(()=>window.arcadeTest.controller.player.z);await page.waitForTimeout(180);
   assert.equal(await page.evaluate(()=>window.arcadeTest.controller.player.z),resetZ);
@@ -231,7 +235,7 @@ async function checkKeyboardAndPicking(page) {
   await page.mouse.move(580,400);await page.mouse.down();await page.mouse.move(760,470,{steps:5});await page.mouse.up();
   assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),yaw,'Drag fallback changes view');
   assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore','Dragging does not activate a cabinet');
-  await page.keyboard.press('Tab');await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');await start(page);
+  await page.keyboard.press('Tab');await page.waitForFunction(()=>window.arcadeTest.state.mode==='paused');await start(page);
   await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));
   assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.pick()),'game-0','Nearby cabinet picks precisely');
   await page.evaluate(()=>window.arcadeTest.controller.__test.block('game-0'));
@@ -266,10 +270,10 @@ async function checkPauseAndDirectory(page,mobile) {
   assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount),renderCount,'Directory stops the render loop');
   assert.deepEqual(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().player),before.controller.player);
   await page.getByRole('button',{name:'Return to 3D arcade',exact:true}).click();
-  assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'welcome');
+  assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore');
   assert.equal(await page.evaluate(()=>window.arcadeTest.state.created),before.created,'Directory return reuses the renderer');
   assert.equal(await page.locator('#scene-container canvas').count(),1);
-  await start(page);await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+  await start(page);await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='help');
   await page.waitForTimeout(80);const paused=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount);
   await page.waitForTimeout(160);assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount),paused);
   for(const size of mobile?[{width:800,height:390},{width:390,height:800}]:[{width:1440,height:900},{width:1280,height:800}]) {
@@ -335,7 +339,7 @@ async function checkHomeDoors(page,receipts,entry) {
     assert.equal(receipts.length,count+1);assertDisposed(receipts.at(-1),id);
     await page.goBack({waitUntil:'domcontentloaded'});await ready(page);
     assert.equal(await page.evaluate(()=>sessionStorage.getItem('arcade:return-state:v1')),null,'Home clears game-return state');
-    await page.waitForFunction(()=>window.arcadeTest.state.mode==='welcome');
+    await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');
   }
 }
 async function checkContextLoss(page) {
@@ -375,7 +379,9 @@ async function runCase(browser,localOrigin,mode) {
         await assertDirectory(page,true,published);
       }
     } else {
-      await ready(page);assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'welcome');
+      await ready(page);assert.equal(await page.evaluate(()=>window.arcadeTest.state.mode),'explore');
+      assert.equal(await page.locator('#welcome,#explore').count(),0,'Direct entry has no welcome or mandatory Enter button');
+      assert.equal(await page.evaluate(()=>document.pointerLockElement),null,'Loading never requests pointer lock');
       if(mobile)await checkTouch(page,context);else await checkKeyboardAndPicking(page);
       await checkCabinetCatalog(page);await checkPauseAndDirectory(page,mobile);await capture('room');
       for(const index of mobile?[1]:[0,1,2,5])await inspectAndVisit(page,index,'guide',receipts,entry);

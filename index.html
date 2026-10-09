@@ -3,33 +3,36 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-    <meta name="theme-color" content="#100b1a">
+    <meta name="theme-color" content="#111214">
     <title>Jordan's Arcade</title>
     <link rel="stylesheet" href="./assets/arcade.css">
     <script src="./codex-link-contract.js" defer></script>
     <script type="module" src="./assets/arcade-app.js"></script>
   </head>
-  <body>
-    <main id="scene-container"></main>
+  <body data-mode="loading">
+    <main id="scene-container" aria-busy="true"></main>
+    <section id="scene-loading" class="scene-loading is-loading" aria-labelledby="loading-title">
+      <div class="loading-content"><h1 id="loading-title">Arcade</h1><ol class="loading-steps" aria-hidden="true"><li></li><li></li><li></li><li></li></ol><p id="load-status" role="status" aria-live="polite" aria-atomic="true">Loading engine</p></div>
+    </section>
     <nav id="site-nav" aria-label="Website navigation">
       <a href="/">Home / Exit</a><a href="/lab/lab-space/">Lab</a><a href="/library/">Library</a><a href="./versions/">Saved versions</a>
-      <button id="open-games" type="button">Games</button><button id="pause-explore" type="button" hidden>Controls</button>
+      <button id="open-games" type="button">Games</button><button id="open-controls" type="button">Controls</button>
     </nav>
-    <section id="welcome" class="panel" aria-labelledby="welcome-title" hidden>
-      <h1 id="welcome-title">Jordan's Arcade</h1><p>Walk the aisle, find a cabinet, and play.</p>
+    <section id="controls" class="panel" aria-labelledby="controls-title" hidden>
+      <h1 id="controls-title">Controls</h1>
       <p class="instructions">WASD / arrows to move · mouse to look · E or click to inspect<br>Shift to move faster · C to crouch · R to return to the entrance · Escape for controls</p>
       <p class="touch-instructions">Hold to move · drag to look · tap a nearby cabinet</p>
-      <div class="actions"><button id="explore" type="button" disabled>Explore arcade</button><button id="welcome-games" type="button">Browse games</button></div>
-      <p id="load-status" role="status">Loading the arcade…</p>
+      <p class="instructions">Click the scene for mouse look. Escape releases the mouse.</p>
+      <div class="actions"><button id="close-controls" type="button">Back to arcade</button><button id="controls-games" type="button">Browse games</button></div>
     </section>
     <section id="cabinet-actions" class="panel" aria-labelledby="cabinet-title" hidden>
       <h2 id="cabinet-title"></h2><p id="cabinet-description"></p>
       <div class="actions"><a id="cabinet-play" hidden>Play</a><a id="cabinet-guide" hidden>Guide</a><span id="coming-soon" hidden>Coming soon</span><button id="cabinet-back" type="button">Back to aisle</button></div>
       <div class="actions"><button id="cabinet-previous" type="button">‹ Previous cabinet</button><button id="cabinet-next" type="button">Next cabinet ›</button></div>
     </section>
-    <section id="mobile-fallback" aria-labelledby="directory-title">
-      <h1 id="directory-title">Jordan's Arcade</h1><p id="directory-message" role="status">Loading the 3D arcade. You can also launch available games below.</p>
-      <div class="actions"><button id="return-to-3d" type="button" hidden>Return to 3D arcade</button><a href="/">Home</a><a href="/">Exit Arcade</a></div>
+    <section id="mobile-fallback" aria-labelledby="directory-title" hidden>
+      <h1 id="directory-title">Games</h1><p id="directory-message" role="status" aria-live="polite">Choose a game.</p>
+      <div class="actions"><button id="return-to-3d" type="button" hidden>Return to 3D arcade</button><button id="retry-loading" type="button" hidden>Retry loading</button><a href="/">Home</a><a href="/">Exit Arcade</a></div>
       <div id="fallback-grid"></div>
     </section>
     <div id="target-hint" role="status" hidden></div><div id="reticle" aria-hidden="true" hidden>·</div>

@@ -7,7 +7,7 @@
     "dev": "node scripts/dev-server.js --open",
     "start": "node scripts/dev-server.js --open",
     "serve": "node scripts/dev-server.js",
-    "test": "node scripts/test-codex-link-contract.js && node scripts/test-arcade-navigation.js && node scripts/test-arcade-scene.js && node scripts/test-arcade-controller.js && node scripts/test-directory-browser.js --check-fixtures && node scripts/test-arcade-versions.js",
+    "test": "node scripts/test-codex-link-contract.js && node scripts/test-arcade-navigation.js && node scripts/test-arcade-scene.js && node scripts/test-arcade-controller.js && node scripts/test-arcade-loading.js && node scripts/test-directory-browser.js --check-fixtures && node scripts/test-arcade-versions.js",
     "test:browser": "node scripts/test-directory-browser.js"
   },
   "devDependencies": {

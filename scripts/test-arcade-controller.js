@@ -28,7 +28,7 @@ function harness(THREE, createArcadeController, failureStage = null, callbacks =
   const windowSurface = new Surface(), documentSurface = new Surface(), canvas = new ElementSurface();
   const children = new Set(), frames = new Map(), pauses = [], failures = [];
   const stats = { renders: 0, worldDisposals: 0, rendererDisposals: 0, contextLosses: 0,
-    pointerExits: 0, animationLoops: [], failRender: false, failSize: false };
+    pointerExits: 0, pointerRequests: 0, animationLoops: [], failRender: false, failSize: false };
   let nextFrame = 1;
   Object.assign(documentSurface, { hidden: false, pointerLockElement: null, exitPointerLock() {
     stats.pointerExits++; this.pointerLockElement = null; this.emit('pointerlockchange');
@@ -37,7 +37,7 @@ function harness(THREE, createArcadeController, failureStage = null, callbacks =
     setAttribute() {}, setPointerCapture() {},
     getBoundingClientRect() { return { left: 0, top: 0, width: 1280, height: 720 }; },
     remove() { children.delete(this); },
-    async requestPointerLock() { documentSurface.pointerLockElement = this; documentSurface.emit('pointerlockchange'); },
+    async requestPointerLock() { stats.pointerRequests++;documentSurface.pointerLockElement = this; documentSurface.emit('pointerlockchange'); },
   });
   Object.assign(globalThis, {
     window: windowSurface, document: documentSurface, Element: ElementSurface,
@@ -81,6 +81,32 @@ async function run() {
     .replace(/(['"])\.\/arcade-motion\.js\1/g, JSON.stringify(motionUrl));
   const { createArcadeController } = await import(moduleUrl(source));
   const { navigation } = await require('./load-arcade-modules')();
+
+  {
+    const h=harness(THREE,createArcadeController),controller=h.create();controller.resume();
+    assert.equal(h.stats.pointerRequests,0,'Keyboard-ready scene must not capture the mouse automatically');
+    h.canvas.emit('pointerdown',{button:2,pointerId:1,clientX:20,clientY:20});assert.equal(h.stats.pointerRequests,0);
+    h.canvas.emit('pointerdown',{button:0,pointerId:1,clientX:20,clientY:20});await Promise.resolve();
+    assert.equal(h.stats.pointerRequests,1,'A primary scene click deliberately requests pointer lock');
+    controller.dispose();
+  }
+  for(const interruption of ['pause','dispose','pause-then-resume']){
+    const h=harness(THREE,createArcadeController),controller=h.create();let grant;
+    h.canvas.requestPointerLock=()=>new Promise(resolve=>{grant=()=>{h.document.pointerLockElement=h.canvas;h.document.emit('pointerlockchange');resolve();};});
+    controller.resume();const capturing=controller.capture();
+    if(interruption==='dispose')controller.dispose();else controller.pause();
+    if(interruption==='pause-then-resume')controller.resume();
+    grant();await capturing;
+    assert.equal(h.document.pointerLockElement,null,`${interruption} must invalidate delayed pointer-lock grants`);
+    assert.equal(h.stats.pointerExits,1);assert.equal(controller.active,interruption==='pause-then-resume','Discarding a stale grant does not reopen help or interrupt a fresh keyboard session');
+    controller.dispose();assert.equal(h.frames.size,0);assert.equal(h.listenerCount,0);
+  }
+  {
+    const h=harness(THREE,createArcadeController),controller=h.create();controller.resume();
+    h.window.emit('keydown',{code:'Escape',repeat:false});controller.resume();
+    h.window.emit('keydown',{code:'Escape',repeat:true});assert.equal(controller.active,true,'Repeated Escape cannot reopen help');
+    h.window.emit('keydown',{code:'Escape',defaultPrevented:true});assert.equal(controller.active,true,'Closing help consumes Escape before the controller handles it');controller.dispose();
+  }
 
   for (const [id,x,z,fromZ,yaw,width] of [['home-entrance',0,-0.02,-0.95,Math.PI,1.72],['home-exit',-2.75,-10.88,-9,0,1]]) {
     const visited=[]; let controller,h;
