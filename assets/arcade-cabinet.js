@@ -18,7 +18,10 @@ export function createCabinetGame({host,onEscape,document:doc=globalThis.documen
       const child=frame?.contentWindow;
       const escape=event=>{if(event.code!=='Escape')return;event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)onEscape();};
       child?.addEventListener('keydown',escape,true);
-      removeKeys=()=>child?.removeEventListener('keydown',escape,true);
+      // Some games consume Escape at an earlier window capture listener. The
+      // release still returns to the aisle; stopping the frame removes both.
+      child?.addEventListener('keyup',escape,true);
+      removeKeys=()=>{child?.removeEventListener('keydown',escape,true);child?.removeEventListener('keyup',escape,true);};
     }catch{/* Cross-origin local game ports use the persistent Back button. */}
   }
   function start(game) {

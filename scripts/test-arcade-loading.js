@@ -77,7 +77,8 @@ async function run(){
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
       __createController(THREE,renderer,world,options){stats.controllers++;let disposed=false;const canvas=renderer.domElement;get('scene-container').canvas=canvas;
-        const c={active:false,resume(options){if(doc.hidden)return;this.active=true;stats.resumes++;if(options)stats.freeLook=options.freeLook;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},returnToAisle(){stats.aisleReturns=(stats.aisleReturns||0)+1;},
+        canvas.focus=()=>{canvas.focused=true;if(!doc.hidden)doc.hasFocus=()=>true;};
+        const c={active:false,resume(options){if(doc.hidden||!doc.hasFocus())return;this.active=true;stats.resumes++;if(options)stats.freeLook=options.freeLook;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},returnToAisle(){stats.aisleReturns=(stats.aisleReturns||0)+1;},
           dispose(){if(disposed)return;disposed=true;this.pause();stats.controllerDisposals++;world.dispose();renderer.dispose();renderer.forceContextLoss();get('scene-container').canvas=null;}};
         if(failure==='first-render'){c.dispose();throw Error('Injected first-render failure');}return c;
       },MutationObserver:Observer};
@@ -164,6 +165,13 @@ async function run(){
       if(change==='help')h.app.showHelp();if(change==='directory')h.app.openDirectory();if(change==='hidden'){h.doc.hidden=true;h.doc.emit('visibilitychange');}if(change==='pagehide')h.win.emit('pagehide');
       assert.equal(h.get('cabinet-game').children.length,0,`${change} removes the unused game document`);h.doc.hidden=false;
     }
+  }
+  {
+    const h=harness();await h.ready();h.app.inspect(0);h.app.playCabinet();const frame=h.get('cabinet-game').children[0];frame.emit('load');
+    const remove=frame.remove.bind(frame);frame.remove=()=>{remove();h.doc.hasFocus=()=>false;};
+    frame.contentWindow.emit('keydown',{code:'Escape'});
+    assert.equal(h.app.state.mode,'explore','Removing a focused game restores canvas focus before the controller resumes');assert.equal(h.app.state.controllerActive,true);assert.equal(h.doc.hasFocus(),true);assert.equal(h.stats.captures,0);
+    h.app.inspect(0);h.app.playCabinet();h.doc.hidden=true;h.doc.hasFocus=()=>false;h.app.returnToScene();assert.equal(h.app.state.mode,'paused');assert.equal(h.app.state.controllerActive,false,'A hidden return cannot restart rendering');
   }
   {
     const h=harness();await h.ready();h.app.inspect(0);const event=h.get('cabinet-play').emit('click',{ctrlKey:true});assert.equal(event.defaultPrevented,false);assert.equal(h.app.state.playing,false,'Modified Play preserves normal full-page links');

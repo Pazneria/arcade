@@ -21,7 +21,7 @@ The original six-entry order stays stable for `arcade:return-state:v1`. Local de
 
 ## Controls and accessibility
 
-Approach either Home exit to slide its panels open, then walk outward through the doorway to leave. E/tap and the website Home / Exit link remain available. See [the door contract and CPU checks](docs/sliding-exit-validation.md); rendered walking and appearance QA remain pending.
+Approach either Home exit to slide its panels open, then walk outward through the doorway to leave. E/tap and the website Home / Exit link remain available. See [the door contract and CPU checks](docs/sliding-exit-validation.md) and [combined acceptance](docs/combined-arcade-integration.md).
 
 The scene opens directly after preparation, with keyboard movement ready. WASD/arrows move, Shift moves faster, C toggles crouch, R returns to the entrance, and E/click inspects the nearby object at the crosshair. A primary scene click requests pointer lock when supported. Loading, keyboard entry and focus recovery never request it. Escape or Controls opens help, pauses and releases the mouse. Back returns to the saved aisle pose and requests lock during its trusted click; Escape returns without recapturing it. Mouse movement over the scene works immediately after return, with drag look and deliberate click-to-lock also available. Touch retains deliberate drag. Movement stops on released/cancelled inputs, blur, hidden page, inspection or the directory.
 
@@ -35,7 +35,7 @@ An optional incoming homepage entry preview uses the pinned shared inline bootst
 
 The draft [cabinet art pass](docs/cabinet-art-integration.md) gives the banks more clearance, integrates game lettering into the original cabinet surfaces, and rebuilds the entrance bench and plant. Its [asset and CPU cost manifest](assets/arcade-art-manifest.json) records the exact derivative modules and resource comparison. Rendered acceptance and matching homepage preview refresh remain parent-coordinated.
 
-The [combined review candidate](docs/combined-arcade-integration.md) integrates that art with sliding exits and cabinet-screen interaction. It preserves the frozen art receipt and records the combined accounting separately. The prepared entry-capture helper is CPU-checked only; capture and publication await the parent's graphics slot.
+The [combined review candidate](docs/combined-arcade-integration.md) integrates that art with sliding exits and cabinet-screen interaction. It preserves the frozen art receipt and records combined accounting and rendered corrections separately. Background Chrome acceptance and the matching entrance capture are parent-coordinated; publication remains held.
 
 ## Scene boundary and resources
 
@@ -61,7 +61,7 @@ npm.cmd run serve
 
 `npm test` checks exact published/local destinations, guide safety and OSRS parameters, session bounds/expiry/storage failures, disposal ordering, normalized movement and thin-wall collision, valid anchors, dependency hashes and scene construction/disposal with real Three.js geometry and stubbed drawing/environment surfaces. Structural mesh/triangle counts are CPU evidence only.
 
-After the parent grants a graphics slot, `npm.cmd run test:browser` runs the focused browser harness (optionally `BROWSER_CHANNEL=chrome`); `npm.cmd run test:rendered` additionally checks real loading/pointer-lock/retry/cancellation and captures live-main scene comparisons. Both use one browser, ephemeral local test hosting, test-only instrumentation and stub game destinations, then clean up. Bounded Chrome QA of the earlier published loading version passed on October 9, 2026; see [the evidence and limits](docs/drop-in-loading-validation.md). The derivative, loading flow and homepage entry bridge are live. These sliding-exit and cabinet-screen drafts await coordinated rendered QA; earlier results do not verify their appearance or browser behavior. Matched baseline frame-time/performance measurements remain pending.
+After the parent grants a graphics slot, `npm.cmd run test:browser` runs the focused browser harness (optionally `BROWSER_CHANNEL=chrome`); `npm.cmd run test:rendered` additionally checks loading/pointer-lock/retry/cancellation and captures scene comparisons. They use one browser, ephemeral local test hosting, test-only instrumentation and stub game destinations, then clean up. `test:integrated` checks real published games and walking exits; `test:handoff` checks the actual prepared homepage/image and entry bridge. See [combined acceptance and its limits](docs/combined-arcade-integration.md). The derivative, loading flow and original homepage entry bridge are live; PR48 and the matching preview refresh remain unpublished. Matched baseline frame-time/performance measurements remain pending.
 
 ## Saved versions
 

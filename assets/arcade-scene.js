@@ -166,6 +166,7 @@ const geometryCache = new Map(), textureCache = new Map();
 let environmentTarget, disposed = false;
 const anchors = [], targetMeshes = [];
 const cabinetScreens = new WeakMap();
+const sideSignatures = new WeakMap();
 function shortTitle(title) { const words=title.split(' '), middle=Math.ceil(words.length/2);return words.slice(0,middle).join(' ')+'\n'+words.slice(middle).join(' '); }
 function cachedGeometry(key, create) { if (!geometryCache.has(key)) geometryCache.set(key, create()); return geometryCache.get(key); }
 function reuseStaticMaterials(root) {
@@ -1156,6 +1157,32 @@ function sidePanels(parent, shape, W, D, thick, artL, artR, trim, bevel = 0.005)
   geo.rotateY(-Math.PI / 2); geo.translate(0, 0, -D / 2);
   mesh(geo, [artL, trim], parent, -W / 2 + thick + bevel, 0, 0);
   mesh(geo, [artR, trim], parent, W / 2 - bevel, 0, 0);
+  // The shared extrusion reverses lettering on its outward +x cap. Reuse a
+  // small crop of the authored signature at the same physical shoulder; leave
+  // both full illustrations and the narrow upper silhouettes unchanged.
+  const signature = sideSignatures.get(artR);
+  if (signature) {
+    // Clip the small opaque crop to the real profile, including the curved
+    // feature shoulder. Reflect only its viewing direction, never its placement.
+    let points = shape.getPoints(18).map(p => [p.x,p.y]);
+    for (const [axis,bound,greater] of [[0,signature.u-signature.width/2,true],[0,signature.u+signature.width/2,false],
+      [1,signature.y-signature.height/2,true],[1,signature.y+signature.height/2,false]]) {
+      const output = [], inside = p => greater ? p[axis]>=bound : p[axis]<=bound;
+      for (let i=0;i<points.length;i++) {
+        const a=points[i],b=points[(i+1)%points.length],ai=inside(a),bi=inside(b);
+        if (ai) output.push(a);
+        if (ai!==bi) {const t=(bound-a[axis])/(b[axis]-a[axis]);output.push([a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);}
+      }
+      points=output;
+    }
+    const decalShape = new THREE.Shape(points.map(([u,v]) => new THREE.Vector2(signature.u-u,v-signature.y)));
+    const decalGeometry = new THREE.ShapeGeometry(decalShape),position=decalGeometry.attributes.position,uv=decalGeometry.attributes.uv;
+    for (let i=0;i<position.count;i++) uv.setXY(i,position.getX(i)/signature.width+.5,position.getY(i)/signature.height+.5);
+    const decal = mesh(decalGeometry,
+      signature.material, parent, W / 2 + .003, signature.y, signature.u - D / 2, 0, Math.PI / 2);
+    decal.name = 'readable-cabinet-side';
+    decal.userData.signature = {title:signature.title,width:signature.width,height:signature.height};
+  }
   return thick + 2 * bevel;
 }
 function artMaterials(key, uMin, uMax, vMax) {
@@ -1163,6 +1190,18 @@ function artMaterials(key, uMin, uMax, vMax) {
   t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   t.repeat.set(1 / (uMax - uMin), 1 / vMax); t.offset.set(-uMin / (uMax - uMin), 0);
   const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.42, metalness: 0.0 });
+  if (!sideSignatures.has(t)) {
+    const G = GAMES[key], range = uMax - uMin, W = t.image.width, H = t.image.height;
+    const u = G.bank === 'STARLITE' ? .22 : .245, v = G.bank === 'STARLITE' ? 1.70 : 1.67;
+    const span = G.bank === 'STARLITE' ? .46 : .42, scaleY = range / vMax * H / W;
+    const sw = span / range * W + 30, sh = 182 * scaleY;
+    const cv = cnv(512, 128);
+    cv.getContext('2d').drawImage(t.image,(u-uMin)/range*W-sw/2,(1-v/vMax)*H-86*scaleY,sw,sh,0,0,512,128);
+    const map = tex(cv,{aniso:8});
+    sideSignatures.set(t,{title:G.title,u,y:v-5*range/W,width:sw/W*range,height:sh/H*vMax,
+      material:new THREE.MeshStandardMaterial({map,roughness:.42,metalness:0.0})});
+  }
+  sideSignatures.set(m,sideSignatures.get(t));
   return [m, m];
 }
 function addCoinDoor(parent, x, y, z, s = 1, insertCol = '#c0101a') {

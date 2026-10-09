@@ -12,8 +12,8 @@
     },
     {
       "path": "assets/arcade-scene.js",
-      "bytes": 135091,
-      "sha256": "fd44a4af44dd7b46d5971d0f3318f0840b93e035658baf54a79d614e642dc072"
+      "bytes": 137647,
+      "sha256": "818d0dc82533fdd6d403ace82b7bcb465f52ddb650358691e3bf1e53e0f5a23f"
     }
   ],
   "externalAssets": [],
@@ -78,8 +78,9 @@
       1024,
       1024
     ],
-    "newTextures": 0,
-    "description": "Lettering painted into existing side-art canvases with metre-correct glyph aspect; original illustrations and wear retained."
+    "newTextures": 6,
+    "positiveFaceCropDimensions": [512, 128],
+    "description": "Frozen lettering painted into existing side-art canvases; six small shoulder crops correct positive-cap reversal in place, clipped to actual profiles. Original full illustrations and wear retained."
   },
   "lounge": {
     "newTextures": 0,
@@ -140,26 +141,26 @@
     "colliders": 20
   },
   "art": {
-    "visibleMeshes": 178,
-    "triangles": 66499,
-    "materials": 156,
-    "staticMergeBuckets": 143,
-    "proceduralTextures": 72,
-    "rgbaBaseBytes": 93082624,
-    "rgbaWithMipBytes": 124097884,
-    "retainedRenderGeometryBytes": 6121608,
+    "visibleMeshes": 184,
+    "triangles": 66514,
+    "materials": 162,
+    "staticMergeBuckets": 149,
+    "proceduralTextures": 78,
+    "rgbaBaseBytes": 94655488,
+    "rgbaWithMipBytes": 126195076,
+    "retainedRenderGeometryBytes": 6123048,
     "lights": 11,
     "colliders": 31
   },
   "delta": {
-    "visibleMeshes": 15,
-    "triangles": 3250,
-    "materials": -6,
-    "staticMergeBuckets": -9,
-    "proceduralTextures": -7,
-    "rgbaBaseBytes": -4860928,
-    "rgbaWithMipBytes": -6483248,
-    "retainedRenderGeometryBytes": 296892,
+    "visibleMeshes": 21,
+    "triangles": 3265,
+    "materials": 0,
+    "staticMergeBuckets": -3,
+    "proceduralTextures": -1,
+    "rgbaBaseBytes": -3288064,
+    "rgbaWithMipBytes": -4386056,
+    "retainedRenderGeometryBytes": 298332,
     "lights": 0,
     "colliders": 11
   },
@@ -180,14 +181,14 @@
       "colliders": 31
     },
     "deltaFromBeforeArt": {
-      "visibleMeshes": -6,
-      "triangles": 3166,
-      "materials": -6,
-      "staticMergeBuckets": -6,
-      "proceduralTextures": -7,
-      "rgbaBaseBytes": -4860928,
-      "rgbaWithMipBytes": -6483248,
-      "retainedRenderGeometryBytes": 303936,
+      "visibleMeshes": 0,
+      "triangles": 3181,
+      "materials": 0,
+      "staticMergeBuckets": 0,
+      "proceduralTextures": -1,
+      "rgbaBaseBytes": -3288064,
+      "rgbaWithMipBytes": -4386056,
+      "retainedRenderGeometryBytes": 305376,
       "lights": 0,
       "colliders": 0
     },

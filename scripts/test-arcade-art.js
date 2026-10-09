@@ -7,7 +7,7 @@ const url=s=>'data:text/javascript;base64,'+Buffer.from(s).toString('base64');
 const read=f=>fs.readFileSync(path.join(root,f),'utf8');
 function canvas() {
   const cv={width:1,height:1,labels:[]},gradient={addColorStop(){}};
-  const context=new Proxy({canvas:cv,fillText(text){assert.equal(typeof text,'string');cv.labels.push(text);},strokeText(){},measureText(text){return {width:String(text).length*parseFloat(this.font.match(/[\d.]+px/)?.[0]||'20')*.70};},getImageData(x,y,w,h){return {data:new Uint8ClampedArray(w*h*4)};},createLinearGradient(){return gradient;},createRadialGradient(){return gradient;}},{get(o,k){return k in o?o[k]:(()=>{});}});
+  const context=new Proxy({canvas:cv,drawImage(...args){cv.crop=args;},fillText(text){assert.equal(typeof text,'string');cv.labels.push(text);},strokeText(){},measureText(text){return {width:String(text).length*parseFloat(this.font.match(/[\d.]+px/)?.[0]||'20')*.70};},getImageData(x,y,w,h){return {data:new Uint8ClampedArray(w*h*4)};},createLinearGradient(){return gradient;},createRadialGradient(){return gradient;}},{get(o,k){return k in o?o[k]:(()=>{});}});
   cv.getContext=()=>context;return cv;
 }
 function stats(THREE,world) {
@@ -54,6 +54,26 @@ async function audit() {
     if(revision==='art') {
       global.__arcadeArtBeforeMerge=staticRoot=>{
         bounds={bench:solidBounds(THREE,staticRoot.getObjectByName('crafted-entrance-bench')),plant:solidBounds(THREE,staticRoot.getObjectByName('crafted-entrance-plant'))};
+        const decals=[];
+        staticRoot.traverse(o=>{if(o.name!=='readable-cabinet-side')return;decals.push(o);
+          assert.equal(o.rotation.y,Math.PI/2);assert.equal(o.material.map.image.width,512);assert.equal(o.material.map.image.height,128);
+          const uv=o.geometry.attributes.uv,pos=o.geometry.attributes.position;
+          for(let i=0;i<pos.count;i++)assert(Math.abs(uv.getX(i)-(pos.getX(i)/o.userData.signature.width+.5))<1e-6,'Letters increase along the +x face viewing-right axis');
+          const panel=o.parent.children.find(p=>p.isMesh&&Array.isArray(p.material)&&p.position.x>0);
+          assert(panel,'Decal has an actual positive cap');const normal=panel.geometry.attributes.normal,vertices=panel.geometry.attributes.position;
+          let capX=-Infinity;for(let i=0;i<normal.count;i++)if(normal.getX(i)>.999)capX=Math.max(capX,vertices.getX(i)+panel.position.x);
+          assert(Math.abs(o.position.x-capX-.003)<1e-5,'Signature lies outside its actual cap, without z fighting');
+          const [source,x,y,w,h]=o.material.map.image.crop;
+          assert(x>=0&&y>=0&&x+w<=source.width&&y+h<=source.height,'Crop stays inside the authored side canvas');
+          assert.equal(o.userData.signature.title.replaceAll(' ',''),source.labels.join('').replaceAll(' ',''));
+          o.parent.updateMatrixWorld(true);
+          for(let i=0;i<pos.count;i++){
+            const origin=new THREE.Vector3(o.position.x+1,o.position.y+pos.getY(i)*.99999,o.position.z-pos.getX(i)*.99999).applyMatrix4(o.parent.matrixWorld);
+            const direction=new THREE.Vector3(-1,0,0).transformDirection(o.parent.matrixWorld);
+            assert(new THREE.Raycaster(origin,direction).intersectObject(panel,false).length,'Every decal corner stays within the actual curved cap');
+          }
+        });
+        assert.equal(decals.length,6,'All cabinet positive faces have readable physical shoulder lettering');
       };
       source=source.replace('const calls = mergeStatic(staticRoot);','globalThis.__arcadeArtBeforeMerge?.(staticRoot);const calls = mergeStatic(staticRoot);');
     }

@@ -9,7 +9,9 @@
     "serve": "node scripts/dev-server.js",
     "test": "node scripts/test-codex-link-contract.js && node scripts/test-arcade-navigation.js && node scripts/test-arcade-exits.js && node scripts/test-arcade-cabinet.js && node scripts/test-arcade-scene.js && node scripts/test-arcade-art.js && node scripts/test-arcade-controller.js && node scripts/test-arcade-loading.js && node scripts/test-room-handoff.js && node scripts/test-directory-browser.js --check-fixtures && node scripts/test-arcade-qa-lifecycle.js && node scripts/test-arcade-versions.js",
     "test:browser": "node scripts/test-directory-browser.js",
-    "test:rendered": "node scripts/test-arcade-rendered.js"
+    "test:rendered": "node scripts/test-arcade-rendered.js",
+    "test:integrated": "node scripts/test-arcade-integrated.js",
+    "test:handoff": "node scripts/test-arcade-handoff-rendered.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

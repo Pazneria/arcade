@@ -109,7 +109,18 @@ function startExplore(focus=false,{capture=false,freeLook}={}) {
   if(controller.active&&capture)controller.capture();
   if(controller.active&&pendingSceneFocus){pendingSceneFocus=false;$('scene-container').querySelector('canvas')?.focus({preventScroll:true});}
 }
-function returnToScene(event) {cabinetGame.stop();if(controller){controller.returnToAisle?.();if(controller)startExplore(true,{freeLook:true,capture:!!(event?.isTrusted&&event.type==='click')});}else if(failed)openDirectory();else {showMode('loading');initialize();}}
+function returnToScene(event) {
+  cabinetGame.stop();
+  if(controller){
+    controller.returnToAisle?.();
+    if(controller){
+      // Removing a focused child document can leave Chrome's top document
+      // unfocused. Restore its canvas focus before the focus-gated resume.
+      if(!document.hidden)$('scene-container').querySelector('canvas')?.focus({preventScroll:true});
+      startExplore(true,{freeLook:true,capture:!!(event?.isTrusted&&event.type==='click')});
+    }
+  }else if(failed)openDirectory();else {showMode('loading');initialize();}
+}
 for(const [index,game] of games.entries()) {
   const card=document.createElement('article');card.className='fallback-card';const title=document.createElement('h2');title.textContent=game.name;
   const description=document.createElement('p');description.textContent=game.description;const links=document.createElement('div');links.className='actions fallback-card-actions';
