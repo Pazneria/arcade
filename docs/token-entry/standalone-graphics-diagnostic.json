@@ -1,0 +1,12 @@
+{
+  "status": "blocked",
+  "time": "2026-10-09T20:00:50Z",
+  "headless": true,
+  "capture": "renderer canvas PNG export",
+  "renderedEvidence": "blank black captures; token readability and cabinet fit unverified",
+  "shaderCompilation": "LINK_STATUS assertion failed; at least one program did not report linked",
+  "lifecycle": "ready-before and ready-after, plus reduced motion assertions ran; CPU suite covers cancellation",
+  "cleanup": "capture process exited; browser/server closed in finally; no owned node capture or headless-shell processes found",
+  "localhost5418": "untouched",
+  "graphicsSlot": "released"
+}
