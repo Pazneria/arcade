@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "status": "targeted rendered review passed; private candidate, publication not approved",
+  "recordedAt": "2026-10-09T22:37:12.500Z",
+  "sourceCommit": "7cebdd37dc90a3b7b02b0ac85435878eef4a8a9b",
+  "nativeCommit": "f29bae6c6df9d8b0e2c80a93193f1f7a10e32110",
+  "graphics": [
+    {
+      "run": "cabinet-proof-v2-rendered-review",
+      "stage": "hostGraphics",
+      "observedLinks": 21,
+      "allBooleanTrueAndValid": true,
+      "contextLost": false
+    },
+    {
+      "run": "cabinet-proof-v2-rendered-review",
+      "stage": "tokenGraphics",
+      "observedLinks": 25,
+      "allBooleanTrueAndValid": true,
+      "contextLost": false
+    },
+    {
+      "run": "cabinet-proof-v2-return-review",
+      "stage": "hostGraphics",
+      "observedLinks": 21,
+      "allBooleanTrueAndValid": true,
+      "contextLost": false
+    },
+    {
+      "run": "cabinet-proof-v2-edge-review-corrected",
+      "stage": "hostGraphics",
+      "observedLinks": 21,
+      "allBooleanTrueAndValid": true,
+      "contextLost": false
+    },
+    {
+      "run": "cabinet-proof-v2-edge-review-corrected",
+      "stage": "edgeGraphics",
+      "observedLinks": 25,
+      "allBooleanTrueAndValid": true,
+      "contextLost": false
+    }
+  ],
+  "acceptedRuns": [
+    "cabinet-proof-v2-rendered-review",
+    "cabinet-proof-v2-return-review",
+    "cabinet-proof-v2-edge-review-corrected"
+  ],
+  "runs": [
+    {
+      "name": "cabinet-proof-v2-rendered-review",
+      "passed": true,
+      "seconds": 93.862,
+      "rawReceipt": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\docs\\cabinet-proof-v2-evidence\\cabinet-proof-v2-rendered-review.json",
+      "sha256": "ae6136ade3311de6072e4b17028585ed4d8103403e0696bc26784b6aa3a8c323"
+    },
+    {
+      "name": "cabinet-proof-v2-return-review",
+      "passed": true,
+      "seconds": 72.424,
+      "rawReceipt": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\docs\\cabinet-proof-v2-evidence\\cabinet-proof-v2-return-review.json",
+      "sha256": "dd705c460cb30539cd358c6319b3c36c7accc6f6e7ba55c8c06ecd73c9f5b82b"
+    },
+    {
+      "name": "cabinet-proof-v2-edge-review",
+      "passed": false,
+      "seconds": 47.687,
+      "rawReceipt": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\docs\\cabinet-proof-v2-evidence\\cabinet-proof-v2-edge-review.json",
+      "sha256": "41a75516fd95730400633be3f597d6bf78bcf5dad552c358c4fff88b634e6f64"
+    },
+    {
+      "name": "cabinet-proof-v2-edge-review-final",
+      "passed": false,
+      "seconds": 15.954,
+      "rawReceipt": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\docs\\cabinet-proof-v2-evidence\\cabinet-proof-v2-edge-review-final.json",
+      "sha256": "2a594ab2d5ea49ed556ca90e6f715a4c12672a438e7a34e0a01c837b3a812014"
+    },
+    {
+      "name": "cabinet-proof-v2-edge-review-corrected",
+      "passed": true,
+      "seconds": 37.782,
+      "rawReceipt": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\docs\\cabinet-proof-v2-evidence\\cabinet-proof-v2-edge-review-corrected.json",
+      "sha256": "8027476f9c3c40dbf51cf40c246e02916690fe9fe4d7f76ff202c41f3d8edbc2"
+    }
+  ],
+  "slotRelease": {
+    "status": "released",
+    "releasedAt": "2026-10-09T22:35:38.9919055Z",
+    "grantedActiveSeconds": 300,
+    "conservativeRunSeconds": 267.709,
+    "runs": [
+      {
+        "review": "cabinet-proof-v2-rendered-review",
+        "seconds": 93.862,
+        "passed": true,
+        "pid": 60368,
+        "cleanup": true,
+        "endedAt": "2026-10-09T22:28:35.38Z"
+      },
+      {
+        "review": "cabinet-proof-v2-return-review",
+        "seconds": 72.424,
+        "passed": true,
+        "pid": 30248,
+        "cleanup": true,
+        "endedAt": "2026-10-09T22:30:29.609Z"
+      },
+      {
+        "review": "cabinet-proof-v2-edge-review",
+        "seconds": 47.687,
+        "passed": false,
+        "pid": 53132,
+        "cleanup": true,
+        "endedAt": "2026-10-09T22:33:00.021Z"
+      },
+      {
+        "review": "cabinet-proof-v2-edge-review-final",
+        "seconds": 15.954,
+        "passed": false,
+        "pid": 62104,
+        "cleanup": true,
+        "endedAt": "2026-10-09T22:33:54.056Z"
+      },
+      {
+        "review": "cabinet-proof-v2-edge-review-corrected",
+        "seconds": 37.782,
+        "passed": true,
+        "pid": 62332,
+        "cleanup": true,
+        "endedAt": "2026-10-09T22:35:06.249Z"
+      }
+    ],
+    "remainingOwnedProcesses": [],
+    "port5418": "No listener or request created by this review; route interception only",
+    "visibleWindowsOpened": 0,
+    "focusChanges": 0,
+    "published": false
+  },
+  "standingCamera": {
+    "position": [
+      -1.6800000000000004,
+      1.62,
+      -3.6499999999999995
+    ],
+    "pitch": -0.4162692978569419,
+    "yaw": 1.5707963267948961,
+    "order": "YXZ",
+    "fov": 70,
+    "near": 0.03,
+    "far": 40,
+    "aspect": 1.8494041170097508
+  },
+  "checks": {
+    "fourCanonicalCoursePointerSelection": true,
+    "keyboardSelectionAndStartFocus": true,
+    "freeCursorCabinetEntry": true,
+    "noDefaultHostPageBars": true,
+    "tokenAndNativeBothReadyBarrier": true,
+    "delayOutsideCancelAndLateLoadInvalidated": true,
+    "directSelectedNativeRun": true,
+    "realKeyboardDrivingSampleSeconds": 12,
+    "hostRendererPausedDuringNativeGame": true,
+    "resizeSameDocument": true,
+    "escapeFromNativeToAisle": true,
+    "resumedMouseLook": true,
+    "nativeMenuReturnRetainsCourse": true,
+    "restartFromPhysicalMenu": true,
+    "nativeBackToAisle": true,
+    "injectedBridgeErrorRetry": true,
+    "repeatedEnterWhileLoadingIgnored": true,
+    "outsideClickFromPlay": true,
+    "naturalReentryFullCameraPreserved": true,
+    "inspectEscapeExit": true
+  },
+  "images": [
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\02-track-a.png",
+      "bytes": 1303929,
+      "width": 1707,
+      "height": 923,
+      "sha256": "f8d4120f0e429c8140c33ec137aad0a15cd7e149b744e5768535eebb510f58d8"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\02-track-b.png",
+      "bytes": 1306238,
+      "width": 1707,
+      "height": 923,
+      "sha256": "9438bfe545f8dc204152e2d325275d1ca2cbc2825d936e6df2862dd1863d1953"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\02-track-c.png",
+      "bytes": 1304970,
+      "width": 1707,
+      "height": 923,
+      "sha256": "43172f3f3686708343ff52890065a8c4491f5c3831c22e2b0a504a5254438b9d"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\02-track-d.png",
+      "bytes": 1304007,
+      "width": 1707,
+      "height": 923,
+      "sha256": "5d3b6b11d27fa21377ce22b3ed53d64202a19365022679088d98e5c48c79809f"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\03-token-in-standing-view.png",
+      "bytes": 1307263,
+      "width": 1707,
+      "height": 923,
+      "sha256": "6ec0acb0659998420137157aca0f547481f70d83eaf523f490041a7358d3fbe8"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\04-delayed-document.png",
+      "bytes": 1304316,
+      "width": 1707,
+      "height": 923,
+      "sha256": "d1f97076d0767803ee7e2b2adb966420f01f3c577596ea2e7fc88ba57381e790"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\05-native-track-play.png",
+      "bytes": 307788,
+      "width": 1707,
+      "height": 923,
+      "sha256": "4de305a994864a98f6518dcce26a3e0468588fc869ea3e71de595ca9b5e1758a"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\06-narrow-play-viewport.png",
+      "bytes": 92920,
+      "width": 390,
+      "height": 844,
+      "sha256": "a1b03592efae8e65c0ca232f90f213a3ea39d07e12e0423e6e01cd073f5bce36"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-rendered-review\\07-desktop-play-without-chrome.png",
+      "bytes": 320899,
+      "width": 1707,
+      "height": 923,
+      "sha256": "2e7d5ce172825765e8a05914c5acaa0ffb4ccf79397abcce78053ee3e0ee6931"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\07b-native-return-to-physical-menu.png",
+      "bytes": 227764,
+      "width": 390,
+      "height": 844,
+      "sha256": "f6d41c978f53cf8b1bb445bed07a449e21ff57f462ca470e6670e03aa51376dd"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-edge-review-corrected\\10-injected-error-retry.png",
+      "bytes": 1303966,
+      "width": 1707,
+      "height": 923,
+      "sha256": "cdca848c690c1b5d8f41e5d0e2abbb607952b33ff7cafb220918025f101aee2d"
+    },
+    {
+      "file": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-edge-review-corrected\\11-outside-play-reentry.png",
+      "bytes": 1301910,
+      "width": 1707,
+      "height": 923,
+      "sha256": "cb49ecac597cdad7418e25a741e8193dbc1ae3c17dba45e410364f699b8602f1"
+    }
+  ],
+  "productionDiffFromTestedSource": [],
+  "protectedDiff": [],
+  "limitations": [
+    "Targeted approach fixture, not a walk-from-spawn arrival review.",
+    "12-second wall-clock keyboard driving sample per full/return run; no sustained lap or performance acceptance.",
+    "Loading failure is an injected verified child bridge error, not a reproduced native engine defect.",
+    "Physical joystick/buttons are not bound.",
+    "Browser-reserved Escape events cannot be forced; visible outside room margin remains fallback.",
+    "390px viewport captures/resize do not establish touch-target or mobile gameplay acceptance.",
+    "Jordan approved the original still; these derived runtime states remain available for human review."
+  ],
+  "failedFixtureRuns": {
+    "cabinet-proof-v2-edge-review": "Pointer was moved after the camera fixture while aisle mouse-look was active, legitimately changing yaw/pitch before entry. Corrected recorder places pointer first. No production edit.",
+    "cabinet-proof-v2-edge-review-final": "Shortened recorder omitted ArrowLeft that previously moved focus to Start, while retaining its assertion. Corrected by explicit Start focus. No production edit."
+  },
+  "rawEdgeVariantCorrection": "Preserved edge receipts say full targeted flow due to recorder metadata; accepted edge run covers only its explicit events and checks above.",
+  "published": false,
+  "merged": false,
+  "softwareInstalled": false,
+  "port5418Touched": false
+}

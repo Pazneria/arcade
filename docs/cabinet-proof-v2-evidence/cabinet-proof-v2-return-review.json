@@ -1,0 +1,490 @@
+{
+  "kind": "targeted integration review; no benchmark or holistic arrival claim",
+  "variant": "return follow-up (delay/cancel covered by first run)",
+  "graphicsRun": true,
+  "startedAt": "2026-10-09T22:29:17.185Z",
+  "sourceCommit": "7cebdd37dc90a3b7b02b0ac85435878eef4a8a9b",
+  "nativeRoot": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge\\dist",
+  "nativeCommit": "f29bae6c6df9d8b0e2c80a93193f1f7a10e32110",
+  "events": [
+    {
+      "standingCamera": {
+        "position": [
+          -1.6800000000000004,
+          1.62,
+          -3.6499999999999995
+        ],
+        "pitch": -0.4162692978569419,
+        "yaw": 1.5707963267948961,
+        "order": "YXZ",
+        "fov": 70,
+        "near": 0.03,
+        "far": 40,
+        "aspect": 1.8494041170097508
+      },
+      "cancelAndLateLoad": false,
+      "nativeTrack": "technical-bowl",
+      "nativeInputSeconds": 12,
+      "resizeRetainsDocument": true,
+      "returnRemovesFrame": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [
+    {
+      "type": "warning",
+      "text": "Allow attribute will take precedence over 'allowfullscreen'."
+    }
+  ],
+  "blocked": [],
+  "screenshots": [
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\01-standing-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\02-selected-track.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\02-track-a.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\02-track-b.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\02-track-c.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\02-track-d.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\05-native-track-play.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\06-narrow-play-viewport.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\07-desktop-play-without-chrome.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\07b-native-return-to-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\08-generic-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-proof-v2-return-review\\09-coming-soon-cabinet.png"
+  ],
+  "cleanup": {
+    "browserRootExited": true,
+    "serverClosed": true,
+    "complete": true,
+    "errors": []
+  },
+  "browserPid": 30248,
+  "browserVersion": "154.0.8037.98",
+  "hostGraphics": {
+    "current": {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "contextLost": false,
+      "programs": [
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        }
+      ]
+    },
+    "links": [
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      }
+    ],
+    "contextEvents": []
+  },
+  "nativeInput": {
+    "before": {
+      "mode": "running",
+      "trackId": "technical-bowl",
+      "trackName": "Test Track C",
+      "runTimeMs": 0,
+      "checkpointMs": null,
+      "checkpointMsList": [],
+      "bestTimeMs": null,
+      "trackS": 5.000000489805646,
+      "checkpointS": 1543.979570605378,
+      "checkpointSs": [
+        1543.979570605378,
+        3176.1865452453494
+      ],
+      "finishS": 4402.370201729652,
+      "speedKmh": 0,
+      "verticalSpeedMps": 0,
+      "airborne": false,
+      "gear": 1,
+      "rpmNormalized": 0.24,
+      "shiftPulse": 0,
+      "x": -0.022085269096574753,
+      "y": 0.06,
+      "z": 4.999941214876779,
+      "yaw": -0.0075670930049055425,
+      "passedCheckpoint": false,
+      "passedCheckpointCount": 0,
+      "autoplay": false,
+      "input": {
+        "source": "Keyboard",
+        "steer": 0,
+        "throttle": 0,
+        "brake": 0
+      }
+    },
+    "samples": [
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 3191.66666666668,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 76.01113473336424,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 144.68632600875225,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 3,
+          "rpmNormalized": 0.9493897099884533,
+          "shiftPulse": 0,
+          "x": -0.5594305711693895,
+          "y": 0.06,
+          "z": 76.0093824090146,
+          "yaw": -0.0075670930049055425,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "a",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 4158.333333333361,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 102.38545575535679,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 10.227466837826512,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 2,
+          "rpmNormalized": 0.32350829536615694,
+          "shiftPulse": 0.5966666666666671,
+          "x": 9.292910668131647,
+          "y": 0.06,
+          "z": 102.41016918268583,
+          "yaw": 0.703568058283564,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 7599.999999999903,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 160.27705378359818,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 129.24206189569813,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 3,
+          "rpmNormalized": 0.8705170565383412,
+          "shiftPulse": 0,
+          "x": 9.155927892990677,
+          "y": 0.06,
+          "z": 158.41793082480356,
+          "yaw": -0.0024451232334807647,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "d",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 8691.666666666584,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 180.06134445690188,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 16.54369159273191,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 2,
+          "rpmNormalized": 0.2201522691732074,
+          "shiftPulse": 0.5600000000000005,
+          "x": -1.9753999960845066,
+          "y": 0.06,
+          "z": 181.9740543855676,
+          "yaw": -0.8699013715050626,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": -1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      }
+    ]
+  },
+  "nativeReturns": {
+    "physicalMenu": true,
+    "selectedTrackRetained": true,
+    "restartedFromMenu": true,
+    "aisle": true
+  },
+  "passed": true,
+  "endedAt": "2026-10-09T22:30:29.609Z"
+}

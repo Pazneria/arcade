@@ -1,6 +1,6 @@
 # Current standing-menu and return acceptance
 
-Historical evidence for the frozen functional reference. Jordan subsequently rejected this artwork. The private input correction in `cabinet-input-correction.md` has CPU checks only and awaits replacement visual direction and rendered clearance; these earlier captures do not validate that correction.
+Historical evidence for the frozen functional reference. Jordan subsequently rejected this artwork. The current approved-art/input candidate is documented in `cabinet-proof-v2-rendered-review.md`; these earlier captures validate only the older source recorded below.
 
 The menu owner's portrait refinement `71a32a3b26df0aa6172ee9abe047573266527e8a` resolves the earlier small-copy concern at the actual tested standing view. The host camera keeps player x/z, eye1.62 and FOV70. Primary selected-track text, A-D choices, Start/Enter, driving hints and Escape/Back are readable in the inspected standing screenshots. Four real pointer targets and keyboard navigation were checked against their current normalized metadata. No host zoom, camera dolly or duplicate artwork changes were introduced.
 

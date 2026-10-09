@@ -1,0 +1,53 @@
+{
+  "status": "released",
+  "releasedAt": "2026-10-09T22:35:38.9919055Z",
+  "grantedActiveSeconds": 300,
+  "conservativeRunSeconds": 267.709,
+  "runs": [
+    {
+      "review": "cabinet-proof-v2-rendered-review",
+      "seconds": 93.862,
+      "passed": true,
+      "pid": 60368,
+      "cleanup": true,
+      "endedAt": "2026-10-09T22:28:35.38Z"
+    },
+    {
+      "review": "cabinet-proof-v2-return-review",
+      "seconds": 72.424,
+      "passed": true,
+      "pid": 30248,
+      "cleanup": true,
+      "endedAt": "2026-10-09T22:30:29.609Z"
+    },
+    {
+      "review": "cabinet-proof-v2-edge-review",
+      "seconds": 47.687,
+      "passed": false,
+      "pid": 53132,
+      "cleanup": true,
+      "endedAt": "2026-10-09T22:33:00.021Z"
+    },
+    {
+      "review": "cabinet-proof-v2-edge-review-final",
+      "seconds": 15.954,
+      "passed": false,
+      "pid": 62104,
+      "cleanup": true,
+      "endedAt": "2026-10-09T22:33:54.056Z"
+    },
+    {
+      "review": "cabinet-proof-v2-edge-review-corrected",
+      "seconds": 37.782,
+      "passed": true,
+      "pid": 62332,
+      "cleanup": true,
+      "endedAt": "2026-10-09T22:35:06.249Z"
+    }
+  ],
+  "remainingOwnedProcesses": [],
+  "port5418": "No listener or request created by this review; route interception only",
+  "visibleWindowsOpened": 0,
+  "focusChanges": 0,
+  "published": false
+}

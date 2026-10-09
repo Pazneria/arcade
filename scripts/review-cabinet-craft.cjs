@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..'),site='https://pazneria.github.io';
 const out=path.resolve(process.env.ARCADE_REVIEW_OUTPUT||path.join(root,'..','cabinet-rendered-review'));
 const nativeRoot=process.env.ARCADE_RACEGPT_DIST||path.join(root,'..','racegpt-cabinet-bridge','dist');
 const playwrightRoot=process.env.ARCADE_PLAYWRIGHT_DIR||'C:/Users/jmore/Documents/Codex/2026-10-08/task-15/arcade-derivative/node_modules/playwright';
-const receipt={kind:'targeted integration review; no benchmark or holistic arrival claim',variant:process.argv.includes('--return-only')?'return follow-up (delay/cancel covered by first run)':'full targeted flow',graphicsRun:false,startedAt:new Date().toISOString(),sourceCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),nativeRoot,nativeCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.dirname(nativeRoot),encoding:'utf8'}).trim(),events:[],errors:[],consoleMessages:[],blocked:[],screenshots:[],cleanup:null};
+const receipt={kind:'targeted integration review; no benchmark or holistic arrival claim',variant:process.argv.includes('--edge-cases')?'injected bridge failure/retry, outside play exit and natural re-entry':process.argv.includes('--return-only')?'return follow-up (delay/cancel covered by first run)':'full targeted flow',graphicsRun:false,startedAt:new Date().toISOString(),sourceCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),nativeRoot,nativeCommit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.dirname(nativeRoot),encoding:'utf8'}).trim(),events:[],errors:[],consoleMessages:[],blocked:[],screenshots:[],cleanup:null};
 const read=file=>fs.readFileSync(file,'utf8').replace(/\r\n/g,'\n');
 const mime=file=>({'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml'})[path.extname(file)]||'application/octet-stream';
 function asset(base,relative){const file=path.resolve(base,relative);return file.startsWith(path.resolve(base)+path.sep)&&fs.existsSync(file)&&fs.statSync(file).isFile()?file:null;}
@@ -18,7 +18,7 @@ async function run(){
   assert.equal(process.env.ARCADE_GRAPHICS_SLOT,'parent-approved','Obtain a coordinated bounded graphics slot from the parent first.');
   assert(fs.existsSync(path.join(nativeRoot,'index.html')),'Native RaceGPT review build must exist; do not install or build implicitly.');
   fs.mkdirSync(out,{recursive:true});
-  const {chromium}=require(playwrightRoot);let browserServer,browser,context,page,gate=null;
+  const {chromium}=require(playwrightRoot);let browserServer,browser,context,page,gate=null,failNext=false;
   const shot=async name=>{const file=path.join(out,name+'.png');await page.screenshot({path:file,timeout:15000});receipt.screenshots.push(file);};
   const phase=()=>page.evaluate(()=>window.arcadeTest.state.mode);
   try{
@@ -45,6 +45,11 @@ async function run(){
         return route.fulfill({contentType:mime(file),body});
       }
       if(url.origin===site&&url.pathname.startsWith('/racegpt/')){
+        if(failNext&&url.pathname==='/racegpt/'){
+          failNext=false;receipt.events.push({injectedFailure:'verified child bridge error, not a native engine defect'});
+          await new Promise(resolve=>setTimeout(resolve,650));
+          return route.fulfill({contentType:'text/html',body:'<!doctype html><script>const u=new URL(location.href);parent.postMessage({type:"racegpt:cabinet:error",version:1,session:u.searchParams.get("arcadeSession"),trackId:u.searchParams.get("track")},u.searchParams.get("arcadeParentOrigin"));</script>'});
+        }
         if(gate&&url.pathname==='/racegpt/'){const held=gate;held.requested=true;await held.promise;}
         const file=asset(nativeRoot,decodeURIComponent(url.pathname.slice(9))||'index.html');return file?route.fulfill({contentType:mime(file),body:fs.readFileSync(file)}):route.fulfill({status:404,body:'Missing native review asset'});
       }
@@ -70,13 +75,32 @@ async function run(){
       assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-projected'),'true');await shot('01-standing-physical-menu');
       await page.keyboard.press('ArrowRight');await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
       assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('02-selected-track');
-      for(const [i,id] of ['banked-shakedown','test-track-b','technical-bowl','jump-speedcheck'].entries()){
+      for(const [i,id] of (process.argv.includes('--edge-cases')?[]:['banked-shakedown','test-track-b','technical-bowl','jump-speedcheck']).entries()){
         await page.locator('#cabinet-hotspots [data-action="'+id+'"]').click();
         assert.equal(await page.locator('#cabinet-hotspots [data-action="'+id+'"]').getAttribute('aria-pressed'),'true');
         await shot('02-track-'+String.fromCharCode(97+i));
       }
-      await page.keyboard.press('ArrowLeft');assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');
+      if(process.argv.includes('--edge-cases'))await page.locator('#cabinet-hotspots [data-action="start"]').focus();else await page.keyboard.press('ArrowLeft');assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');
       assert.equal(await page.locator('#cabinet-hotspots [data-action="start"]').evaluate(button=>button===document.activeElement),true,'Arrow navigation synchronizes native Start focus');
+      if(process.argv.includes('--edge-cases')){
+        failNext=true;await page.locator('#cabinet-hotspots [data-action="start"]').click();
+        await page.keyboard.press('Enter');await page.keyboard.press('Enter');
+        await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect'&&document.querySelector('#cabinet-hotspots [data-action="start"]').getAttribute('aria-label')==='Try again');
+        assert.equal(await page.locator('#game-frame iframe').count(),0);await shot('10-injected-error-retry');
+        await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='play');
+        assert.equal(await page.locator('#game-frame iframe').count(),1);await page.mouse.click(2,2);
+        await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
+        // Position the review pointer before the camera fixture. Moving a locked
+        // pointer afterward legitimately changes aisle look before activation.
+        await page.mouse.move(1707/2,923/2);await page.waitForTimeout(50);
+        await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));
+        const before=await page.evaluate(()=>window.arcadeTest.controller.__test.camera());await page.mouse.click(1707/2,923/2);await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect');
+        const after=await page.evaluate(()=>window.arcadeTest.controller.__test.camera());assert.deepEqual(after,before);await shot('11-outside-play-reentry');
+        await page.keyboard.press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');
+        assert.equal(await page.locator('#site-nav').isVisible(),false);await validateGraphics('edgeGraphics');
+        receipt.events.push({retryAfterInjectedError:true,repeatedStartIgnored:true,outsidePlayExit:true,naturalReentryPreservesCamera:true,inspectEscapeExit:true});
+        assert.deepEqual(receipt.errors,[]);receipt.passed=true;return;
+      }
       if(!process.argv.includes('--return-only')){
       let release;gate={promise:new Promise(resolve=>release=resolve),release,requested:false};
       await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='inserting');
