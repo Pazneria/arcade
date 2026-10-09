@@ -4,14 +4,14 @@ const moduleUrl=source=>'data:text/javascript;base64,'+Buffer.from(source).toStr
 
 // Event, frame and timer queues run on the CPU. No browser/renderer/server is used.
 class Surface {
-  constructor(){this.listeners=new Map();this.attrs=new Map();this.classes=new Set();this.children=[];this.hidden=false;this.dataset={};this.textContent='';
+  constructor(){this.listeners=new Map();this.attrs=new Map();this.classes=new Set();this.children=[];this.hidden=false;this.dataset={};this.style={};this.textContent='';
     this.classList={add:(...items)=>items.forEach(i=>this.classes.add(i)),remove:(...items)=>items.forEach(i=>this.classes.delete(i)),
       contains:i=>this.classes.has(i),toggle:(i,on)=>{if(on)this.classes.add(i);else this.classes.delete(i);}};}
   addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(fn);}
   removeEventListener(type,fn){this.listeners.get(type)?.delete(fn);}
-  emit(type,values={}){const e={target:this,currentTarget:this,button:0,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},...values};for(const fn of this.listeners.get(type)||[])fn(e);return e;}
+  emit(type,values={}){const e={type,target:this,currentTarget:this,button:0,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},stopImmediatePropagation(){},...values};for(const fn of this.listeners.get(type)||[])fn(e);return e;}
   setAttribute(name,value){this.attrs.set(name,String(value));}removeAttribute(name){this.attrs.delete(name);}
-  append(...children){this.children.push(...children);}focus(){this.focused=true;}setPointerCapture(){}
+  append(...children){this.children.push(...children);children.forEach(c=>{c.parent=this;});}remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);}focus(){this.focused=true;}setPointerCapture(){}
   querySelector(selector){return selector==='canvas'?this.canvas:null;}
 }
 function scheduler(reduced=false){
@@ -36,6 +36,7 @@ async function run(){
     screen.dispose();assert.equal(q.frames.size,0);assert.equal(q.timers.size,0);
   }
   const {catalog,navigation}=await require('./load-arcade-modules')();
+  const {createCabinetGame,placeCabinetScreen}=await import(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-cabinet.js'),'utf8')));
   const codex=require('../codex-link-contract');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert(!/id="(?:welcome|explore)"/.test(html),'Entry has no welcome panel or mandatory Explore button');
@@ -46,14 +47,14 @@ async function run(){
     .replace("import('./vendor/three.module.js')",'__loadEngine()')
     .replace("import('./arcade-scene.js')",'Promise.resolve({createArcadeScene:__createScene})')
     .replace("import('./arcade-controller.js')",'Promise.resolve({createArcadeController:__createController})')+
-    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,controllerActive:!!controller?.active,selected};}};';
+    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,inspect,playCabinet,returnToScene,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,controllerActive:!!controller?.active,selected,playing:cabinetGame.active};}};';
   function harness({failure=null,holdEngine=false,reduced=false,handoff=false}={}){
     const q=scheduler(reduced),nodes=new Map(),steps=Array.from({length:4},()=>new Surface()),win=new Surface(),doc=new Surface();
     for(const match of html.matchAll(/\bid="([^"]+)"/g))nodes.set(match[1],new Surface());
     const get=id=>nodes.get(id),stats={engines:0,renderers:0,worlds:0,compiles:0,controllers:0,resumes:0,captures:0,worldDisposals:0,rendererDisposals:0,contextLosses:0,controllerDisposals:0,reloads:0,navigations:[],stages:[],handoffReady:0,handoffFails:0,restoredCabinets:0};
     const values=new Map(),storage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
     const location={hostname:'pazneria.github.io',href:'https://pazneria.github.io/arcade/',assign(destination){stats.navigations.push({destination,state:win.testApp.state,frames:q.frames.size,timers:q.timers.size,canvas:!!get('scene-container').canvas});},reload(){stats.reloads++;}};
-    Object.assign(doc,{hidden:false,body:new Surface(),documentElement:new Surface(),hasFocus:()=>true,getElementById:get,createElement:()=>new Surface(),querySelectorAll:selector=>selector==='.loading-steps li'?steps:[]});
+    Object.assign(doc,{hidden:false,body:new Surface(),documentElement:new Surface(),hasFocus:()=>true,getElementById:get,createElement:type=>{const el=new Surface();if(type==='iframe')el.contentWindow=new Surface();return el;},querySelectorAll:selector=>selector==='.loading-steps li'?steps:[]});
     win.ArcadeCodexLinks=codex;
     const observers=new Set();let handoffActive=handoff,fade=0;
     class Observer {constructor(callback){this.callback=callback;}observe(){observers.add(this);}disconnect(){observers.delete(this);}}
@@ -71,11 +72,12 @@ async function run(){
     const engine={WebGLRenderer:Renderer};
     const context={window:win,document:doc,location,sessionStorage:storage,innerWidth:1280,matchMedia:()=>({matches:false}),console:{warn(){}},
       buildArcadeCatalog:catalog.buildArcadeCatalog,...navigation,
+      createCabinetGame:options=>createCabinetGame({...options,document:doc}),placeCabinetScreen,
       createLoadingScreen:elements=>createLoadingScreen(elements,q.options),
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
       __createController(THREE,renderer,world,options){stats.controllers++;let disposed=false;const canvas=renderer.domElement;get('scene-container').canvas=canvas;
-        const c={active:false,resume(){if(doc.hidden)return;this.active=true;stats.resumes++;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},
+        const c={active:false,resume(options){if(doc.hidden)return;this.active=true;stats.resumes++;if(options)stats.freeLook=options.freeLook;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},returnToAisle(){stats.aisleReturns=(stats.aisleReturns||0)+1;},
           dispose(){if(disposed)return;disposed=true;this.pause();stats.controllerDisposals++;world.dispose();renderer.dispose();renderer.forceContextLoss();get('scene-container').canvas=null;}};
         if(failure==='first-render'){c.dispose();throw Error('Injected first-render failure');}return c;
       },MutationObserver:Observer};
@@ -151,6 +153,22 @@ async function run(){
   {
     const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.finishHandoff();assert.equal(h.get('site-nav').inert,false);h.releaseEngine();await h.ready();assert.equal(h.stats.resumes,1);assert.equal(h.stats.handoffReady,0,'Accessibility removal does not reveal a second cover');
   }
-  console.log('Arcade CPU loading, handoff default-frame/input gating, one-shot restoration, fallback/retry, fade cancellation and navigation ownership checks passed.');
+  {
+    const h=harness();await h.ready();h.app.inspect(0);h.get('cabinet-play').emit('click');
+    assert.equal(h.app.state.mode,'play');assert.equal(h.app.state.controllerActive,false);assert.equal(h.app.state.playing,true);assert.equal(h.get('cabinet-game').children.length,1);assert.equal(h.stats.navigations.length,0);
+    const frame=h.get('cabinet-game').children[0];frame.emit('load');frame.contentWindow.emit('keydown',{code:'Escape'});
+    assert.equal(h.app.state.mode,'explore');assert.equal(h.get('cabinet-game').children.length,0);assert.equal(h.stats.freeLook,true);assert.equal(h.stats.captures,0,'Escape restores window mouse look without trapping the pointer');
+    h.app.inspect(2);h.app.playCabinet();h.get('game-back').emit('click',{isTrusted:true});assert.equal(h.stats.captures,1,'Explicit trusted Back requests lock in its gesture');assert.equal(h.app.state.controllerActive,true);assert.equal(h.stats.aisleReturns,2);
+    for(const change of ['help','directory','hidden','pagehide']) {
+      h.app.inspect(1);h.app.playCabinet();assert.equal(h.get('cabinet-game').children.length,1);
+      if(change==='help')h.app.showHelp();if(change==='directory')h.app.openDirectory();if(change==='hidden'){h.doc.hidden=true;h.doc.emit('visibilitychange');}if(change==='pagehide')h.win.emit('pagehide');
+      assert.equal(h.get('cabinet-game').children.length,0,`${change} removes the unused game document`);h.doc.hidden=false;
+    }
+  }
+  {
+    const h=harness();await h.ready();h.app.inspect(0);const event=h.get('cabinet-play').emit('click',{ctrlKey:true});assert.equal(event.defaultPrevented,false);assert.equal(h.app.state.playing,false,'Modified Play preserves normal full-page links');
+    h.app.playCabinet();await h.app.navigate('https://pazneria.github.io/racegpt/',0);assert.equal(h.get('cabinet-game').children.length,0);assert.equal(h.stats.navigations[0].canvas,false);assert.equal(h.stats.controllerDisposals,1,'Full page disposes the paused Arcade before navigation');
+  }
+  console.log('Arcade CPU loading, handoff/input gating, cabinet play/return/cleanup, fallback/retry and navigation ownership checks passed.');
 }
 if(require.main===module)run().catch(error=>{console.error(error);process.exitCode=1;});

@@ -1,12 +1,14 @@
 import {buildArcadeCatalog} from './arcade-catalog.js';
 import {readReturnState,writeReturnState,clearReturnState,navigateAfterDispose} from './arcade-navigation.js';
 import {createLoadingScreen} from './arcade-loading.js';
+import {createCabinetGame,placeCabinetScreen} from './arcade-cabinet.js';
 
 const $=id=>document.getElementById(id);
 const games=buildArcadeCatalog(location,window.ArcadeCodexLinks);
 const controls=$('controls'),directory=$('mobile-fallback'),actions=$('cabinet-actions'),status=$('load-status');
 const loading=createLoadingScreen({root:$('scene-loading'),status,steps:[...document.querySelectorAll('.loading-steps li')]});
 let controller=null,failed=false,mode='loading',selected=-1,loadPromise=null,generation=0,pending=null,pendingSceneFocus=false;
+const cabinetGame=createCabinetGame({host:$('cabinet-game'),onEscape:()=>returnToScene()});
 const handoff=window.pazneriaRoomHandoff;
 let freshHandoff=!!(handoff?.active&&handoff.room==='arcade'&&handoff.camera==='default-entry-v1'),handoffWait=null,handoffObserver=null;
 const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','mobile-fallback','touch-controls'].map($);
@@ -29,7 +31,9 @@ function storage() {try{return sessionStorage;}catch{return null;}}
 const readState=()=>readReturnState(storage(),{cabinetCount:games.length});
 function save(index) {writeReturnState(storage(),index,{cabinetCount:games.length});}
 function showMode(next) {
-  mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect';
+  if(next!=='play')cabinetGame.stop();
+  mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='play';
+  $('cabinet-menu').hidden=next==='play';$('cabinet-game').hidden=next!=='play';$('game-actions').hidden=next!=='play';
   $('scene-container').setAttribute('aria-busy',String(next==='loading'));
   $('reticle').hidden=next!=='explore';$('target-hint').hidden=true;
   $('touch-controls').hidden=next!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);
@@ -37,7 +41,7 @@ function showMode(next) {
 function showHelp() {if(mode==='loading')dispose();controller?.pause();loading.hide();showMode('help');$('close-controls').focus();}
 function openDirectory() {if(mode==='loading')dispose();controller?.pause();loading.hide();showMode('directory');$('return-to-3d').hidden=failed;$('directory-title').tabIndex=-1;$('directory-title').focus();}
 function releasePending() {const owned=pending;pending=null;owned?.world?.dispose();owned?.renderer.dispose();owned?.renderer.forceContextLoss();}
-function dispose() {generation++;pendingSceneFocus=false;cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
+function dispose() {generation++;pendingSceneFocus=false;cabinetGame.stop();cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
 async function navigate(url,index=null) {
   if(index!==null)save(index);else clearReturnState(storage());
   loading.begin();status.textContent='Leaving Arcade';showMode('loading');
@@ -45,12 +49,19 @@ async function navigate(url,index=null) {
 }
 function inspect(index,focus=true) {
   if(!controller)return;
+  cabinetGame.stop();
   selected=(index+games.length)%games.length;const game=games[selected];controller.focusGame(selected);if(!controller)return;showMode('inspect');
   $('cabinet-title').textContent=game.name;$('cabinet-description').textContent=game.description;$('coming-soon').hidden=!game.comingSoon;
   for(const [id,url,label] of [['cabinet-play',game.comingSoon?null:game.url,`Play ${game.name}`],['cabinet-guide',game.guideUrl,`Open ${game.name} guide`]]) {
     const link=$(id);link.hidden=!url;link.setAttribute('aria-label',label);if(url)link.href=url;else link.removeAttribute('href');
   }
   if(focus) (game.comingSoon?$('cabinet-back'):$('cabinet-play')).focus();
+}
+function playCabinet() {
+  if(!controller||mode!=='inspect'||games[selected]?.comingSoon)return;
+  controller.pause();save(selected);const game=games[selected];
+  $('game-full-page').href=game.url;$('game-full-page').setAttribute('aria-label',`Open ${game.name} full page`);
+  showMode('play');if(!cabinetGame.start(game)){inspect(selected);return;}
 }
 function showFailure() {failed=true;dispose();loading.hide();showMode('directory');$('return-to-3d').hidden=true;$('retry-loading').hidden=false;$('directory-message').textContent='The 3D arcade is unavailable. Retry loading or choose a game below.';}
 async function initialize() {
@@ -72,7 +83,8 @@ async function initialize() {
       pending=null;
       controller=createArcadeController(THREE,renderer,world,{
         container:$('scene-container'),onTarget:anchor=>{const hint=$('target-hint');hint.hidden=!anchor;if(anchor)hint.textContent=anchor.kind==='home'?'E / tap · Home / Exit':`E / tap · ${games[anchor.gameIndex].name}`;},
-        onInspect:inspect,onHome:()=>navigate('/'),onPause:reason=>{if(mode==='explore'){if(reason==='help'||reason==='unlock')showHelp();else showMode('paused');}},onResume:()=>{if(mode==='paused')startExplore();},onFailure:showFailure
+        onInspect:inspect,onHome:()=>navigate('/'),onPause:reason=>{if(mode==='explore'){if(reason==='help'||reason==='unlock')showHelp();else showMode('paused');}},onResume:()=>{if(mode==='paused')startExplore();},onFailure:showFailure,
+        onScreenLayout:rect=>placeCabinetScreen(actions,rect)
       });
       if(!await loading.stage(3,'Opening Arcade')||token!==generation)return null;
       $('return-to-3d').hidden=false;$('retry-loading').hidden=true;
@@ -91,12 +103,13 @@ async function initialize() {
     } finally {if(token===generation)loadPromise=null;}
   })();return loadPromise;
 }
-function startExplore(focus=false) {
-  if(!controller)return;pendingSceneFocus||=focus;controller.resume();
+function startExplore(focus=false,{capture=false,freeLook}={}) {
+  if(!controller)return;pendingSceneFocus||=focus;controller.resume(freeLook===undefined?undefined:{freeLook});
   showMode(controller.active?'explore':'paused');
+  if(controller.active&&capture)controller.capture();
   if(controller.active&&pendingSceneFocus){pendingSceneFocus=false;$('scene-container').querySelector('canvas')?.focus({preventScroll:true});}
 }
-function returnToScene() {if(controller)startExplore(true);else if(failed)openDirectory();else {showMode('loading');initialize();}}
+function returnToScene(event) {cabinetGame.stop();if(controller){controller.returnToAisle?.();if(controller)startExplore(true,{freeLook:true,capture:!!(event?.isTrusted&&event.type==='click')});}else if(failed)openDirectory();else {showMode('loading');initialize();}}
 for(const [index,game] of games.entries()) {
   const card=document.createElement('article');card.className='fallback-card';const title=document.createElement('h2');title.textContent=game.name;
   const description=document.createElement('p');description.textContent=game.description;const links=document.createElement('div');links.className='actions fallback-card-actions';
@@ -107,15 +120,16 @@ for(const [index,game] of games.entries()) {
 }
 $('open-games').addEventListener('click',openDirectory);$('controls-games').addEventListener('click',openDirectory);$('open-controls').addEventListener('click',showHelp);$('close-controls').addEventListener('click',returnToScene);
 $('return-to-3d').addEventListener('click',returnToScene);$('retry-loading').addEventListener('click',()=>{loading.begin();status.textContent='Retrying Arcade';showMode('loading');dispose();location.reload();});
-$('cabinet-back').addEventListener('click',()=>startExplore(true));$('cabinet-previous').addEventListener('click',()=>inspect(selected-1));$('cabinet-next').addEventListener('click',()=>inspect(selected+1));
-for(const id of ['cabinet-play','cabinet-guide'])$(id).addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href,selected);});
+$('cabinet-back').addEventListener('click',returnToScene);$('game-back').addEventListener('click',returnToScene);$('cabinet-previous').addEventListener('click',()=>inspect(selected-1));$('cabinet-next').addEventListener('click',()=>inspect(selected+1));
+$('cabinet-play').addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();playCabinet();});
+for(const id of ['cabinet-guide','game-full-page'])$(id).addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href,selected);});
 for(const link of document.querySelectorAll('#site-nav a,#mobile-fallback > .actions a'))link.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href);});
 for(const [id,direction] of [['touch-forward',1],['touch-backward',-1]]) {
   const button=$(id);button.addEventListener('pointerdown',e=>{if(!controller||mode!=='explore')return;e.preventDefault();button.setPointerCapture(e.pointerId);controller.setTouchMove(direction);});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>controller?.setTouchMove(0));
 }
-window.addEventListener('keydown',e=>{if(e.code==='Escape'&&(mode==='inspect'||mode==='help')){e.preventDefault();if(!e.repeat)returnToScene();}});window.addEventListener('pagehide',dispose);
+window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene();}});window.addEventListener('pagehide',dispose);
 window.addEventListener('pageshow',e=>{if(e.persisted){failed=false;showMode('loading');initialize();}});
 function resumeVisible() {if(mode==='paused'&&!document.hidden&&document.hasFocus())startExplore();}
-window.addEventListener('focus',resumeVisible);document.addEventListener('visibilitychange',resumeVisible);
+window.addEventListener('focus',resumeVisible);document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='play')showMode('inspect');resumeVisible();});
 window.addEventListener('resize',()=>{$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});initialize();

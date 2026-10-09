@@ -164,6 +164,7 @@ function mergeStatic(root) {
 const geometryCache = new Map(), textureCache = new Map();
 let environmentTarget, disposed = false;
 const anchors = [], targetMeshes = [];
+const cabinetScreens = new WeakMap();
 function shortTitle(title) { const words=title.split(' '), middle=Math.ceil(words.length/2);return words.slice(0,middle).join(' ')+'\n'+words.slice(middle).join(' '); }
 function cachedGeometry(key, create) { if (!geometryCache.has(key)) geometryCache.set(key, create()); return geometryCache.get(key); }
 function reuseStaticMaterials(root) {
@@ -188,6 +189,13 @@ function addGameAnchor(object, gameIndex) {
   const position = new THREE.Vector3(0, 1.2, depth / 2 + 0.1).applyMatrix4(object.matrixWorld);
   const approach = new THREE.Vector3(0, 0, depth / 2 + 1.05).applyMatrix4(object.matrixWorld);
   const anchor = { id: 'game-' + gameIndex, gameIndex, position, approach, yaw: object.rotation.y, kind: 'game' };
+  const surface=cabinetScreens.get(object);
+  if(surface) {
+    const {frame,width,height,cy,z}=surface;frame.updateMatrixWorld(true);
+    const at=(x,y)=>new THREE.Vector3(x,y+cy,z).applyMatrix4(frame.matrixWorld);
+    anchor.screen={width,height,center:at(0,0),normal:new THREE.Vector3(0,0,1).transformDirection(frame.matrixWorld),up:new THREE.Vector3(0,1,0).transformDirection(frame.matrixWorld),
+      corners:[at(-width/2,height/2),at(width/2,height/2),at(-width/2,-height/2),at(width/2,-height/2)]};
+  }
   anchors.push(anchor);
   const hit = new THREE.Mesh(new THREE.BoxGeometry(width + 0.08, 2.0, depth + 0.2), new THREE.MeshBasicMaterial({visible:false}));
   hit.position.set(0, 1, 0.06); object.add(hit); hit.userData.keep = true; hit.userData.anchor = anchor; targetMeshes.push(hit);
@@ -1242,6 +1250,8 @@ function addControls(frame, L, layout, style) {
 }
 function screenAssembly(parent, D, p0, p1, innerW, key, ow, oh, cy, light, offset, glassOut = 0.006) {
   const f = frameAt(parent, D, p0, p1, 0), len = f.userData.len;
+  // A small functional surface anchor follows cabinet placement and screen tilt.
+  cabinetScreens.set(parent,{frame:f,width:ow-.02,height:oh-.02,cy,z:glassOut+.002});
   // bezel card with a rounded opening
   const sh = new THREE.Shape(); sh.moveTo(-innerW / 2, -len / 2); sh.lineTo(innerW / 2, -len / 2); sh.lineTo(innerW / 2, len / 2); sh.lineTo(-innerW / 2, len / 2); sh.closePath();
   sh.holes.push(roundRectShape(ow, oh, 0.03, 0, cy, new THREE.Path()));

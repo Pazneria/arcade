@@ -39,10 +39,32 @@ function canvas() {
   assert.equal(world.anchors.length,8,'Six catalog anchors and two Home doors');
   assert.deepEqual(world.anchors.filter(a=>a.kind==='game').map(a=>a.gameIndex),[0,1,2,3,4,5]);
   for(const anchor of world.anchors.filter(a=>a.kind==='game')) {
+    assert(anchor.screen,'Every actual cabinet supplies its screen surface');
+    assert(Math.abs(anchor.screen.corners[0].distanceTo(anchor.screen.corners[1])-anchor.screen.width)<1e-8);
+    assert(Math.abs(anchor.screen.normal.dot(anchor.screen.up))<1e-8,'Screen normal and up follow the tilted frame');
     const player={x:anchor.approach.x,z:anchor.approach.z,yaw:0,eye:1.62};
     const before={...player};movePlayer(player,{forward:0,strafe:0,run:false},0,world.colliders);
     assert(Math.hypot(player.x-before.x,player.z-before.z)<0.001,`Inspection anchor ${anchor.gameIndex} must stand outside colliders`);
   }
+  const controllerSource=fs.readFileSync(path.join(root,'assets/arcade-controller.js'),'utf8').replace("'./arcade-motion.js'",JSON.stringify(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-motion.js'),'utf8'))));
+  const {createArcadeController}=await import(moduleUrl(controllerSource)),{harness}=require('./test-arcade-controller');
+  const canvasDocument=global.document;
+  for(const [width,height] of [[1280,720],[390,844],[800,390]]) {
+    let layout;const h=harness(THREE,createArcadeController,null,{onScreenLayout:rect=>{layout=rect;}});
+    global.innerWidth=width;global.innerHeight=height;h.canvas.getBoundingClientRect=()=>({left:0,top:0,width,height});
+    Object.assign(h.world,{scene:world.scene,camera:world.camera,anchors:world.anchors,colliders:world.colliders,animate:world.animate});
+    const controller=h.create(),aisle={...controller.player};
+    for(const anchor of world.anchors.filter(a=>a.kind==='game')) {
+      controller.focusGame(anchor.gameIndex);assert.deepEqual(controller.player,aisle,'Inspecting an actual screen preserves the aisle pose');
+      assert.equal(h.frames.size,0);assert(layout&&layout.width>70&&layout.height>70);
+      assert(layout.left>=17.9&&layout.top>=height*.1);assert(layout.left+layout.width<=width-17.9&&layout.top+layout.height<=height-60,'Screen controls remain clear of window edges/navigation');
+      const corners=anchor.screen.corners.map(point=>point.clone().project(world.camera));
+      assert(Math.abs(corners[0].y-corners[1].y)<1e-8&&Math.abs(corners[0].x-corners[2].x)<1e-8,'Framing keeps the actual tilted screen parallel to the native control plane');
+      assert(Math.abs(layout.width/layout.height-anchor.screen.width/anchor.screen.height)<1e-8,'Game document fits the actual screen aspect');
+    }
+    controller.returnToAisle();assert.equal(layout,null);controller.dispose();assert.equal(h.listenerCount,0);
+  }
+  global.document=canvasDocument;
   world.scene.updateMatrixWorld(true);
   for(const anchor of world.anchors) {
     const at=anchor.approach || new THREE.Vector3(anchor.position.x,0,anchor.id==='home-exit'?-9:-0.95);
