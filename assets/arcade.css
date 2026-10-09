@@ -4,6 +4,8 @@ button,.actions a {font:inherit;color:#fff0d4;background:#34243c;border:1px soli
 button:hover,.actions a:hover {background:#543550}button:disabled {opacity:.55;cursor:wait}a:focus-visible,button:focus-visible {outline:3px solid #9eedff;outline-offset:3px}
 #scene-container {position:fixed;inset:0;overflow:hidden}#scene-container canvas {display:block;width:100%;height:100%;touch-action:none}
 .scene-loading {position:fixed;inset:0;z-index:4;display:grid;place-items:center;background:#111214;color:#f4f4f5;opacity:1;transition:opacity 180ms ease-out}
+html[data-room-handoff] #scene-loading {visibility:hidden}
+html[data-room-handoff] body > :not(.pazneria-handoff-controls) {pointer-events:none}
 .scene-loading.is-loading {transition:none;opacity:1}.scene-loading.is-ready {opacity:0;pointer-events:none}.loading-content {width:180px;text-align:center}.loading-content h1 {font-size:20px;font-weight:500;letter-spacing:.02em;margin:0 0 18px}.loading-content p {font-size:12px;line-height:1.5;color:#9b9da4;margin:12px 0 0;min-height:18px}
 .loading-steps {display:grid;grid-template-columns:repeat(4,1fr);gap:4px;list-style:none;padding:0;margin:0}.loading-steps li {height:2px;background:#303238;border-radius:2px}.loading-steps .is-current {background:#858991}.loading-steps .is-complete {background:#d7d9df}
 body[data-mode="loading"] #site-nav {z-index:5;background:transparent;border-color:transparent}body[data-mode="loading"] #site-nav a,body[data-mode="loading"] #site-nav button {color:#b6b9bf}body[data-mode="loading"] #site-nav a:hover,body[data-mode="loading"] #site-nav button:hover {background:#25272b}

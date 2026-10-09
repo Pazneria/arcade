@@ -83,7 +83,9 @@ async function run() {
   const { navigation } = await require('./load-arcade-modules')();
 
   {
-    const h=harness(THREE,createArcadeController),controller=h.create();controller.resume();
+    const h=harness(THREE,createArcadeController),controller=h.create();
+    assert.deepEqual(h.world.camera.position.toArray(),[0,1.62,-.95]);assert.equal(h.world.camera.rotation.order,'YXZ');assert.equal(h.world.camera.rotation.x,-.04);assert.equal(h.world.camera.rotation.y,0);
+    assert.equal(controller.active,false);assert.equal(h.frames.size,0,'Default first frame leaves input/frame loop paused for the handoff');controller.resume();
     assert.equal(h.stats.pointerRequests,0,'Keyboard-ready scene must not capture the mouse automatically');
     h.canvas.emit('pointerdown',{button:2,pointerId:1,clientX:20,clientY:20});assert.equal(h.stats.pointerRequests,0);
     h.canvas.emit('pointerdown',{button:0,pointerId:1,clientX:20,clientY:20});await Promise.resolve();
