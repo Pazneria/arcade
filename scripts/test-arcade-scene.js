@@ -16,6 +16,7 @@ function canvas() {
 }
 (async()=>{
   const {createPlayer,movePlayer,pixelRatio,canInteract}=await load('assets/arcade-motion.js');
+  assert.deepEqual(createPlayer(),{x:0,z:-0.95,yaw:0,pitch:-0.04,eye:1.62,crouch:false},'Handoff default-entry-v1 pose remains pinned');
   const straight=createPlayer(),diagonal=createPlayer();
   movePlayer(straight,{forward:1,strafe:0,run:false},1,[]);movePlayer(diagonal,{forward:1,strafe:1,run:false},1,[]);
   assert(Math.abs(Math.hypot(diagonal.x,diagonal.z+0.95)-Math.hypot(straight.x,straight.z+0.95))<1e-8,'Diagonal movement must not be faster');
@@ -33,6 +34,7 @@ function canvas() {
   const games=catalog.buildArcadeCatalog(new URL('https://pazneria.github.io/arcade/'),require('../codex-link-contract'));
   const {createArcadeScene}=await load('assets/arcade-scene.js');
   const world=createArcadeScene(fakeThree,fakeRenderer,games);
+  assert.equal(world.camera.fov,70);assert.equal(world.camera.near,.03);assert.equal(world.camera.far,40);
   assert.equal(world.anchors.length,8,'Six catalog anchors and two Home doors');
   assert.deepEqual(world.anchors.filter(a=>a.kind==='game').map(a=>a.gameIndex),[0,1,2,3,4,5]);
   for(const anchor of world.anchors.filter(a=>a.kind==='game')) {

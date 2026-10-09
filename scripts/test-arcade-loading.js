@@ -46,15 +46,21 @@ async function run(){
     .replace("import('./vendor/three.module.js')",'__loadEngine()')
     .replace("import('./arcade-scene.js')",'Promise.resolve({createArcadeScene:__createScene})')
     .replace("import('./arcade-controller.js')",'Promise.resolve({createArcadeController:__createController})')+
-    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,selected};}};';
-  function harness({failure=null,holdEngine=false,reduced=false}={}){
+    '\nwindow.testApp={initialize,navigate,dispose,openDirectory,showHelp,startExplore,get state(){return {mode,failed,pending:!!pending,hasController:!!controller,controllerActive:!!controller?.active,selected};}};';
+  function harness({failure=null,holdEngine=false,reduced=false,handoff=false}={}){
     const q=scheduler(reduced),nodes=new Map(),steps=Array.from({length:4},()=>new Surface()),win=new Surface(),doc=new Surface();
     for(const match of html.matchAll(/\bid="([^"]+)"/g))nodes.set(match[1],new Surface());
-    const get=id=>nodes.get(id),stats={engines:0,renderers:0,worlds:0,compiles:0,controllers:0,resumes:0,captures:0,worldDisposals:0,rendererDisposals:0,contextLosses:0,controllerDisposals:0,reloads:0,navigations:[],stages:[]};
+    const get=id=>nodes.get(id),stats={engines:0,renderers:0,worlds:0,compiles:0,controllers:0,resumes:0,captures:0,worldDisposals:0,rendererDisposals:0,contextLosses:0,controllerDisposals:0,reloads:0,navigations:[],stages:[],handoffReady:0,handoffFails:0,restoredCabinets:0};
     const values=new Map(),storage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
     const location={hostname:'pazneria.github.io',href:'https://pazneria.github.io/arcade/',assign(destination){stats.navigations.push({destination,state:win.testApp.state,frames:q.frames.size,timers:q.timers.size,canvas:!!get('scene-container').canvas});},reload(){stats.reloads++;}};
-    Object.assign(doc,{hidden:false,body:new Surface(),hasFocus:()=>true,getElementById:get,createElement:()=>new Surface(),querySelectorAll:selector=>selector==='.loading-steps li'?steps:[]});
+    Object.assign(doc,{hidden:false,body:new Surface(),documentElement:new Surface(),hasFocus:()=>true,getElementById:get,createElement:()=>new Surface(),querySelectorAll:selector=>selector==='.loading-steps li'?steps:[]});
     win.ArcadeCodexLinks=codex;
+    const observers=new Set();let handoffActive=handoff,fade=0;
+    class Observer {constructor(callback){this.callback=callback;}observe(){observers.add(this);}disconnect(){observers.delete(this);}}
+    const finishHandoff=()=>{handoffActive=false;q.options.clearTimer(fade);fade=0;for(const observer of [...observers])observer.callback();};
+    if(handoff)win.pazneriaRoomHandoff={room:'arcade',camera:'default-entry-v1',get active(){return handoffActive;},
+      ready(){stats.handoffReady++;assert.equal(stats.compiles,1);assert.equal(stats.controllers,1);assert.equal(stats.resumes,0,'First matching frame precedes input');assert.equal(stats.restoredCabinets,0,'Matching frame keeps default camera');if(reduced)finishHandoff();else fade=q.options.setTimer(finishHandoff,160);},
+      fail(){stats.handoffFails++;finishHandoff();}};
     let resolveEngine;const held=new Promise(resolve=>{resolveEngine=resolve;});
     class Renderer {
       constructor(){if(failure==='renderer')throw Error('Injected renderer failure');stats.renderers++;this.domElement=new Surface();this.disposed=false;}
@@ -69,12 +75,12 @@ async function run(){
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
       __createController(THREE,renderer,world,options){stats.controllers++;let disposed=false;const canvas=renderer.domElement;get('scene-container').canvas=canvas;
-        const c={active:false,resume(){this.active=true;stats.resumes++;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){this.pause();},
+        const c={active:false,resume(){if(doc.hidden)return;this.active=true;stats.resumes++;},pause(){this.active=false;},capture(){stats.captures++;},focusGame(){stats.restoredCabinets++;this.pause();},
           dispose(){if(disposed)return;disposed=true;this.pause();stats.controllerDisposals++;world.dispose();renderer.dispose();renderer.forceContextLoss();get('scene-container').canvas=null;}};
         if(failure==='first-render'){c.dispose();throw Error('Injected first-render failure');}return c;
-      },};
+      },MutationObserver:Observer};
     vm.runInNewContext(source,context,{filename:'arcade-app-cpu-fixture.js'});
-    return {q,get,stats,win,doc,storage,app:win.testApp,releaseEngine:()=>resolveEngine(engine),
+    return {q,get,stats,win,doc,storage,app:win.testApp,observers,finishHandoff,releaseEngine:()=>resolveEngine(engine),
       async ready(){await q.until(()=>this.app.state.mode==='explore'||this.app.state.mode==='inspect'||this.app.state.failed);},
       async stage(label){await q.until(()=>get('load-status').textContent===label);},};
   }
@@ -114,6 +120,37 @@ async function run(){
     const h=harness();h.storage.setItem('arcade:return-state:v1',JSON.stringify({cabinetIndex:2,savedAt:Date.now()}));await h.ready();
     assert.equal(h.app.state.mode,'inspect');assert.equal(h.app.state.selected,2);assert.equal(h.stats.resumes,0,'Game Back retains its cabinet selection');
   }
-  console.log('Arcade CPU loading stages, direct entry, fallback/retry, fade cancellation and navigation ownership checks passed.');
+  for(const reduced of [false,true]){
+    const h=harness({handoff:true,reduced});const remembered=JSON.stringify({cabinetIndex:2,savedAt:Date.now()});
+    h.storage.setItem('arcade:return-state:v1',remembered);h.storage.setItem('arcade:preferences','unchanged');
+    await h.q.until(()=>h.stats.handoffReady===1);
+    assert.equal(h.get('scene-loading').hidden,true,'Handoff reveals no normal loading indicator');
+    if(!reduced){assert.equal(h.app.state.mode,'loading');assert.equal(h.stats.resumes,0);assert.equal(h.get('scene-container').inert,true);h.win.emit('focus');assert.equal(h.stats.resumes,0);h.q.expire();}
+    await h.ready();assert.equal(h.app.state.mode,'explore');assert.equal(h.stats.restoredCabinets,0);assert.equal(h.stats.captures,0);
+    assert.equal(h.get('scene-container').canvas.focused,true,'Scene receives focus only after cover removal');assert.equal(h.get('site-nav').inert,false);assert.equal(h.observers.size,0);
+    assert.equal(h.storage.getItem('arcade:return-state:v1'),remembered);assert.equal(h.storage.getItem('arcade:preferences'),'unchanged');
+    h.win.emit('pagehide');h.win.emit('pageshow',{persisted:true});await h.ready();assert.equal(h.app.state.mode,'inspect');assert.equal(h.stats.handoffReady,1,'Back cannot replay the one-shot handoff');
+  }
+  for(const failure of ['import','renderer','compile','first-render']){
+    const h=harness({handoff:true,failure});await h.ready();assert.equal(h.stats.handoffReady,0);assert.equal(h.stats.handoffFails,1);assert.equal(h.get('site-nav').inert,false);assert.equal(h.get('retry-loading').hidden,false);assert.equal(h.observers.size,0);
+  }
+  {
+    const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.win.emit('pagehide');h.releaseEngine();for(let i=0;i<6;i++)await h.q.frame();
+    assert.equal(h.stats.handoffFails,1);assert.equal(h.stats.renderers,0);assert.equal(h.observers.size,0);assert.equal(h.get('site-nav').inert,false);
+  }
+  {
+    const h=harness({handoff:true});await h.q.until(()=>h.stats.handoffReady===1);await h.app.navigate('/');await h.q.flush();
+    assert.equal(h.stats.resumes,0,'A cancelled fade cannot resume disposed controls');assert.equal(h.stats.controllerDisposals,1);assert.equal(h.q.timers.size,0);assert.equal(h.observers.size,0);
+  }
+  {
+    const h=harness({handoff:true});await h.q.until(()=>h.stats.handoffReady===1);h.doc.hidden=true;h.doc.hasFocus=()=>false;h.q.expire();await h.q.flush();
+    assert.equal(h.app.state.mode,'paused');assert.equal(h.app.state.controllerActive,false);assert.equal(h.get('scene-container').canvas.focused,undefined,'Hidden reveal defers focus');
+    h.doc.hidden=false;h.doc.emit('visibilitychange');assert.equal(h.app.state.mode,'paused','An unfocused visible page waits for focus');
+    h.doc.hasFocus=()=>true;h.win.emit('focus');await h.ready();assert.equal(h.app.state.controllerActive,true);assert.equal(h.stats.resumes,1);assert.equal(h.get('scene-container').canvas.focused,true);assert.equal(h.stats.captures,0);
+  }
+  {
+    const h=harness({handoff:true,holdEngine:true});await h.q.until(()=>h.stats.engines===1);h.finishHandoff();assert.equal(h.get('site-nav').inert,false);h.releaseEngine();await h.ready();assert.equal(h.stats.resumes,1);assert.equal(h.stats.handoffReady,0,'Accessibility removal does not reveal a second cover');
+  }
+  console.log('Arcade CPU loading, handoff default-frame/input gating, one-shot restoration, fallback/retry, fade cancellation and navigation ownership checks passed.');
 }
 if(require.main===module)run().catch(error=>{console.error(error);process.exitCode=1;});

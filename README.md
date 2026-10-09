@@ -29,6 +29,8 @@ On touch devices, hold Forward/Backward, drag to look and tap a nearby cabinet. 
 
 The entrant's HUD, frame overlay, diagnostic keys, auto-resolution controls and original instructions are removed. The remaining overlays are website navigation, optional controls and game actions.
 
+An optional incoming homepage entry preview uses the pinned shared inline bootstrap. Valid one-shot entries hold the captured room image through preparation, bypass a remembered cabinet for that visit, and release keyboard input/focus after the matching default frame and cover fade. Ordinary entry retains the existing loader and restoration. See [the handoff integration and pending combined QA](docs/room-handoff-integration.md).
+
 ## Scene boundary and resources
 
 `assets/arcade-catalog.js` owns IDs, descriptions and destinations. `arcade-navigation.js` owns bounded, one-hour session restoration and disposal-before-navigation. `arcade-app.js` connects native links and page state. None of these owns room geometry.
