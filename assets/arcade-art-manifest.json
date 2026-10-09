@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "0c771736020c8e21135b3342b4f67be6741b038d",
+  "derivativeOnly": true,
+  "sourceProvenance": "assets/arcade-source.json",
+  "moduleHashBasis": "UTF-8 source with CRLF normalized to LF; no other transformation",
+  "moduleFiles": [
+    {
+      "path": "assets/arcade-art.js",
+      "bytes": 11879,
+      "sha256": "49aa83634863208c6d9825b6cfe6cca14e4c583fa5d4090c2397ebf56dea11ae"
+    },
+    {
+      "path": "assets/arcade-scene.js",
+      "bytes": 135091,
+      "sha256": "fd44a4af44dd7b46d5971d0f3318f0840b93e035658baf54a79d614e642dc072"
+    }
+  ],
+  "externalAssets": [],
+  "fontDownloads": [],
+  "newRuntimeModuleRequests": 1,
+  "proceduralMarquees": [
+    {
+      "width": 713,
+      "height": 256,
+      "text": [
+        "RACEGPT",
+        "VOLT-TEK AMUSEMENTS"
+      ]
+    },
+    {
+      "width": 713,
+      "height": 256,
+      "text": [
+        "OSRS",
+        "CLONE",
+        "VOLT-TEK AMUSEMENTS"
+      ]
+    },
+    {
+      "width": 966,
+      "height": 256,
+      "text": [
+        "SWORD GUYS",
+        "WAVECREST AMUSEMENTS"
+      ]
+    },
+    {
+      "width": 966,
+      "height": 256,
+      "text": [
+        "GHOST SIGNAL",
+        "WAVECREST AMUSEMENTS"
+      ]
+    },
+    {
+      "width": 782,
+      "height": 256,
+      "text": [
+        "REBOUND",
+        "RELAY",
+        "STARLITE ORIGINAL / 2-PLAYER DELUXE"
+      ]
+    },
+    {
+      "width": 713,
+      "height": 256,
+      "text": [
+        "NIGHT",
+        "COURIER",
+        "VOLT-TEK AMUSEMENTS"
+      ]
+    }
+  ],
+  "sideSignatures": {
+    "surfaces": 6,
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "newTextures": 0,
+    "description": "Lettering painted into existing side-art canvases with metre-correct glyph aspect; original illustrations and wear retained."
+  },
+  "lounge": {
+    "newTextures": 0,
+    "newLights": 0,
+    "newAnimators": 0,
+    "leafForms": 3,
+    "leaves": 11,
+    "geometry": "Static bevelled slats and hardware; closed-profile lathed terracotta, soil, folded leaves, stems and raised veins.",
+    "bounds": {
+      "bench": {
+        "min": [
+          -3.1939999938011168,
+          0.00900000038743019,
+          -0.5169999994337559
+        ],
+        "max": [
+          -1.9060000061988829,
+          0.9123641965039236,
+          -0.022615747663288818
+        ]
+      },
+      "plant": {
+        "min": [
+          -3.509999997615814,
+          0.00900000038743019,
+          -1.1482949788482804
+        ],
+        "max": [
+          -3.121763938346848,
+          1.1139506187438966,
+          -0.759799767255783
+        ]
+      }
+    }
+  },
+  "layout": {
+    "left": [
+      -3.65,
+      -4.92,
+      -6.19
+    ],
+    "right": [
+      -6.1,
+      -7.55
+    ],
+    "feature": -9.25
+  },
+  "baseline": {
+    "visibleMeshes": 163,
+    "triangles": 63249,
+    "materials": 162,
+    "staticMergeBuckets": 152,
+    "proceduralTextures": 79,
+    "rgbaBaseBytes": 97943552,
+    "rgbaWithMipBytes": 130581132,
+    "retainedRenderGeometryBytes": 5824716,
+    "lights": 11,
+    "colliders": 20
+  },
+  "art": {
+    "visibleMeshes": 178,
+    "triangles": 66499,
+    "materials": 156,
+    "staticMergeBuckets": 143,
+    "proceduralTextures": 72,
+    "rgbaBaseBytes": 93082624,
+    "rgbaWithMipBytes": 124097884,
+    "retainedRenderGeometryBytes": 6121608,
+    "lights": 11,
+    "colliders": 31
+  },
+  "delta": {
+    "visibleMeshes": 15,
+    "triangles": 3250,
+    "materials": -6,
+    "staticMergeBuckets": -9,
+    "proceduralTextures": -7,
+    "rgbaBaseBytes": -4860928,
+    "rgbaWithMipBytes": -6483248,
+    "retainedRenderGeometryBytes": 296892,
+    "lights": 0,
+    "colliders": 11
+  },
+  "accountingLimits": "CPU scene construction and drawing recorders. No browser/server/WebGL/GPU. RGBA accounting excludes the unchanged PMREM target and driver overhead; mesh submissions are structural, not measured frame calls.",
+  "isolatedArtReceipt": "docs/cabinet-art-isolated-receipt.json",
+  "integration": {
+    "beforeArtCommit": "42edac87da91fd38d9b755934d3d13055b4c0ac5",
+    "beforeArt": {
+      "visibleMeshes": 184,
+      "triangles": 63333,
+      "materials": 162,
+      "staticMergeBuckets": 149,
+      "proceduralTextures": 79,
+      "rgbaBaseBytes": 97943552,
+      "rgbaWithMipBytes": 130581132,
+      "retainedRenderGeometryBytes": 5817672,
+      "lights": 11,
+      "colliders": 31
+    },
+    "deltaFromBeforeArt": {
+      "visibleMeshes": -6,
+      "triangles": 3166,
+      "materials": -6,
+      "staticMergeBuckets": -6,
+      "proceduralTextures": -7,
+      "rgbaBaseBytes": -4860928,
+      "rgbaWithMipBytes": -6483248,
+      "retainedRenderGeometryBytes": 303936,
+      "lights": 0,
+      "colliders": 0
+    },
+    "sourcePatchSha256": "6e1d7361b94256e97d20f2e9d0e5854874d3973fd6a004f793210e091e283fad",
+    "sourceBundleSha256": "f8934d5d2a5a04c967d57813aabc48e39b6f5a8011e73b9561c0df9276a0d8a7"
+  }
+}

@@ -83,6 +83,7 @@ function instrumentController(source) {
       __blocker.position.copy(camera.position).lerp(anchor.position,.5);__blocker.lookAt(camera.position);scene.add(__blocker);renderOnce();},
     unblock(){if(!__blocker)return;scene.remove(__blocker);__blocker.geometry.dispose();__blocker.material.dispose();__blocker=null;renderOnce();},
     freezeElapsed(){elapsed=0;renderOnce();},
+    camera(){return {position:camera.position.toArray(),pitch:camera.rotation.x,yaw:camera.rotation.y,order:camera.rotation.order,fov:camera.fov,near:camera.near,far:camera.far,aspect:camera.aspect};},
     graphics(){const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER),version:gl.getParameter(gl.VERSION)};},
     loseContext(){renderer.forceContextLoss();}
   };

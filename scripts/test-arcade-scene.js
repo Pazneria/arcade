@@ -4,7 +4,11 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const root=path.resolve(__dirname,'..');
 const moduleUrl=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');
-const load=file=>import(moduleUrl(fs.readFileSync(path.join(root,file),'utf8')));
+const load=file=>{
+  let source=fs.readFileSync(path.join(root,file),'utf8');
+  if(file==='assets/arcade-scene.js')for(const dependency of ['arcade-art.js','arcade-exits.js'])source=source.replace("'./"+dependency+"'",JSON.stringify(moduleUrl(fs.readFileSync(path.join(root,'assets',dependency),'utf8'))));
+  return import(moduleUrl(source));
+};
 
 // Canvas drawing is stubbed solely to build and inspect geometry on the CPU.
 // This never creates a browser, WebGL context, renderer, or GPU measurement.
@@ -32,8 +36,7 @@ function canvas() {
   const fakeThree={...THREE,PMREMGenerator:class{fromScene(){return {texture:new THREE.Texture(),dispose(){environmentDisposed=true;}};}dispose(){}}};
   const {catalog}=await require('./load-arcade-modules')();
   const games=catalog.buildArcadeCatalog(new URL('https://pazneria.github.io/arcade/'),require('../codex-link-contract'));
-  const sceneSource=fs.readFileSync(path.join(root,'assets/arcade-scene.js'),'utf8').replace("'./arcade-exits.js'",JSON.stringify(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-exits.js'),'utf8'))));
-  const {createArcadeScene}=await import(moduleUrl(sceneSource));
+  const {createArcadeScene}=await load('assets/arcade-scene.js');
   const world=createArcadeScene(fakeThree,fakeRenderer,games);
   assert.equal(world.camera.fov,70);assert.equal(world.camera.near,.03);assert.equal(world.camera.far,40);
   assert.equal(world.anchors.length,8,'Six catalog anchors and two Home doors');

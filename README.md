@@ -10,11 +10,11 @@ The source room spans x=-3.6…3.6 and z=-11…0 metres; its token/prize alcove 
 
 | Catalog index | Game | Scene placement | Published launch | Guide |
 | --- | --- | --- | --- | --- |
-| 0 | RaceGPT | Left Volt-Tek at z=-4.0 | [/racegpt/](https://pazneria.github.io/racegpt/) | [/racegpt/wiki/](https://pazneria.github.io/racegpt/wiki/) |
-| 1 | OSRS Clone | Left Volt-Tek at z=-4.68 | [/osrs-clone/](https://pazneria.github.io/osrs-clone/) | [/osrs-clone-codex/wiki/](https://pazneria.github.io/osrs-clone-codex/wiki/) |
-| 2 | Sword Guys | Right Wavecrest at z=-6.5 | [/sword-guys/](https://pazneria.github.io/sword-guys/) | [/sword-guys/wiki/](https://pazneria.github.io/sword-guys/wiki/) |
-| 3 | Ghost Signal | Right Wavecrest at z=-7.28 | Coming soon | — |
-| 4 | Night Courier | Added left Volt-Tek at z=-5.36 | Coming soon | — |
+| 0 | RaceGPT | Left Volt-Tek at z=-3.65 | [/racegpt/](https://pazneria.github.io/racegpt/) | [/racegpt/wiki/](https://pazneria.github.io/racegpt/wiki/) |
+| 1 | OSRS Clone | Left Volt-Tek at z=-4.92 | [/osrs-clone/](https://pazneria.github.io/osrs-clone/) | [/osrs-clone-codex/wiki/](https://pazneria.github.io/osrs-clone-codex/wiki/) |
+| 2 | Sword Guys | Right Wavecrest at z=-6.10 | [/sword-guys/](https://pazneria.github.io/sword-guys/) | [/sword-guys/wiki/](https://pazneria.github.io/sword-guys/wiki/) |
+| 3 | Ghost Signal | Right Wavecrest at z=-7.55 | Coming soon | — |
+| 4 | Night Courier | Added left Volt-Tek at z=-6.19 | Coming soon | — |
 | 5 | Rebound Relay | Feature cabinet at z=-9.25 | [/rebound-relay/](https://pazneria.github.io/rebound-relay/) | [/rebound-relay/wiki/](https://pazneria.github.io/rebound-relay/wiki/) |
 
 The original six-entry order stays stable for `arcade:return-state:v1`. Local development retains RaceGPT at port 5178 and Sword Guys at port 5179. OSRS guide links retain `from=arcade` and `return=<arcade URL>` through the existing Codex link contract. Game progress storage belongs to each game and is untouched. Home `/`, Lab `/lab/lab-space/` and Library `/library/` match the published homepage navigation checked during integration.
@@ -32,6 +32,10 @@ On touch devices, hold Forward/Backward, drag to look and tap a nearby cabinet. 
 The entrant's HUD, frame overlay, diagnostic keys, auto-resolution controls and original instructions are removed. The remaining overlays are website navigation, optional controls and game actions.
 
 An optional incoming homepage entry preview uses the pinned shared inline bootstrap. Valid one-shot entries hold the captured room image through preparation, bypass a remembered cabinet for that visit, and release keyboard input/focus after the matching default frame and cover fade. Ordinary entry retains the existing loader and restoration. See [the handoff integration and pending combined QA](docs/room-handoff-integration.md).
+
+The draft [cabinet art pass](docs/cabinet-art-integration.md) gives the banks more clearance, integrates game lettering into the original cabinet surfaces, and rebuilds the entrance bench and plant. Its [asset and CPU cost manifest](assets/arcade-art-manifest.json) records the exact derivative modules and resource comparison. Rendered acceptance and matching homepage preview refresh remain parent-coordinated.
+
+The [combined review candidate](docs/combined-arcade-integration.md) integrates that art with sliding exits and cabinet-screen interaction. It preserves the frozen art receipt and records the combined accounting separately. The prepared entry-capture helper is CPU-checked only; capture and publication await the parent's graphics slot.
 
 ## Scene boundary and resources
 

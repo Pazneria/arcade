@@ -1,6 +1,7 @@
 // Derivative of completed Claude12 / starlite-arcade-claude. See arcade-source.json.
 // Authored source is preserved at its pinned Lab commit; this module is separate.
 import {createSlidingExits} from './arcade-exits.js';
+import { CABINET_LAYOUT, paintMarquee, paintSideSignature, buildLoungeProps } from './arcade-art.js';
 export function createArcadeScene(THREE, renderer, games) {
 const titles = games.map(g => g.name.toUpperCase());
 const TAU = Math.PI * 2;
@@ -199,9 +200,8 @@ function addGameAnchor(object, gameIndex) {
   anchors.push(anchor);
   const hit = new THREE.Mesh(new THREE.BoxGeometry(width + 0.08, 2.0, depth + 0.2), new THREE.MeshBasicMaterial({visible:false}));
   hit.position.set(0, 1, 0.06); object.add(hit); hit.userData.keep = true; hit.userData.anchor = anchor; targetMeshes.push(hit);
-  // Small explicit launch title on each control deck, keeping the original cabinet art.
-  const title = labelTexture([titles[gameIndex], games[gameIndex].comingSoon ? 'COMING SOON' : 'PLAY / GUIDE'], '#fff3cf', '#17101e', 512, 128, 32);
-  mesh(new THREE.PlaneGeometry(width * 0.88, 0.16), new THREE.MeshBasicMaterial({map:title}), object, 0, 0.72, depth / 2 + 0.105);
+  // Identity belongs to the backlit marquee and painted shoulder. The former
+  // floating cream launch cards duplicated those titles and hid cabinet art.
 }
 function addExitAnchor(id, x, z, width) {
   const anchor = {id, kind:'home', position:new THREE.Vector3(x, 1.3, z)};
@@ -344,49 +344,10 @@ function starfield(g, w, h, n, seed, alpha = 1) {
 }
 
 // --- Marquees (backlit translucent) -------------------------------------------
-function marqueeTextureRaw(key) {
-  const G = GAMES[key], c = G.c, W = 1024, H = 256, cv = cnv(W, H), g = cv.getContext('2d');
-  const bg = g.createLinearGradient(0, 0, 0, H);
-  if (key === 'crater') { bg.addColorStop(0, '#2a0e3a'); bg.addColorStop(0.65, '#a8301f'); bg.addColorStop(1, '#ffb347'); }
-  else if (key === 'nomads') { bg.addColorStop(0, '#05041a'); bg.addColorStop(0.6, '#3a1170'); bg.addColorStop(1, '#ff3fa4'); }
-  else if (key === 'tide') { bg.addColorStop(0, '#7af7ee'); bg.addColorStop(0.5, '#1a9db0'); bg.addColorStop(1, '#063047'); }
-  else if (key === 'kite') { bg.addColorStop(0, '#3b1650'); bg.addColorStop(0.55, '#ff5e8a'); bg.addColorStop(1, '#ffc25a'); }
-  else { bg.addColorStop(0, '#040a24'); bg.addColorStop(0.7, '#0e2a5c'); bg.addColorStop(1, '#1f6f9a'); }
-  g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  if (key === 'crater') {
-    starfield(g, W, 120, 90, 11);
-    g.fillStyle = '#ffd59a'; g.beginPath(); g.arc(880, 70, 46, 0, TAU); g.fill();
-    g.fillStyle = '#5a1f2a'; g.beginPath(); g.moveTo(0, 230); for (let x = 0; x <= W; x += 32) g.lineTo(x, 200 - Math.abs(Math.sin(x * 0.013)) * 40); g.lineTo(W, H); g.lineTo(0, H); g.fill();
-    drawBuggy(g, 150, 200, 48, c);
-  } else if (key === 'nomads') {
-    starfield(g, W, H, 160, 12);
-    for (let i = 0; i < 6; i++) { const rg = g.createRadialGradient(150 + i * 160, 120 + (i % 2) * 40, 0, 150 + i * 160, 120, 140); rg.addColorStop(0, 'rgba(255,63,164,0.35)'); rg.addColorStop(1, 'rgba(123,60,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, W, H); }
-    drawShip(g, 110, 140, 52, c[2], -0.4); drawShip(g, 920, 120, 40, c[0], 0.5); drawShip(g, 980, 200, 22, c[4], 0.3);
-  } else if (key === 'tide') {
-    g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 6;
-    for (let k = 0; k < 6; k++) { g.beginPath(); for (let x = 0; x <= W; x += 16) g.lineTo(x, 40 + k * 40 + Math.sin(x * 0.02 + k) * 10); g.stroke(); }
-    for (let i = 0; i < 28; i++) { g.strokeStyle = 'rgba(255,255,255,0.6)'; g.lineWidth = 3; g.beginPath(); g.arc((i * 137) % W, (i * 71) % H, 4 + (i % 4) * 3, 0, TAU); g.stroke(); }
-    drawCrab(g, 120, 160, 52, c); drawCrab(g, 915, 170, 40, ['#ffd27a', '#ff9e3d', '#fff', '#06283a']);
-  } else if (key === 'kite') {
-    g.fillStyle = '#ffe9a8'; g.beginPath(); g.arc(512, 250, 110, Math.PI, 0); g.fill();
-    g.fillStyle = 'rgba(255,94,138,0.9)'; for (let k = 0; k < 5; k++) g.fillRect(380, 170 + k * 18, 264, 5 + k);
-    for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(255,240,230,0.35)'; g.beginPath(); g.ellipse(80 + i * 180, 60 + (i % 3) * 30, 70, 18, 0, 0, TAU); g.fill(); }
-    drawKite(g, 110, 100, 52, '#e2384d', '#ffd23f', -0.3, true); drawKite(g, 915, 95, 50, '#39a0ff', '#ffffff', 0.35, true);
-  } else {
-    starfield(g, W, H, 140, 14);
-    g.fillStyle = '#fff8dc'; g.beginPath(); g.arc(120, 80, 50, 0, TAU); g.fill();
-    g.fillStyle = '#0a1638'; g.beginPath(); g.arc(140, 70, 44, 0, TAU); g.fill();
-    g.fillStyle = '#0b3a5c'; g.fillRect(0, 210, W, 46);
-    g.strokeStyle = 'rgba(160,230,255,0.45)'; g.lineWidth = 3;
-    for (let k = 0; k < 4; k++) { g.beginPath(); for (let x = 0; x <= W; x += 12) g.lineTo(x, 218 + k * 10 + Math.sin(x * 0.05 + k * 2) * 3); g.stroke(); }
-    drawLighthouse(g, 930, 225, 62, c);
-  }
-  const lines = G.title.length > 13 && W ? [G.title] : [G.title];
-  logoText(g, lines[0], W / 2, H * 0.47, key === 'light' ? 92 : 104, c[4] || '#fff', c[0], c[3], { maxW: 700, glow: 'rgba(0,0,0,0.6)' });
-  g.font = `bold 20px ${FONT}`; g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,0.85)';
-  g.fillText(G.bank === 'STARLITE' ? '★ STARLITE ORIGINAL · 2-PLAYER DELUXE ★' : `${G.bank} AMUSEMENTS`, W / 2, H - 24);
-  // inner frame line
-  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 4; g.strokeRect(10, 10, W - 20, H - 20);
+function marqueeTextureRaw(key, aspect = 3) {
+  const G = GAMES[key], H = 256, W = Math.round(H * aspect), cv = cnv(W, H), g = cv.getContext('2d');
+  paintMarquee(g, G, W, H);
+  grain(g, W, H, 4, 17);
   return tex(cv, { aniso: 8 });
 }
 
@@ -468,6 +429,7 @@ function sideArtTextureRaw(key, uMin, uMax, vMax) {
   }
   for (let i = 0; i < 26; i++) { const x = W - r() * 40 * r(), y = Y(0.3 + r() * 1.4); g.fillStyle = 'rgba(25,18,14,0.75)'; g.beginPath(); g.ellipse(x, y, 3 + r() * 7, 2 + r() * 4, r(), 0, TAU); g.fill(); }
   for (let i = 0; i < 40; i++) { const x = r() * W, y = r() * H; g.strokeStyle = 'rgba(255,255,255,0.08)'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 120, y + (r() - 0.5) * 30); g.stroke(); }
+  paintSideSignature(g, G, uMin, uMax, vMax, W, H);
   grain(g, W, H, 10, 9);
   return tex(cv, { aniso: 8 });
 }
@@ -822,7 +784,7 @@ function marqueeTexture(...args) { const key = 'marqueeTexture:' + JSON.stringif
 
 function sideArtTexture(...args) { const key = 'sideArtTexture:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, sideArtTextureRaw(...args)); return textureCache.get(key); }
 
-function cpoTexture(...args) { const key = 'cpoTexture:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, cpoTextureRaw(...args)); return textureCache.get(key); }
+function cpoTexture(...args) { const key = 'cpoTexture:' + JSON.stringify(args); if (!textureCache.has(key)) textureCache.set(key, cpoTextureRaw(...args)); return textureCache.get(key); }
 
 function screenSheet(...args) { const key = 'screenSheet:' + JSON.stringify(args) + (GAMES[args[0]]?.title || ''); if (!textureCache.has(key)) textureCache.set(key, screenSheetRaw(...args)); return textureCache.get(key); }
 
@@ -1280,7 +1242,7 @@ function screenAssembly(parent, D, p0, p1, innerW, key, ow, oh, cy, light, offse
 function marqueePanel(parent, D, p0, p1, innerW, key, intensity = 1.6) {
   const f = frameAt(parent, D, p0, p1, 0), len = f.userData.len;
   box(innerW, len, 0.02, M.matte, f, 0, 0, -0.03);
-  mesh(new THREE.PlaneGeometry(innerW, len - 0.02), emissiveMat(marqueeTexture(key), intensity), f, 0, 0, -0.004);
+  mesh(new THREE.PlaneGeometry(innerW, len - 0.02), emissiveMat(marqueeTexture(key, innerW / (len - 0.02)), intensity), f, 0, 0, -0.004);
   box(innerW, 0.016, 0.012, M.chrome, f, 0, len / 2 - 0.008, 0.002);
   box(innerW, 0.016, 0.012, M.chrome, f, 0, -len / 2 + 0.008, 0.002);
   mesh(new THREE.PlaneGeometry(innerW, len - 0.02), M.glass, f, 0, 0, 0.0);
@@ -1487,7 +1449,7 @@ function buildLighthouse(offset) {
   mesh(ag, [navy, M.gold], hdr, 0, 0, 0);
   const inset = new THREE.Shape(); const iw = hw - 0.05;
   inset.moveTo(-iw / 2, 0.02); inset.lineTo(iw / 2, 0.02); inset.lineTo(iw / 2, archH - 0.005); inset.quadraticCurveTo(0, archPk - 0.05, -iw / 2, archH - 0.005); inset.closePath();
-  const mt = marqueeTexture('light'); mt.repeat.set(1 / iw, 1 / 0.34); mt.offset.set(0.5, -0.02 / 0.34);
+  const mt = marqueeTexture('light', iw / 0.34); mt.repeat.set(1 / iw, 1 / 0.34); mt.offset.set(0.5, -0.02 / 0.34);
   mesh(new THREE.ShapeGeometry(inset, 32), emissiveMat(mt, 2.0), hdr, 0, 0, 0.2345);
   // chase bulbs following the arch
   const pts = [];
@@ -1615,8 +1577,8 @@ function buildRoom() {
   spots.push([0, -0.55, 1.0, 0.9]);
   for (let z = -1; z > -8.2; z -= 0.35) spots.push([Math.sin(z * 1.3) * 0.25, z, 0.8, 0.22]);
   for (let a = 0; a < TAU; a += 0.2) spots.push([Math.cos(a) * 1.35, -9.25 + Math.sin(a) * 1.35, 0.5, 0.26]);
-  for (const z of [-4.0, -4.66]) spots.push([-2.4, z, 0.45, 0.75], [-2.55, z, 0.3, 0.5]);
-  for (const z of [-6.5, -7.26]) spots.push([2.25, z, 0.45, 0.75], [2.4, z, 0.3, 0.5]);
+  for (const z of CABINET_LAYOUT.left) spots.push([-2.4, z, 0.45, 0.75], [-2.55, z, 0.3, 0.5]);
+  for (const z of CABINET_LAYOUT.right) spots.push([2.25, z, 0.45, 0.75], [2.4, z, 0.3, 0.5]);
   spots.push([0, -7.95, 0.7, 0.85], [-0.4, -7.95, 0.4, 0.6], [0.4, -7.95, 0.4, 0.6]);
   for (let x = 0.3; x < 4.4; x += 0.35) spots.push([x, -3.0 - Math.sin(x) * 0.25, 0.6, 0.2]);
   spots.push([4.2, -3.2, 0.6, 0.7], [4.15, -4.3, 0.35, 0.6]);
@@ -1926,18 +1888,9 @@ function buildProps() {
   mesh(new THREE.TorusGeometry(0.19, 0.012, 8, 24), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.4 }), g, -3.3, 0.62, -8.4, Math.PI / 2);
   blobShadow(g, 0.6, 0.6, -8.4).position.x = -3.3;
   addCollider(-3.6, -8.65, -3.08, -8.15);
-  // bench by the entrance
-  const bx = -2.55, bz = -0.32;
-  box(1.3, 0.05, 0.38, M.wood, g, bx, 0.45, bz);
-  for (const sx of [-0.55, 0.55]) { box(0.05, 0.43, 0.32, M.steel, g, bx + sx, 0.215, bz); }
-  box(1.3, 0.3, 0.04, M.wood, g, bx, 0.75, -0.06);
-  blobShadow(g, 1.6, 0.6, bz).position.x = bx;
-  addCollider(bx - 0.7, -0.55, bx + 0.7, 0);
-  // potted plant in the corner
-  cyl(0.17, 0.13, 0.36, 20, new THREE.MeshStandardMaterial({ color: 0xc8643a, roughness: 0.7 }), g, -3.32, 0.18, -0.95);
-  const leaf = new THREE.MeshStandardMaterial({ color: 0x2f7a3a, roughness: 0.55, side: THREE.DoubleSide });
-  for (let i = 0; i < 14; i++) { const a = i / 14 * TAU + r(), l = 0.35 + r() * 0.3; const lm = mesh(new THREE.PlaneGeometry(0.09, l), leaf, g, -3.32 + Math.cos(a) * 0.08, 0.36 + l * 0.45, -0.95 + Math.sin(a) * 0.08, 0, -a, 0); lm.rotateX(0.35 + r() * 0.3); }
-  blobShadow(g, 0.5, 0.5, -0.95).position.x = -3.32;
+  // Art geometry stays inside the existing prop collision footprints.
+  buildLoungeProps({THREE, root:g, M, mesh, box, cyl, blobShadow, cachedGeometry});
+  addCollider(-3.25, -0.55, -1.85, 0);
   addCollider(-3.6, -1.15, -3.1, -0.75);
   // fire extinguisher
   cyl(0.075, 0.075, 0.45, 18, new THREE.MeshStandardMaterial({ color: 0xc81010, roughness: 0.3 }), g, 3.48, 0.75, -0.8);
@@ -2004,18 +1957,18 @@ function build() {
   // Bank A (left wall, facing +x): Volt-Tek classics
   const a1 = buildVoltTek('crater', 0.0, ['yellow', 'orange', 'red'], 'red');
   const a2 = buildVoltTek('nomads', 5.3, ['pink', 'purple', 'teal'], 'black');
-  [[a1, -4.0], [a2, -4.68]].forEach(([c, z]) => { c.position.set(ROOM.x0 + 0.03 + c.userData.D / 2, 0, z); c.rotation.y = Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
+  [[a1, CABINET_LAYOUT.left[0]], [a2, CABINET_LAYOUT.left[1]]].forEach(([c, z]) => { c.position.set(ROOM.x0 + 0.03 + c.userData.D / 2, 0, z); c.rotation.y = Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
   // Bank B (right wall, facing -x): Wavecrest curves
   const b1 = buildWavecrest('tide', 2.1, ['teal', 'pink', 'yellow', 'white'], ['teal', 'pink', 'yellow', 'white']);
   const b2 = buildWavecrest('kite', 8.7, ['red', 'yellow', 'orange', 'white'], ['blue', 'white', 'teal', 'purple']);
-  [[b1, -6.5], [b2, -7.28]].forEach(([c, z]) => { c.position.set(ROOM.x1 - 0.03 - c.userData.D / 2, 0, z); c.rotation.y = -Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
+  [[b1, CABINET_LAYOUT.right[0]], [b2, CABINET_LAYOUT.right[1]]].forEach(([c, z]) => { c.position.set(ROOM.x1 - 0.03 - c.userData.D / 2, 0, z); c.rotation.y = -Math.PI / 2; staticRoot.add(c); cabinets.push(c); });
   // feature cabinet at the far end, on axis with the entrance
   feature = buildLighthouse(3.7);
-  feature.position.set(0, 0, -9.25); staticRoot.add(feature);
+  feature.position.set(0, 0, CABINET_LAYOUT.feature); staticRoot.add(feature);
   GAMES.nomads.title = titles[4]; GAMES.nomads.short = shortTitle(titles[4]);
   const extra = buildVoltTek('nomads', 11.2, ['pink', 'purple', 'teal'], 'black');
   GAMES.nomads.title = titles[1]; GAMES.nomads.short = shortTitle(titles[1]);
-  extra.position.set(ROOM.x0 + 0.03 + extra.userData.D / 2, 0, -5.36); extra.rotation.y = Math.PI / 2; staticRoot.add(extra);
+  extra.position.set(ROOM.x0 + 0.03 + extra.userData.D / 2, 0, CABINET_LAYOUT.left[2]); extra.rotation.y = Math.PI / 2; staticRoot.add(extra);
   // Current catalog indices stay stable independently of scene order.
   const slots = [cabinets[0], cabinets[1], cabinets[2], cabinets[3], extra, feature];
   slots.forEach((object, gameIndex) => addGameAnchor(object, gameIndex));
@@ -2028,7 +1981,7 @@ function build() {
   addLocalCollider(feature, -dw / 2, dz0, dw / 2, dz1);
   for (const c of [...cabinets, feature]) if (c.userData.light) screenLights.push([c.userData.light, c.userData.light.intensity, screenLights.length * 2.1]);
   // one shared screen-glow light per bank (keeps the per-pixel light count low)
-  for (const [col, x, z] of [[0xe07ab8, ROOM.x0 + 1.25, -4.34], [0x7ad8d0, ROOM.x1 - 1.3, -6.89]]) {
+  for (const [col, x, z] of [[0xe07ab8, ROOM.x0 + 1.25, CABINET_LAYOUT.left[1]], [0x7ad8d0, ROOM.x1 - 1.3, (CABINET_LAYOUT.right[0] + CABINET_LAYOUT.right[1]) / 2]]) {
     const l = new THREE.PointLight(col, 3.2, 3.6, 2); l.position.set(x, 1.3, z); scene.add(l);
     screenLights.push([l, l.intensity, Math.random() * 10]);
   }

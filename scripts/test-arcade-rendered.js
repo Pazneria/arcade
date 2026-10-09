@@ -119,3 +119,4 @@ async function main(){
   assert(receipt.cleanup.complete,'Owned QA resources must close');
 }
 if(require.main===module)main().catch(error=>{console.error(error);process.exitCode=1;});
+module.exports={descendants,alive};
