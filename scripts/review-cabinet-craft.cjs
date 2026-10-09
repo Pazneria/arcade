@@ -115,7 +115,8 @@ async function run(){
       }else await page.locator('#game-back').click();
       await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
       assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),true);
-      await page.mouse.move(800,450);const returnedYaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);await page.mouse.move(840,450);
+      const viewport=page.viewportSize(),mx=viewport.width/2,my=viewport.height/2;
+      await page.mouse.move(mx,my);const returnedYaw=await page.evaluate(()=>window.arcadeTest.controller.player.yaw);await page.mouse.move(mx+40,my);
       assert.notEqual(await page.evaluate(()=>window.arcadeTest.controller.player.yaw),returnedYaw,'Mouse look resumes after Back');
       // A trusted Back click deliberately captures mouse look. Escape releases
       // it before interacting with navigation, exactly as the room controls say.

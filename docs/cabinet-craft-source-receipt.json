@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-10-09T20:49:03.065Z",
+  "recordedAt": "2026-10-09T21:09:53.949Z",
   "baseCommit": "e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5",
   "liveBase": "5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75",
   "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft",
@@ -31,15 +31,15 @@
   ],
   "nativeIntegration": {
     "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge",
-    "commit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+    "commit": "72816f6d75b286090976bac827191bbb269e581a",
     "protocol": "racegpt-v1 ready/start/started; paired host/native integration required",
     "standaloneMenuPreserved": true
   },
   "sourceFiles": [
     {
       "file": "assets/arcade-app.js",
-      "sha256": "fba8f7c49878df00ab566767fda8bad89ed3a3dcaaf9a6c50e7cb5c5f990b9a2",
-      "bytes": 19093
+      "sha256": "f4a28a31e248dc76cf098fdc4396b6fe4e198d72e4804e6253f483f5c9e18881",
+      "bytes": 19277
     },
     {
       "file": "assets/arcade-controller.js",
@@ -48,8 +48,8 @@
     },
     {
       "file": "assets/arcade-cabinet.js",
-      "sha256": "ff7f53e81069c5bfe9b1062ed0232853ad7ad84291c5b8d182444145dfd12ae1",
-      "bytes": 7126
+      "sha256": "ba60d9358df3640a7a34f6749a6ceffbab3041cdc3e96258ca203aa2bda13d18",
+      "bytes": 7298
     },
     {
       "file": "assets/arcade-scene.js",
@@ -119,27 +119,27 @@
     "launched": true
   },
   "graphicsRun": true,
-  "renderedAcceptance": "previous direct-launch/return flow validated; current portrait menu pending standing review clearance",
+  "renderedAcceptance": "standing primary typography and targeted launch/menu/aisle return accepted at tested fixtures; no whole-experience or performance claim",
   "standingRefinement": {
     "sourceCommit": "71a32a3b26df0aa6172ee9abe047573266527e8a",
     "cpuChecked": true,
-    "graphicsAccepted": false,
+    "graphicsAccepted": true,
     "design": {
       "width": 960,
       "height": 1280
     },
-    "report": "docs/cabinet-menu/standing-readability-refinement.md"
+    "report": "docs/cabinet-craft-standing-review.md"
   },
   "renderedReview": {
-    "sourceCommit": "f472c95d80daf453c6e237ba549f085b04bd248f",
-    "nativeCommit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+    "sourceCommit": "96bbdd91cbeaa90cbb51dc606e4ffa4f0f7a1d29",
+    "nativeCommit": "b07203e139d086f15cd5894256a07c2aa9fd1bf1",
     "followUpPassed": true,
     "cleanupComplete": true,
-    "endedAt": "2026-10-09T20:24:14.277Z",
-    "report": "docs/cabinet-craft-rendered-review.md"
+    "endedAt": "2026-10-09T21:01:44.286Z",
+    "report": "docs/cabinet-craft-standing-review.md"
   },
   "libraryUpload": {
-    "status": "blocked by automatic approval review; no upload ran",
+    "status": "blocked by automatic approval review; no upload ran; parent instructed no retry",
     "fileIds": []
   },
   "published": false,

@@ -11,15 +11,18 @@ const collaborators=[
 for(const owner of collaborators)for(const file of owner.files)assert.equal(hash(path.join(root,owner.target,file)),hash(path.join(owner.source,file)),`${owner.kind} copied source must remain unchanged`);
 const protectedDiff=cp.execFileSync('git',['diff','--name-only',base,'--','versions','assets/vendor','assets/arcade-source.json','codex-link-contract.js','assets/arcade-art.js'],{cwd:root,encoding:'utf8'}).trim();assert.equal(protectedDiff,'');
 cp.execFileSync('git',['merge-base','--is-ancestor',base,'HEAD'],{cwd:root});
-const reviewPath=path.join(root,'docs/cabinet-craft-evidence/return-review-receipt.json');
+const finalReturnPath=path.join(root,'docs/cabinet-craft-evidence/native-return-final-receipt.json');
+const reviewPath=fs.existsSync(finalReturnPath)?finalReturnPath:path.join(root,'docs/cabinet-craft-evidence/return-review-receipt.json');
 const review=fs.existsSync(reviewPath)?JSON.parse(fs.readFileSync(reviewPath,'utf8')):null;
+const standingPath=path.join(root,'docs/cabinet-craft-evidence/standing-refinement-receipt.json');
+const standing=fs.existsSync(standingPath)?JSON.parse(fs.readFileSync(standingPath,'utf8')):null;
 const receipt={schemaVersion:1,recordedAt:new Date().toISOString(),baseCommit:base,liveBase:'5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75',checkout:root,branch:'craft/cabinet-screen-lifecycle',hashBasis:'UTF-8, CRLF normalized to LF',collaborators,
   nativeIntegration:{checkout:path.join(root,'..','racegpt-cabinet-bridge'),commit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.join(root,'..','racegpt-cabinet-bridge'),encoding:'utf8'}).trim(),protocol:'racegpt-v1 ready/start/started; paired host/native integration required',standaloneMenuPreserved:true},
   sourceFiles:sourceFiles.map(file=>({file,sha256:hash(path.join(root,file)),bytes:Buffer.byteLength(normalized(path.join(root,file)))})),protectedDiff:[],
   cpuSuite:{command:'npm test',result:'passed',log:'docs/cabinet-craft-cpu.txt'},reviewHarness:{file:'scripts/review-cabinet-craft.cjs',syntaxChecked:true,launched:!!review},
-  graphicsRun:!!review,renderedAcceptance:'previous direct-launch/return flow validated; current portrait menu pending standing review clearance',
-  standingRefinement:{sourceCommit:'71a32a3b26df0aa6172ee9abe047573266527e8a',cpuChecked:true,graphicsAccepted:false,design:{width:960,height:1280},report:'docs/cabinet-menu/standing-readability-refinement.md'},
-  renderedReview:review?{sourceCommit:review.sourceCommit,nativeCommit:review.nativeCommit,followUpPassed:review.passed,cleanupComplete:review.cleanup.complete,endedAt:review.endedAt,report:'docs/cabinet-craft-rendered-review.md'}:null,
-  libraryUpload:{status:'blocked by automatic approval review; no upload ran',fileIds:[]},published:false,merged:false,softwareInstalled:false,existingBrowserFocused:false,localhost5418Touched:false};
+  graphicsRun:!!review,renderedAcceptance:standing?.passed&&review?.passed?'standing primary typography and targeted launch/menu/aisle return accepted at tested fixtures; no whole-experience or performance claim':'pending current standing/return review',
+  standingRefinement:{sourceCommit:'71a32a3b26df0aa6172ee9abe047573266527e8a',cpuChecked:true,graphicsAccepted:!!standing?.passed,design:{width:960,height:1280},report:'docs/cabinet-craft-standing-review.md'},
+  renderedReview:review?{sourceCommit:review.sourceCommit,nativeCommit:review.nativeCommit,followUpPassed:review.passed,cleanupComplete:review.cleanup.complete,endedAt:review.endedAt,report:'docs/cabinet-craft-standing-review.md'}:null,
+  libraryUpload:{status:'blocked by automatic approval review; no upload ran; parent instructed no retry',fileIds:[]},published:false,merged:false,softwareInstalled:false,existingBrowserFocused:false,localhost5418Touched:false};
 fs.writeFileSync(path.join(root,'docs/cabinet-craft-source-receipt.json'),JSON.stringify(receipt,null,2)+'\n');
 console.log(JSON.stringify({protectedDiff:[],unchangedCollaboratorFiles:5,receipt:'docs/cabinet-craft-source-receipt.json',graphicsRun:!!review}));

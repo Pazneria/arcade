@@ -1,0 +1,758 @@
+{
+  "kind": "targeted integration review; no benchmark or holistic arrival claim",
+  "variant": "full targeted flow",
+  "graphicsRun": true,
+  "startedAt": "2026-10-09T20:49:34.290Z",
+  "sourceCommit": "947d0fcdfd869fd98d5dd9ecf87ff19a8795d8d9",
+  "nativeRoot": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge\\dist",
+  "nativeCommit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+  "events": [
+    {
+      "standingCamera": {
+        "position": [
+          -1.6800000000000004,
+          1.62,
+          -3.6499999999999995
+        ],
+        "pitch": -0.4162692978569419,
+        "yaw": 1.5707963267948961,
+        "order": "YXZ",
+        "fov": 70,
+        "near": 0.03,
+        "far": 40,
+        "aspect": 1.8494041170097508
+      },
+      "cancelAndLateLoad": true,
+      "nativeTrack": "technical-bowl",
+      "nativeInputSeconds": 12,
+      "resizeRetainsDocument": true,
+      "returnRemovesFrame": true
+    }
+  ],
+  "errors": [],
+  "consoleMessages": [
+    {
+      "type": "warning",
+      "text": "Allow attribute will take precedence over 'allowfullscreen'."
+    }
+  ],
+  "blocked": [],
+  "screenshots": [
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\01-standing-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\02-selected-track.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\02-track-a.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\02-track-b.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\02-track-c.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\02-track-d.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\03-token-in-standing-view.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\04-delayed-document.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\05-native-track-play.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\06-narrow-play-viewport.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\07-fit-same-game-to-cabinet.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\08-generic-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-standing-refinement-review\\09-coming-soon-cabinet.png"
+  ],
+  "cleanup": {
+    "browserRootExited": true,
+    "serverClosed": true,
+    "complete": true,
+    "errors": []
+  },
+  "browserPid": 56540,
+  "browserVersion": "154.0.8037.98",
+  "hostGraphics": {
+    "current": {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "contextLost": false,
+      "programs": [
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        }
+      ]
+    },
+    "links": [
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      }
+    ],
+    "contextEvents": []
+  },
+  "tokenGraphics": {
+    "current": {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "contextLost": false,
+      "programs": [
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        }
+      ]
+    },
+    "links": [
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      }
+    ],
+    "contextEvents": []
+  },
+  "nativeInput": {
+    "before": {
+      "mode": "running",
+      "trackId": "technical-bowl",
+      "trackName": "Test Track C",
+      "runTimeMs": 0,
+      "checkpointMs": null,
+      "checkpointMsList": [],
+      "bestTimeMs": null,
+      "trackS": 5.000000489805646,
+      "checkpointS": 1543.979570605378,
+      "checkpointSs": [
+        1543.979570605378,
+        3176.1865452453494
+      ],
+      "finishS": 4402.370201729652,
+      "speedKmh": 0,
+      "verticalSpeedMps": 0,
+      "airborne": false,
+      "gear": 1,
+      "rpmNormalized": 0.24,
+      "shiftPulse": 0,
+      "x": -0.022085269096574753,
+      "y": 0.06,
+      "z": 4.999941214876779,
+      "yaw": -0.0075670930049055425,
+      "passedCheckpoint": false,
+      "passedCheckpointCount": 0,
+      "autoplay": false,
+      "input": {
+        "source": "Keyboard",
+        "steer": 0,
+        "throttle": 0,
+        "brake": 0
+      }
+    },
+    "samples": [
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 4191.666666666693,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 120.47547849779889,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 173.5097142088099,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 4,
+          "rpmNormalized": 0.808722174830058,
+          "shiftPulse": 0,
+          "x": -0.8958116357218598,
+          "y": 0.06,
+          "z": 120.46167654840454,
+          "yaw": -0.0075670930049055425,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "a",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 5533.333333333311,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 156.05408051454742,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 0.2797004396742412,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 2,
+          "rpmNormalized": 0.22294590088718946,
+          "shiftPulse": 0.6700000000000004,
+          "x": 11.1869342058189,
+          "y": 0.06,
+          "z": 153.96989122504627,
+          "yaw": 0.18701843188130882,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 9825,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 268.95331145164613,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 171.7267621897448,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 4,
+          "rpmNormalized": 0.8027398160661458,
+          "shiftPulse": 0,
+          "x": 32.130906950305366,
+          "y": 0.06,
+          "z": 264.8770715003703,
+          "yaw": 0.18665247724723807,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "d",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 11283.33333333344,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 321.950082220357,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 133.41836938223884,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 4,
+          "rpmNormalized": 0.6754355650699092,
+          "shiftPulse": 0,
+          "x": 1.7294390779629907,
+          "y": 0.06,
+          "z": 309.11422560973716,
+          "yaw": -1.7042180171143204,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": -1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      }
+    ]
+  },
+  "passed": true,
+  "endedAt": "2026-10-09T20:50:47.848Z"
+}

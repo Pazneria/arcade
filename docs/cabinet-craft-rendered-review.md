@@ -1,5 +1,7 @@
 # Targeted integrated review
 
+Historical first-menu report. Current standing typography and native return acceptance are recorded in `cabinet-craft-standing-review.md`; the receipts/screenshots below are preserved evidence for the earlier composition.
+
 Reviewed host source `f472c95d80daf453c6e237ba549f085b04bd248f` with paired native RaceGPT source `6e0f47999e66742e0aac81ecd097f2ffc17c8ffa`. The original worker title/token modules remain unchanged. This is focused acceptance evidence, not a benchmark score or whole-experience acceptance claim.
 
 The parent-granted exclusive slot ran from the missing-browser attempt at 20:19:22 UTC through final cleanup at 20:24:14 UTC on 2026-10-09, within five minutes. The missing cached executable was not installed; the review used existing installed Chrome 154.0.8037.98 in headless mode, a fresh disposable context and ANGLE/Vulkan SwiftShader. The two actual browser runs were sequential. Local source/build GETs were fulfilled under the normal public origins, all other traffic/writes were blocked, no HTTP server or existing browser profile was used, no windows opened/focused, and port5418 stayed untouched. Both receipts confirm owned browser/server cleanup; a final process census found no owned review Node or Chromium processes. The slot is released and no further graphics work is queued.

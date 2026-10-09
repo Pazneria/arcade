@@ -1,0 +1,467 @@
+{
+  "kind": "targeted integration review; no benchmark or holistic arrival claim",
+  "variant": "return follow-up (delay/cancel covered by first run)",
+  "graphicsRun": true,
+  "startedAt": "2026-10-09T20:58:44.874Z",
+  "sourceCommit": "96bbdd91cbeaa90cbb51dc606e4ffa4f0f7a1d29",
+  "nativeRoot": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge\\dist",
+  "nativeCommit": "b07203e139d086f15cd5894256a07c2aa9fd1bf1",
+  "events": [],
+  "errors": [],
+  "consoleMessages": [
+    {
+      "type": "warning",
+      "text": "Allow attribute will take precedence over 'allowfullscreen'."
+    }
+  ],
+  "blocked": [],
+  "screenshots": [
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\01-standing-physical-menu.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\02-selected-track.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\02-track-a.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\02-track-b.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\02-track-c.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\02-track-d.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\05-native-track-play.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\06-narrow-play-viewport.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\07-fit-same-game-to-cabinet.png",
+    "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\cabinet-native-return-review\\07b-native-return-to-physical-menu.png"
+  ],
+  "cleanup": {
+    "browserRootExited": true,
+    "serverClosed": true,
+    "complete": true,
+    "errors": []
+  },
+  "browserPid": 56964,
+  "browserVersion": "154.0.8037.98",
+  "hostGraphics": {
+    "current": {
+      "vendor": "Google Inc. (Google)",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "contextLost": false,
+      "programs": [
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        },
+        {
+          "name": "",
+          "linked": true,
+          "log": ""
+        }
+      ]
+    },
+    "links": [
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      },
+      {
+        "linked": true,
+        "valid": true,
+        "contextLost": false,
+        "log": ""
+      }
+    ],
+    "contextEvents": []
+  },
+  "nativeInput": {
+    "before": {
+      "mode": "running",
+      "trackId": "technical-bowl",
+      "trackName": "Test Track C",
+      "runTimeMs": 33.333333333333336,
+      "checkpointMs": null,
+      "checkpointMsList": [],
+      "bestTimeMs": null,
+      "trackS": 5.000000489805646,
+      "checkpointS": 1543.979570605378,
+      "checkpointSs": [
+        1543.979570605378,
+        3176.1865452453494
+      ],
+      "finishS": 4402.370201729652,
+      "speedKmh": 0,
+      "verticalSpeedMps": 0,
+      "airborne": false,
+      "gear": 1,
+      "rpmNormalized": 0.22643916543075351,
+      "shiftPulse": 0,
+      "x": -0.022085269096574753,
+      "y": 0.06,
+      "z": 4.999941214876779,
+      "yaw": -0.0075670930049055425,
+      "passedCheckpoint": false,
+      "passedCheckpointCount": 0,
+      "autoplay": false,
+      "input": {
+        "source": "Keyboard",
+        "steer": 0,
+        "throttle": 0,
+        "brake": 0
+      }
+    },
+    "samples": [
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 4533.333333333348,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 135.66066194003798,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 182.51622066357913,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 4,
+          "rpmNormalized": 0.8395105387464284,
+          "shiftPulse": 0,
+          "x": -1.0107348783451036,
+          "y": 0.06,
+          "z": 135.6486246940665,
+          "yaw": -0.0075670930049055425,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "a",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 5974.999999999962,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 178.88363067281577,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 1.1751818245992123,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 2,
+          "rpmNormalized": 0.22868132533581156,
+          "shiftPulse": 0.8533333333333335,
+          "x": 16.8169002201415,
+          "y": 0.06,
+          "z": 174.8193625870971,
+          "yaw": 0.3103854165574342,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "w",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 10475.000000000047,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 258.4667235860015,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 6.991739276308371,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 1,
+          "rpmNormalized": 0.3116143738017089,
+          "shiftPulse": 0,
+          "x": 40.25020419393431,
+          "y": 0.06,
+          "z": 252.44613604796345,
+          "yaw": 0.1399024294480491,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": 0,
+            "throttle": 1,
+            "brake": 0
+          }
+        }
+      },
+      {
+        "key": "d",
+        "debug": {
+          "mode": "running",
+          "trackId": "technical-bowl",
+          "trackName": "Test Track C",
+          "runTimeMs": 12000.000000000158,
+          "checkpointMs": null,
+          "checkpointMsList": [],
+          "bestTimeMs": null,
+          "trackS": 259.8944259850863,
+          "checkpointS": 1543.979570605378,
+          "checkpointSs": [
+            1543.979570605378,
+            3176.1865452453494
+          ],
+          "finishS": 4402.370201729652,
+          "speedKmh": 4.464801442189063,
+          "verticalSpeedMps": 0,
+          "airborne": false,
+          "gear": 1,
+          "rpmNormalized": 0.27336506316659764,
+          "shiftPulse": 0,
+          "x": 40.38302675782013,
+          "y": 0.06,
+          "z": 254.37668290298458,
+          "yaw": -0.018439225173314724,
+          "passedCheckpoint": false,
+          "passedCheckpointCount": 0,
+          "autoplay": false,
+          "input": {
+            "source": "Keyboard",
+            "steer": -1,
+            "throttle": 0,
+            "brake": 0
+          }
+        }
+      }
+    ]
+  },
+  "nativeReturns": {
+    "physicalMenu": true,
+    "selectedTrackRetained": true,
+    "restartedFromMenu": true,
+    "aisle": true
+  },
+  "passed": false,
+  "error": "AssertionError [ERR_ASSERTION]: Mouse look resumes after Back\n    at checks (C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\scripts\\review-cabinet-craft.cjs:119:14)\n    at async run (C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft\\scripts\\review-cabinet-craft.cjs:128:5)",
+  "endedAt": "2026-10-09T20:59:31.500Z"
+}
