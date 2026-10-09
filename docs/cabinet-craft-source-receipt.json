@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-10-09T20:01:32.770Z",
+  "recordedAt": "2026-10-09T20:19:04.689Z",
   "baseCommit": "e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5",
   "liveBase": "5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75",
   "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\arcade-cabinet-craft",
@@ -29,11 +29,17 @@
       ]
     }
   ],
+  "nativeIntegration": {
+    "checkout": "C:\\Users\\jmore\\Documents\\Codex\\2026-10-09\\task-29\\racegpt-cabinet-bridge",
+    "commit": "6e0f47999e66742e0aac81ecd097f2ffc17c8ffa",
+    "protocol": "racegpt-v1 ready/start/started; paired host/native integration required",
+    "standaloneMenuPreserved": true
+  },
   "sourceFiles": [
     {
       "file": "assets/arcade-app.js",
-      "sha256": "92f86c669b0744e8b2f1f52b3f5da6fb5d8011a510425d7e9cd6af96e055366d",
-      "bytes": 19067
+      "sha256": "fba8f7c49878df00ab566767fda8bad89ed3a3dcaaf9a6c50e7cb5c5f990b9a2",
+      "bytes": 19093
     },
     {
       "file": "assets/arcade-controller.js",
@@ -42,8 +48,8 @@
     },
     {
       "file": "assets/arcade-cabinet.js",
-      "sha256": "b3010b8139adf2f48bef6bc11c5c766e1cf9dab60205ab62debc21ee05056ff0",
-      "bytes": 4872
+      "sha256": "ff7f53e81069c5bfe9b1062ed0232853ad7ad84291c5b8d182444145dfd12ae1",
+      "bytes": 7126
     },
     {
       "file": "assets/arcade-scene.js",
@@ -62,8 +68,8 @@
     },
     {
       "file": "assets/arcade-session.js",
-      "sha256": "2b3b56af64e8b646fdde11cf0037500ad78ec06cb564975db39426fa162cf214",
-      "bytes": 2227
+      "sha256": "d3f65f7647931d716911284864435ed440674987bb29c96c13346a08d13e4e79",
+      "bytes": 2364
     },
     {
       "file": "assets/arcade.css",

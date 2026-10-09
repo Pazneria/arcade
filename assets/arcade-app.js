@@ -122,7 +122,7 @@ function playCabinet(selection=null,attempt=null) {
   if(!controller||mode!=='inspect'||games[selected]?.comingSoon)return;
   if(cabinetMenu?.enabled&&!attempt){cabinetMenu.start();return;}
   controller.pause();save(selected);const game=games[selected];
-  const launch=selection&&game.name==='RaceGPT'?{...game,url:cabinetMenu.launchUrl(game.url,selection)}:game;
+  const launch=selection&&game.name==='RaceGPT'?{...game,url:cabinetMenu.launchUrl(game.url,selection),nativeBridge:'racegpt-v1'}:game;
   $('game-full-page').href=launch.url;$('game-full-page').setAttribute('aria-label',`Open ${game.name} full page`);
   cabinetSession.start(launch,{signal:attempt?.signal,requestId:attempt?.id});
 }

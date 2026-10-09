@@ -24,6 +24,8 @@ export function createCabinetSession({game,tokenFor=()=>null,onStart=()=>{},onRe
         const preload=()=>game.ready.then(loaded=>{if(!loaded)throw new DOMException('Canceled','AbortError');return true;});
         const result=owned.token?await owned.token.start({signal:owned.abort.signal,preload}):await preload();
         if(current!==owned||owned.abort.signal.aborted||result===false)return false;
+        const activated=await game.activate?.();
+        if(current!==owned||owned.abort.signal.aborted||activated===false)return false;
         clearAttempt(owned);owned.token?.reset();onReady(owned);
         // A host callback may leave/reselect during its state update.
         if(current!==owned)return false;

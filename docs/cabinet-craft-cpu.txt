@@ -6,7 +6,7 @@ Arcade catalog and Codex link contract checks passed.
 Arcade return-state, Guide safety, and disposal-order checks passed.
 Arcade CPU sliding-door collision, threshold, interruption and disposal checks passed.
 Arcade CPU cabinet game lifecycle, child Escape, unchanged URLs and screen layout checks passed.
-Cabinet CPU session checks passed: both barrier orders, repeated Start, cancellation/stale loads, errors/retry, focus retention and projective pointer mapping.
+Cabinet CPU session checks passed: barrier orders, native engine/start handshake, source/origin/session checks, repeats, cancel/stale loads, errors/retry, focus and projective targeting.
 Cabinet CPU menu adapter checks passed: actual craft renderer, native focus/hotspots, keyboard track choice, repeat/cancel/error/ready and canonical launch query.
 PASS ready first still completes exactly once after insertion
 PASS insertion first has static waiting state and no fake readiness

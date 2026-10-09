@@ -12,6 +12,7 @@ for(const owner of collaborators)for(const file of owner.files)assert.equal(hash
 const protectedDiff=cp.execFileSync('git',['diff','--name-only',base,'--','versions','assets/vendor','assets/arcade-source.json','codex-link-contract.js','assets/arcade-art.js'],{cwd:root,encoding:'utf8'}).trim();assert.equal(protectedDiff,'');
 cp.execFileSync('git',['merge-base','--is-ancestor',base,'HEAD'],{cwd:root});
 const receipt={schemaVersion:1,recordedAt:new Date().toISOString(),baseCommit:base,liveBase:'5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75',checkout:root,branch:'craft/cabinet-screen-lifecycle',hashBasis:'UTF-8, CRLF normalized to LF',collaborators,
+  nativeIntegration:{checkout:path.join(root,'..','racegpt-cabinet-bridge'),commit:cp.execFileSync('git',['rev-parse','HEAD'],{cwd:path.join(root,'..','racegpt-cabinet-bridge'),encoding:'utf8'}).trim(),protocol:'racegpt-v1 ready/start/started; paired host/native integration required',standaloneMenuPreserved:true},
   sourceFiles:sourceFiles.map(file=>({file,sha256:hash(path.join(root,file)),bytes:Buffer.byteLength(normalized(path.join(root,file)))})),protectedDiff:[],
   cpuSuite:{command:'npm test',result:'passed',log:'docs/cabinet-craft-cpu.txt'},reviewHarness:{file:'scripts/review-cabinet-craft.cjs',syntaxChecked:true,launched:false},
   graphicsRun:false,renderedAcceptance:'pending coordinated parent slot',published:false,merged:false,softwareInstalled:false,existingBrowserFocused:false,localhost5418Touched:false};
