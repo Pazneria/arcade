@@ -60,7 +60,7 @@ function harness(THREE, createArcadeController, failureStage = null, callbacks =
     anchors: [{ gameIndex: 0, approach: new THREE.Vector3(0, 0, -2), position: new THREE.Vector3(0, 1.2, -3) }],
     targetMeshes: [], colliders: [], animate() {}, dispose() { stats.worldDisposals++; } };
   const create = () => createArcadeController(THREE, renderer, world, {
-    container: { append(node) { children.add(node); } }, onTarget() {}, onInspect() {}, onHome: callbacks.onHome || (() => {}),
+    container: { append(node) { children.add(node); } }, onTarget() {}, onInspect: callbacks.onInspect || (() => {}), onHome: callbacks.onHome || (() => {}),
     onPause() { pauses.push(true); }, onFailure(error) { failures.push(error); },
     onScreenLayout:callbacks.onScreenLayout,
   });
@@ -94,6 +94,27 @@ async function run() {
     assert.equal(h.stats.pointerRequests,1,'A primary scene click deliberately requests pointer lock');
     controller.dispose();
   }
+  for(const locked of [false,true]){
+    let controller;
+    const h=harness(THREE,createArcadeController,null,{onInspect:index=>controller.focusGame(index)}),anchor=h.world.anchors[0];
+    anchor.kind='game';anchor.screen={center:new THREE.Vector3(0,1.35,-3),normal:new THREE.Vector3(0,0,1),width:.6,height:.44,
+      corners:[new THREE.Vector3(-.3,1.57,-3),new THREE.Vector3(.3,1.57,-3),new THREE.Vector3(-.3,1.13,-3),new THREE.Vector3(.3,1.13,-3)]};
+    anchor.interactionBounds=new THREE.Box3(new THREE.Vector3(-.55,0,-3.1),new THREE.Vector3(.55,2.65,-2.9));
+    const hit=new THREE.Mesh(new THREE.BoxGeometry(1.1,2,.2),new THREE.MeshBasicMaterial({visible:false}));hit.position.set(0,1.2,-3);hit.userData.anchor=anchor;
+    h.world.scene.add(hit);h.world.targetMeshes.push(hit);controller=h.create();controller.resume();const before={...controller.player};
+    if(locked)await controller.capture();
+    h.canvas.emit('pointerdown',{button:0,pointerId:1,clientX:640,clientY:360});
+    assert.equal(controller.cabinet,anchor);assert.equal(controller.active,false);assert.equal(h.document.pointerLockElement,null,'Cabinet entry releases the cursor');
+    assert.equal(h.stats.pointerRequests,locked?1:0,'An unlocked cabinet click never requests a lock');
+    assert.deepEqual(controller.player,before,'Natural selection preserves the entire player pose, including yaw/pitch');assert.equal(h.world.camera.fov,70);
+    assert(controller.containsCabinet(640,360));assert(!controller.containsCabinet(10,10));assert(!controller.containsCabinet(NaN,360));
+    const marquee=new THREE.Vector3(0,2.35,-2.9).project(h.world.camera);assert(controller.containsCabinet((marquee.x+1)*640,(1-marquee.y)*360),'Cabinet envelope includes the actual marquee above the old selection box');
+    const wall=new THREE.Mesh(new THREE.BoxGeometry(2,3,.1),new THREE.MeshBasicMaterial());wall.position.set(0,1.3,-1.5);h.world.scene.add(wall);h.world.scene.updateMatrixWorld(true);
+    assert(!controller.containsCabinet(640,360),'Opaque intervening geometry is outside the current cabinet');h.world.scene.remove(wall);wall.geometry.dispose();wall.material.dispose();
+    controller.returnToAisle();controller.resume({freeLook:true});h.canvas.requestPointerLock=()=>Promise.reject(Error('Browser rejected capture'));await controller.capture();
+    const yaw=controller.player.yaw;h.canvas.emit('pointermove',{pointerType:'mouse',movementX:20,movementY:0});assert(controller.player.yaw<yaw,'Window mouse look remains usable when lock is rejected');
+    controller.dispose();assert.equal(h.listenerCount,0);assert.equal(h.frames.size,0);hit.geometry.dispose();hit.material.dispose();
+  }
   {
     const h=harness(THREE,createArcadeController),controller=h.create();
     controller.resume();Object.assign(controller.player,{x:1,z:-5,yaw:.7,pitch:.1,crouch:true});const aisle={...controller.player};
@@ -115,6 +136,13 @@ async function run() {
     assert.equal(h.document.pointerLockElement,null,`${interruption} must invalidate delayed pointer-lock grants`);
     assert.equal(h.stats.pointerExits,1);assert.equal(controller.active,interruption==='pause-then-resume','Discarding a stale grant does not reopen help or interrupt a fresh keyboard session');
     controller.dispose();assert.equal(h.frames.size,0);assert.equal(h.listenerCount,0);
+  }
+  {
+    const h=harness(THREE,createArcadeController),controller=h.create();controller.resume();await controller.capture();
+    h.document.exitPointerLock=function(){h.stats.pointerExits++;this.pointerLockElement=null;};
+    controller.focusGame(0);controller.returnToAisle();controller.resume({freeLook:true});
+    h.document.emit('pointerlockchange');assert.equal(controller.active,true,'A delayed programmatic cabinet-entry unlock cannot interrupt an already resumed aisle');assert.equal(h.pauses.length,0);
+    await controller.capture();h.document.pointerLockElement=null;h.document.emit('pointerlockchange');assert.equal(controller.active,false);assert.equal(h.pauses.length,1,'A real browser-owned unlock still pauses deliberate captured look');controller.dispose();
   }
   {
     const h=harness(THREE,createArcadeController),controller=h.create();

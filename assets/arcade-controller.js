@@ -44,6 +44,15 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     const blocker=ray.intersectObjects(scene.children,true).find(i=>!i.object.userData.anchor && i.object.material && !i.object.material.transparent && i.object.material.visible!==false);
     return canInteract(hit.distance,blocker?.distance) ? anchor : null;
   }
+  function containsCabinet(x,y) {
+    if(!inspection?.interactionBounds||!Number.isFinite(x)||!Number.isFinite(y))return false;
+    const rect=canvas.getBoundingClientRect();
+    point.set((x-rect.left)/rect.width*2-1,1-(y-rect.top)/rect.height*2);ray.setFromCamera(point,camera);
+    if(!ray.ray.intersectBox(inspection.interactionBounds,view))return false;
+    const distance=ray.ray.origin.distanceTo(view);
+    const blocker=ray.intersectObjects(scene.children,true).find(i=>!i.object.userData.anchor&&i.object.material&&!i.object.material.transparent&&i.object.material.visible!==false);
+    return canInteract(distance,blocker?.distance);
+  }
   function select(next) { if(next===target)return;target=next;onTarget(next); }
   function leaveHome() {if(disposed||!active||leaving)return;leaving=true;pause();onHome();}
   function activate(anchor) { if(!anchor||!active)return; if(anchor.kind==='home')leaveHome(); else onInspect(anchor.gameIndex); }
@@ -71,7 +80,7 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   function pause() {
     active=false;captureEpoch++;cancelAnimationFrame(raf);raf=0;last=0;clearInput();select(null);
     world.exits?.cancel();
-    if(document.pointerLockElement===canvas)document.exitPointerLock();
+    if(document.pointerLockElement===canvas){ignoredUnlock=true;document.exitPointerLock();}
   }
   function stopPresentation(){cancelAnimationFrame(presentation);presentation=0;presentationLast=0;presenter=null;}
   function present(update) {
@@ -97,10 +106,8 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     if(!aislePose)aislePose={...player};pause();stopPresentation();inspection=anchor;
     if(approach||!anchor.screen) {
       player.x=anchor.approach.x;player.z=anchor.approach.z;player.eye=1.62;player.crouch=false;
-    }
-    {
-      // Look across the cabinet face so both its screen and coin door remain
-      // in a standing view. This is a head turn; x/z/eye and FOV stay fixed.
+      // Only an explicit directory approach positions/aims the standing view.
+      // A natural click or ray selection keeps the complete current eye pose.
       view.copy(anchor.position).sub(new THREE.Vector3(player.x,player.eye,player.z));
       player.yaw=Math.atan2(-view.x,-view.z);player.pitch=Math.atan2(view.y,Math.hypot(view.x,view.z));
     }
@@ -111,7 +118,7 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   listen(window,'blur',()=>{pause();stopPresentation();onPause('blur');});
   listen(document,'visibilitychange',()=>{if(document.hidden){pause();stopPresentation();onPause('visibility');}});
   listen(document,'pointerlockchange',()=>{
-    if(document.pointerLockElement===canvas){if(!active||disposed||captureRequestEpoch!==captureEpoch)rejectLateLock();else hadSceneLock=true;return;}
+    if(document.pointerLockElement===canvas){if(!active||disposed||captureRequestEpoch!==captureEpoch)rejectLateLock();else{hadSceneLock=true;ignoredUnlock=false;}return;}
     const owned=hadSceneLock;hadSceneLock=false;clearInput();if(ignoredUnlock){ignoredUnlock=false;return;}if(owned&&active){pause();onPause('unlock');}
   });
   listen(window,'keydown',e=>{
@@ -129,6 +136,10 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     if(e.button!==undefined&&e.button!==0)return;
     if(!active)onResume?.();if(!active)return;
     if(document.pointerLockElement===canvas){activate(pick());return;}
+    // Select an unlocked cabinet directly. Asking for lock first can consume
+    // the same click that should release the cursor onto its screen controls.
+    const anchor=pick(e.clientX,e.clientY);
+    if(!touch&&anchor?.kind==='game'){e.preventDefault();activate(anchor);return;}
     canvas.setPointerCapture(e.pointerId);gesture={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,dragged:false};
     if(!touch&&e.button===0)capture();
   });
@@ -149,10 +160,10 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   });
   for(const event of ['pointercancel','lostpointercapture'])listen(canvas,event,()=>{gesture=null;touchMove=0;});
   listen(canvas,'webglcontextlost',e=>{e.preventDefault();pause();onFailure();});
-  canvas.setAttribute('tabindex','0');canvas.setAttribute('aria-label','Arcade scene. Move with WASD or arrow keys. Click for mouse look; Controls for help and Games for links.');
+  canvas.setAttribute('tabindex','0');canvas.setAttribute('aria-label','Arcade scene. Move with WASD or arrow keys. Click a nearby cabinet to use its screen. Click outside the cabinet or press Escape to return to mouse look.');
   function dispose() {if(disposed)return;stopPresentation();pause();disposed=true;listeners.splice(0).forEach(remove=>remove());world.dispose();renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();}
   try {container.append(canvas);resize();renderOnce();started=true;} catch(error) {dispose();throw error;}
-  return {player,pause,resume,capture,focusGame,present,stopPresentation,dispose,returnToAisle,
+  return {player,pause,resume,capture,focusGame,present,stopPresentation,dispose,returnToAisle,containsCabinet,
     get cabinet(){return inspection;},getScreenLayout:screenLayout,
     reset(){stopPresentation();world.exits?.cancel();inspection=null;aislePose=null;Object.assign(player,START);renderOnce();},setTouchMove(value){touchMove=value;},get active(){return active;}};
 }

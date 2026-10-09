@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "status": "CPU source ready; rendered input review pending",
+  "recordedAt": "2026-10-09T22:01:25.6603973Z",
+  "branch": "craft/cabinet-input-correction",
+  "frozenHostReference": "0b6e4a4e59cfcdc9f3973bdb4fae5def3db73520",
+  "frozenNativeReference": "72816f6d75b286090976bac827191bbb269e581a",
+  "nativeCheckout": "C:/Users/jmore/Documents/Codex/2026-10-09/task-29/racegpt-cabinet-bridge",
+  "nativeCommit": "f29bae6c6df9d8b0e2c80a93193f1f7a10e32110",
+  "hostCpuSuite": {
+    "log": "docs/cabinet-input-cpu.txt",
+    "passed": true,
+    "command": "npm test"
+  },
+  "nativeBridgeTests": {
+    "command": "node node_modules/tsx/dist/cli.mjs scripts/cabinet-bridge-tests.ts",
+    "passed": true
+  },
+  "nativeTypecheckBuild": {
+    "command": "npm run build",
+    "passed": true
+  },
+  "graphicsRun": false,
+  "graphicsLease": "released; no new grant used",
+  "renderedAcceptance": "pending parent clearance",
+  "replacementVisualDirection": "pending; frozen artwork rejected by Jordan",
+  "artworkChanged": false,
+  "protectedDiff": [],
+  "sourceHashes": [
+    {
+      "file": "assets/arcade-app.js",
+      "bytes": 19386,
+      "sha256": "8176486bace6143020eb706007699d0e76be5132c4a330114858d697edf5c2d6"
+    },
+    {
+      "file": "assets/arcade-interaction.js",
+      "bytes": 931,
+      "sha256": "1da86a64548bf407722308a5e961045f4d1719662003001d8f0ee98a88dbbf3c"
+    },
+    {
+      "file": "assets/arcade-controller.js",
+      "bytes": 12134,
+      "sha256": "b5789f84d6c7fdcb6cd81848fa79b6a99378dcd836413a81053ddb2f71814df2"
+    },
+    {
+      "file": "assets/arcade-menu.js",
+      "bytes": 3201,
+      "sha256": "c02a1d4fabd1597865fca90436fb30937e53f7283de55730016577a5c808933a"
+    },
+    {
+      "file": "assets/arcade-scene.js",
+      "bytes": 138192,
+      "sha256": "77ad8a5c10ac156db7c968e2ef65646507bc8b13be5882bbb01e232779dabae4"
+    },
+    {
+      "file": "assets/arcade.css",
+      "bytes": 8914,
+      "sha256": "56f4110a885fe385518ed60ac57f2982db89a93c4d4d37ecd5a1d7212aeca42f"
+    },
+    {
+      "file": "index.html",
+      "bytes": 11298,
+      "sha256": "f408713e10909ec427faab3e81cfcb53128f22383a444a9a76d1b3c50e970e8e"
+    }
+  ],
+  "published": false,
+  "merged": false,
+  "softwareInstalled": false,
+  "port5418Touched": false,
+  "report": "docs/cabinet-input-correction.md"
+}

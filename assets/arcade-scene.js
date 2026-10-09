@@ -192,6 +192,9 @@ function addGameAnchor(object, gameIndex) {
   const position = new THREE.Vector3(0, 1.2, depth / 2 + 0.1).applyMatrix4(object.matrixWorld);
   const approach = new THREE.Vector3(0, 0, depth / 2 + 1.05).applyMatrix4(object.matrixWorld);
   const anchor = { id: 'game-' + gameIndex, gameIndex, position, approach, yaw: object.rotation.y, kind: 'game',cabinetRoot:object };
+  // Keep the complete cabinet envelope before static geometry is merged. This
+  // CPU-only bound includes marquee/controls and adds no mesh or GPU resource.
+  anchor.interactionBounds=new THREE.Box3().setFromObject(object);
   const coin=cabinetCoinDoors.get(object);
   if(coin)anchor.tokenMount={parent:coin,position:[-.065,.085,.033],rotation:[0,0,0]};
   const surface=cabinetScreens.get(object);

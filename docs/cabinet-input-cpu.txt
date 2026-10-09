@@ -1,0 +1,35 @@
+
+> arcade@1.0.0 test
+> node scripts/test-codex-link-contract.js && node scripts/test-arcade-navigation.js && node scripts/test-arcade-exits.js && node scripts/test-arcade-cabinet.js && node scripts/test-cabinet-session.js && node scripts/test-cabinet-menu-adapter.js && node scripts/test-cabinet-interaction.js && node scripts/token-entry/test-token-entry.cjs && node scripts/test-arcade-scene.js && node scripts/test-arcade-art.js && node scripts/test-arcade-controller.js && node scripts/test-arcade-loading.js && node scripts/test-room-handoff.js && node scripts/test-directory-browser.js --check-fixtures && node scripts/test-arcade-qa-lifecycle.js && node scripts/test-arcade-versions.js
+
+Arcade catalog and Codex link contract checks passed.
+Arcade return-state, Guide safety, and disposal-order checks passed.
+Arcade CPU sliding-door collision, threshold, interruption and disposal checks passed.
+Arcade CPU cabinet game lifecycle, child Escape, unchanged URLs and screen layout checks passed.
+Cabinet CPU session checks passed: barrier orders, native engine/start handshake, source/origin/session checks, repeats, cancel/stale loads, errors/retry, focus and projective targeting.
+Cabinet CPU menu adapter checks passed: actual craft renderer, native focus/hotspots, keyboard track choice, repeat/cancel/error/ready and canonical launch query.
+PASS cabinet CPU interaction: mode gating, inside/outside targets, consumed exit gesture, trusted capture and Escape fallback
+PASS ready first still completes exactly once after insertion
+PASS insertion first has static waiting state and no fake readiness
+PASS external cancellation aborts work and old success cannot complete retry
+PASS old failure is isolated from a new session
+PASS errors and thrown preload support retry without stranded work
+PASS pre-aborted requests do not start work; listeners detach after settlement
+PASS reduced motion is stationary and uses the same readiness barrier
+PASS host hook failures cannot strand completion and onStart can cancel
+PASS state hooks may cancel before start without resurrecting the prop
+PASS timestep partitions, contact alignment and final occlusion are deterministic
+PASS all real Three geometry is finite, reeded edge is instanced, mount follows parent
+PASS mouth shader clips only owned materials and supports instanced world transforms
+PASS idle costs no pose/matrix updates; disposal frees every owned resource once
+PASS borrowed environment textures survive reset and disposal
+PASS no private render loop, timers, loaders or host camera edits
+{"checks":15,"threeRevision":"169","tokenDuration":0.92,"reducedDuration":0.1,"graphics":false}
+Arcade CPU scene/motion checks passed. Structural counts only: {"meshes":184,"vertices":190728,"triangles":66514,"textures":78,"staticMergeBuckets":149,"colliders":31,"materialCount":162}
+Arcade CPU art, existing prop footprint and walkable clearance checks passed. {"baseCommit":"0c771736020c8e21135b3342b4f67be6741b038d","evidence":"CPU scene construction and drawing recorders. No browser/server/WebGL/GPU. RGBA accounting excludes the unchanged PMREM target and driver overhead; mesh submissions are structural, not measured frame calls.","baseline":{"visibleMeshes":163,"triangles":63249,"materials":162,"staticMergeBuckets":152,"proceduralTextures":79,"rgbaBaseBytes":97943552,"rgbaWithMipBytes":130581132,"retainedRenderGeometryBytes":5824716,"lights":11,"colliders":20},"art":{"visibleMeshes":184,"triangles":66514,"materials":162,"staticMergeBuckets":149,"proceduralTextures":78,"rgbaBaseBytes":94655488,"rgbaWithMipBytes":126195076,"retainedRenderGeometryBytes":6123048,"lights":11,"colliders":31},"delta":{"visibleMeshes":21,"triangles":3265,"materials":0,"staticMergeBuckets":-3,"proceduralTextures":-1,"rgbaBaseBytes":-3288064,"rgbaWithMipBytes":-4386056,"retainedRenderGeometryBytes":298332,"lights":0,"colliders":11},"integration":{"beforeArtCommit":"42edac87da91fd38d9b755934d3d13055b4c0ac5","beforeArt":{"visibleMeshes":184,"triangles":63333,"materials":162,"staticMergeBuckets":149,"proceduralTextures":79,"rgbaBaseBytes":97943552,"rgbaWithMipBytes":130581132,"retainedRenderGeometryBytes":5817672,"lights":11,"colliders":31},"deltaFromBeforeArt":{"visibleMeshes":0,"triangles":3181,"materials":0,"staticMergeBuckets":0,"proceduralTextures":-1,"rgbaBaseBytes":-3288064,"rgbaWithMipBytes":-4386056,"retainedRenderGeometryBytes":305376,"lights":0,"colliders":0},"sourcePatchSha256":"6e1d7361b94256e97d20f2e9d0e5854874d3973fd6a004f793210e091e283fad","sourceBundleSha256":"f8934d5d2a5a04c967d57813aabc48e39b6f5a8011e73b9561c0df9276a0d8a7"},"bounds":{"bench":{"min":[-3.1939999938011168,0.00900000038743019,-0.5169999994337559],"max":[-1.9060000061988829,0.9123641965039236,-0.022615747663288818]},"plant":{"min":[-3.509999997615814,0.00900000038743019,-1.1482949788482804],"max":[-3.121763938346848,1.1139506187438966,-0.759799767255783]}},"marquees":[{"width":713,"height":256,"text":["RACEGPT","VOLT-TEK AMUSEMENTS"]},{"width":713,"height":256,"text":["OSRS","CLONE","VOLT-TEK AMUSEMENTS"]},{"width":966,"height":256,"text":["SWORD GUYS","WAVECREST AMUSEMENTS"]},{"width":966,"height":256,"text":["GHOST SIGNAL","WAVECREST AMUSEMENTS"]},{"width":782,"height":256,"text":["REBOUND","RELAY","STARLITE ORIGINAL / 2-PLAYER DELUXE"]},{"width":713,"height":256,"text":["NIGHT","COURIER","VOLT-TEK AMUSEMENTS"]}],"layout":{"left":[-3.65,-4.92,-6.19],"right":[-6.1,-7.55],"feature":-9.25}}
+Arcade CPU controller startup cleanup, input interruption, disposal and failure checks passed.
+Arcade CPU loading, handoff/input gating, cabinet play/return/cleanup, fallback/retry and navigation ownership checks passed.
+Canonical inline handoff hash, early paint installation, validation, one-shot consumption, accessible recovery and cleanup checks passed on CPU surfaces.
+Browser suite and served module fixtures parsed. No server, browser, or GPU session started.
+PASS CPU-only QA request deadlines, independent cleanup attempts, fallback kill and failure receipts
+Saved Arcade version archive and snapshot SHA256 checks passed.

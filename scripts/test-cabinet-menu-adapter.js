@@ -11,13 +11,14 @@ async function run(){
     constructor(){this.listeners=new Map();this.children=[];this.style={};this.dataset={};this.attrs={};}
     addEventListener(t,fn){this.listeners.set(t,fn);}setAttribute(k,v){this.attrs[k]=v;}
     append(n){this.children.push(n);n.parent=this;}remove(){this.parent.children=this.parent.children.filter(c=>c!==this);}
-    focus(){focus=this;this.listeners.get('focus')?.();}click(){this.listeners.get('click')?.();}
+    focus(){focus=this;this.listeners.get('focus')?.();}click(event={}){this.listeners.get('click')?.(event);}
   }
   const gradient={addColorStop(){}},ctx=new Proxy({measureText:s=>({width:s.length*15}),createLinearGradient:()=>gradient,createRadialGradient:()=>gradient,
     fillRect(){draws++;}},{get:(obj,key)=>obj[key]||(()=>{})});
   const canvas={width:1280,height:960,getContext:()=>ctx},hotspots=new Node(),native=new Node();
   globalThis.matchMedia=()=>({matches:true});
-  const display=createCabinetMenu({canvas,hotspots,native,document:{createElement:()=>new Node()},onStart:(selection,attempt)=>{starts++;assert.equal(selection.trackId,display.state.trackId);assert(attempt.signal);},onCancel:()=>cancels++,onBack:()=>backs++});
+  let backEvent;
+  const display=createCabinetMenu({canvas,hotspots,native,document:{createElement:()=>new Node()},onStart:(selection,attempt)=>{starts++;assert.equal(selection.trackId,display.state.trackId);assert(attempt.signal);},onCancel:()=>cancels++,onBack:event=>{backs++;backEvent=event;}});
   display.mount({name:'RaceGPT'});assert.equal(native.hidden,true);assert.equal(hotspots.children.length,6);display.focus();assert.equal(focus.dataset.action,'start');
   for(const r of MENU_HOTSPOTS){const button=hotspots.children.find(b=>b.dataset.action===r.id);assert.equal(button.style.left,r.u*100+'%');assert.equal(button.style.top,r.v*100+'%');assert.equal(button.style.width,r.width*100+'%');assert.equal(button.style.height,r.height*100+'%');}
   const startRegion=MENU_HOTSPOTS.find(r=>r.id==='start'),start=focus;
@@ -25,11 +26,12 @@ async function run(){
   const key={code:'ArrowRight',preventDefault(){this.defaultPrevented=true;}};display.key(key);assert.equal(display.state.index,1);assert(key.defaultPrevented);assert.equal(focus,start);
   start.click();start.click();assert.equal(starts,1);assert.equal(display.state.phase,'loading');
   const cancel=hotspots.children.find(b=>b.dataset.action==='cancel');assert.equal(cancel.hidden,false);
+  display.focus();assert.equal(focus,cancel,'Loading keyboard focus stays on the visible physical Cancel target');
   assert.equal(cancel.style.top,CANCEL_HOTSPOT.v*100+'%');assert(startRegion.v+startRegion.height<CANCEL_HOTSPOT.v,'Repeated Start cannot hit the separate Cancel target');
   cancel.click();assert.equal(cancels,1);assert.equal(display.state.phase,'menu');
   start.click();const attempt=display.state.requestId;assert(display.error(attempt,'failure'));assert.equal(display.state.phase,'error');assert.equal(start.hidden,false);
   start.click();assert(display.ready(display.state.requestId));assert.equal(display.state.phase,'playing');display.cancel();
-  hotspots.children.find(b=>b.dataset.action==='back').click();assert.equal(backs,1);
+  const trustedBack={type:'click',isTrusted:true,button:0};hotspots.children.find(b=>b.dataset.action==='back').click(trustedBack);assert.equal(backs,1);assert.equal(backEvent,trustedBack,'Physical Back retains the actual gesture for optional look capture');
   display.update(.016,1200);assert(draws>0,'Adapter invokes the actual renderer without a browser');
   const launch=new URL(display.launchUrl('https://pazneria.github.io/racegpt/?from=arcade&autoplay=1',{trackId:'technical-bowl'}));assert.equal(launch.searchParams.get('track'),'technical-bowl');assert.equal(launch.searchParams.get('from'),'arcade');assert(!launch.searchParams.has('autoplay'));
   display.mount({name:'Sword Guys'});assert.equal(native.hidden,false);assert.equal(canvas.hidden,true);assert.equal(hotspots.children.length,0);display.dispose();

@@ -43,6 +43,8 @@ function canvas() {
   assert.deepEqual(world.anchors.filter(a=>a.kind==='game').map(a=>a.gameIndex),[0,1,2,3,4,5]);
   for(const anchor of world.anchors.filter(a=>a.kind==='game')) {
     assert(anchor.screen,'Every actual cabinet supplies its screen surface');
+    assert(anchor.interactionBounds?.isBox3&&!anchor.interactionBounds.isEmpty(),'Every cabinet retains its complete interaction envelope before static merge');
+    assert(anchor.screen.corners.every(point=>anchor.interactionBounds.containsPoint(point)),'The complete physical screen belongs to its cabinet envelope');
     assert(Math.abs(anchor.screen.corners[0].distanceTo(anchor.screen.corners[1])-anchor.screen.width)<1e-8);
     assert(Math.abs(anchor.screen.normal.dot(anchor.screen.up))<1e-8,'Screen normal and up follow the tilted frame');
     const player={x:anchor.approach.x,z:anchor.approach.z,yaw:0,eye:1.62};

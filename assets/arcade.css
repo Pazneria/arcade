@@ -34,11 +34,7 @@ h1,h2 {margin:0 0 12px;font-weight:650}p {line-height:1.5}.instructions {font-si
 .game-opening {position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:clamp(16px,5cqw,32px);background:#100b1cee;text-align:center}
 .game-opening p {margin:0;max-width:30em;color:#e9dae6}
 #cabinet-game iframe:focus-visible {outline:3px solid #9eedff;outline-offset:-3px}
-.game-actions {position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:3;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);width:max-content;padding:6px 10px;background:#160e20eb;border:1px solid #70546b;border-radius:8px}
-.game-actions a {font:inherit;padding:10px 12px;min-height:44px;display:inline-flex;align-items:center}.game-actions span {font-size:12px;color:#dcc8d1;max-width:300px}
-body[data-mode="play"][data-game-expanded="true"] #cabinet-game {left:16px!important;top:calc(var(--site-nav-bottom,64px) + 12px)!important;width:calc(100% - 32px)!important;height:calc(100dvh - var(--site-nav-bottom,64px) - 108px)!important;transform:none!important;border:1px solid #b39578;border-radius:10px;box-shadow:0 14px 48px #0009;overflow:hidden}
-body[data-game-expanded="true"] .game-actions span {display:none}
-@media(max-height:500px) {.game-actions span {display:none}.game-actions {bottom:6px;padding:2px 6px}}
+body[data-mode="play"][data-game-expanded="true"] #cabinet-game {left:16px!important;top:16px!important;width:calc(100% - 32px)!important;height:calc(100dvh - 32px)!important;transform:none!important;border:1px solid #b39578;border-radius:10px;box-shadow:0 14px 48px #0009;overflow:hidden}
 
 /* The menu's authored plane follows the four projected cabinet corners. Its
    controls and Canvas2D artwork share that plane, including perspective. */
@@ -59,6 +55,7 @@ body[data-game-expanded="true"] .game-actions span {display:none}
 #cabinet-actions[data-screen-projected="true"] #cabinet-native :is(button,a):focus-visible {outline-width:5px;outline-offset:6px}
 #cabinet-game {position:fixed;z-index:2;transform-origin:0 0;overflow:hidden;border-radius:6px}
 body[data-mode="inserting"] #cabinet-game {visibility:hidden;pointer-events:none}
-body[data-mode="inserting"] .game-actions span {display:none}
-.cabinet-lifecycle-status {position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:3;max-width:min(500px,calc(100vw - 32px));padding:8px 14px;margin:0;color:#e8e1cd;background:#12252fee;border:1px solid #697c7c;border-radius:6px;text-align:center;font-size:14px;pointer-events:none}
-@media(max-width:767px) {body[data-mode="play"][data-game-expanded="true"] #cabinet-game {left:8px!important;width:calc(100% - 16px)!important;height:calc(100dvh - var(--site-nav-bottom,64px) - 144px)!important}.game-actions span {display:none}.cabinet-lifecycle-status {bottom:140px}}
+.cabinet-lifecycle-status {position:absolute;left:48px;right:48px;bottom:32px;margin:0;color:#e8e1cd;font-size:25px;line-height:1.3;pointer-events:none}
+#cabinet-recovery {position:absolute;left:48px;right:48px;bottom:100px}
+#cabinet-actions[data-craft-menu="true"] .cabinet-lifecycle-status {width:1px;height:1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@media(max-width:767px) {body[data-mode="play"][data-game-expanded="true"] #cabinet-game {left:8px!important;top:8px!important;width:calc(100% - 16px)!important;height:calc(100dvh - 16px)!important}}

@@ -4,7 +4,7 @@ import {draw,createMenu,createRaceGptLaunchUrl} from './cabinet-menu/racegpt-men
 // provide browser focus and semantics at the same physical-screen hotspots.
 export function createCabinetMenu({canvas,hotspots,native,onStart,onBack,onCancel,onStatus=()=>{},document:doc=globalThis.document}) {
   const buttons=new Map(),ctx=canvas.getContext('2d');
-  let menu=null,enabled=false,lastPhase='menu',disposed=false;
+  let menu=null,enabled=false,lastPhase='menu',disposed=false,activationEvent=null;
   function sync(state) {
     if(disposed)return;
     const canceled=lastPhase==='loading'&&state.phase==='menu';lastPhase=state.phase;
@@ -15,7 +15,7 @@ export function createCabinetMenu({canvas,hotspots,native,onStart,onBack,onCance
       if(!button){
         button=doc.createElement('button');button.type='button';button.className='cabinet-hotspot';button.dataset.action=r.id;
         button.textContent=r.label;button.setAttribute('aria-label',r.label);
-        button.addEventListener('click',()=>menu?.activate(r.id));
+        button.addEventListener('click',event=>{activationEvent=event;try{menu?.activate(r.id);}finally{activationEvent=null;}});
         button.addEventListener('focus',()=>menu?.pointer({u:r.u+r.width/2,v:r.v+r.height/2,type:'down'}));
         buttons.set(r.id,button);hotspots.append(button);
       }
@@ -27,7 +27,7 @@ export function createCabinetMenu({canvas,hotspots,native,onStart,onBack,onCance
   function mount(game) {
     menu?.dispose();menu=null;buttons.forEach(button=>button.remove());buttons.clear();
     enabled=game?.name==='RaceGPT';canvas.hidden=!enabled;hotspots.hidden=!enabled;native.hidden=enabled;lastPhase='menu';
-    if(enabled)menu=createMenu({onStart,onBack,onChange:sync});
+    if(enabled)menu=createMenu({onStart,onBack:()=>onBack(activationEvent),onChange:sync});
     if(menu)sync(menu.getState());
     return enabled;
   }
@@ -40,7 +40,7 @@ export function createCabinetMenu({canvas,hotspots,native,onStart,onBack,onCance
   }
   function update(dt,time){if(enabled&&menu)draw(ctx,{width:canvas.width,height:canvas.height,time,state:menu.getState(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});}
   return {mount,key,update,launchUrl:createRaceGptLaunchUrl,
-    focus(){buttons.get('start')?.focus({preventScroll:true});},
+    focus(){buttons.get(menu?.getState().phase==='loading'?'cancel':'start')?.focus({preventScroll:true});},
     pointer(point){return enabled&&menu?menu.pointer(point):false;},
     start(){return menu?.start();},ready(id){return menu?.ready(id);},error(id,message){return menu?.error(id,message);},
     cancel(){return menu?.cancel();},get enabled(){return enabled;},get state(){return menu?.getState();},

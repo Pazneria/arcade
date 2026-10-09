@@ -1,5 +1,7 @@
 # Current standing-menu and return acceptance
 
+Historical evidence for the frozen functional reference. Jordan subsequently rejected this artwork. The private input correction in `cabinet-input-correction.md` has CPU checks only and awaits replacement visual direction and rendered clearance; these earlier captures do not validate that correction.
+
 The menu owner's portrait refinement `71a32a3b26df0aa6172ee9abe047573266527e8a` resolves the earlier small-copy concern at the actual tested standing view. The host camera keeps player x/z, eye1.62 and FOV70. Primary selected-track text, A-D choices, Start/Enter, driving hints and Escape/Back are readable in the inspected standing screenshots. Four real pointer targets and keyboard navigation were checked against their current normalized metadata. No host zoom, camera dolly or duplicate artwork changes were introduced.
 
 The full revised-menu run used host `947d0fcdfd869fd98d5dd9ecf87ff19a8795d8d9` with native `6e0f47999e66742e0aac81ecd097f2ffc17c8ffa`; its preserved receipt is `cabinet-craft-evidence/standing-refinement-receipt.json` (`passed:true`). It covers all four course choices, Start focus, actual linked host/token shaders, visible token/slot pixels, delayed document cancellation and obsolete-load rejection, direct chosen-course countdown with keyboard driving, same-document resize/Fit, Back/mouse-look/Escape and repeated generic/coming-soon entry. There were zero browser page errors and no context loss.

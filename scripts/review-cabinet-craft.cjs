@@ -61,11 +61,12 @@ async function run(){
     async function checks(){
       await page.goto(site+'/arcade/',{waitUntil:'domcontentloaded'});await withDeadline(ready(page),'Arcade ready',30000);
       await validateGraphics('hostGraphics');
-      // Targeted approach fixture, followed by the real E/ray selection path.
+      // Targeted approach fixture, followed by a real cabinet click/ray path.
       await page.evaluate(()=>window.arcadeTest.controller.__test.faceAnchor('game-0'));
-      const aisle=await page.evaluate(()=>({...window.arcadeTest.controller.player}));await page.keyboard.press('e');
+      const aisle=await page.evaluate(()=>({...window.arcadeTest.controller.player}));await page.mouse.click(1707/2,923/2);
       await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect');
       const camera=await page.evaluate(()=>window.arcadeTest.controller.__test.camera());assert.deepEqual(camera.position,[aisle.x,aisle.eye,aisle.z]);assert.equal(camera.fov,70);
+      assert.equal(await page.evaluate(()=>document.pointerLockElement),null,'Cabinet entry frees the cursor');assert.equal(await page.locator('#site-nav').isVisible(),false);assert.equal(await page.locator('#cabinet-browse,#game-actions').count(),0);
       assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-projected'),'true');await shot('01-standing-physical-menu');
       await page.keyboard.press('ArrowRight');await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
       assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('02-selected-track');
@@ -82,8 +83,9 @@ async function run(){
       await page.waitForTimeout(160);await shot('03-token-in-standing-view');assert.equal(await page.locator('#game-frame iframe').evaluate(f=>f.inert),true);
       await validateGraphics('tokenGraphics');
       await page.waitForFunction(()=>document.getElementById('cabinet-lifecycle-status').textContent.includes('taking longer'),{},{timeout:15000});await shot('04-delayed-document');
-      await page.keyboard.press('Escape');assert.equal(await phase(),'explore');assert.equal(await page.locator('#game-frame iframe').count(),0);gate.release();gate=null;
+      await page.mouse.click(2,2);assert.equal(await phase(),'explore');assert.equal(await page.locator('#game-frame iframe').count(),0);gate.release();gate=null;
       await page.waitForTimeout(120);assert.equal(await phase(),'explore');
+      await page.keyboard.press('Escape');
       await page.locator('#open-games').click();await page.getByRole('button',{name:'View RaceGPT cabinet',exact:true}).click();
       await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').click();
       }
@@ -103,16 +105,16 @@ async function run(){
       assert.equal(await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot().renderCount),stopped,'Host renderer stays paused during native play');await shot('05-native-track-play');
       await page.locator('#game-frame iframe').evaluate(f=>f.dataset.reviewIdentity='one-document');
       await page.setViewportSize({width:390,height:844});await page.waitForTimeout(180);assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');await shot('06-narrow-play-viewport');
-      await page.setViewportSize({width:1707,height:923});await page.locator('#game-expand').click();assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');await shot('07-fit-same-game-to-cabinet');
+      await page.setViewportSize({width:1707,height:923});assert.equal(await page.locator('#game-frame iframe').getAttribute('data-review-identity'),'one-document');assert.equal(await page.locator('#site-nav').isVisible(),false);await shot('07-desktop-play-without-chrome');
       if(process.argv.includes('--native-return')){
-        await page.locator('#game-expand').click();await page.setViewportSize({width:390,height:844});
+        await page.setViewportSize({width:390,height:844});
         await game.getByRole('button',{name:'Pause run',exact:true}).click();await game.waitForFunction(()=>window.__raceGptDebug?.mode==='paused');
         await game.locator('#pause-menu-button').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='inspect');
         assert.equal(await page.locator('#game-frame iframe').count(),0);assert.equal(await page.locator('#cabinet-hotspots [data-action="technical-bowl"]').getAttribute('aria-pressed'),'true');await shot('07b-native-return-to-physical-menu');
         await page.locator('#cabinet-hotspots [data-action="start"]').click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='play');
         const restarted=page.frames().find(f=>f.url().startsWith(site+'/racegpt/'));assert(restarted);await restarted.getByRole('button',{name:'Pause run',exact:true}).click();await restarted.waitForFunction(()=>window.__raceGptDebug?.mode==='paused');
         await restarted.locator('#pause-return-button').click();receipt.nativeReturns={physicalMenu:true,selectedTrackRetained:true,restartedFromMenu:true,aisle:true};
-      }else await page.locator('#game-back').click();
+      }else await page.keyboard.press('Escape');
       await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#game-frame iframe').count(),0);
       assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),true);
       const viewport=page.viewportSize(),mx=viewport.width/2,my=viewport.height/2;

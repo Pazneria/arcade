@@ -6,6 +6,7 @@ import {screenProjection} from './arcade-screen-projection.js';
 import {createCabinetMenu} from './arcade-menu.js';
 import {createTokenEntry} from './token-entry/token-entry.js';
 import {createCabinetSession} from './arcade-session.js';
+import {isCabinetMode,exitOnOutsidePress,canCaptureOnExit} from './arcade-interaction.js';
 
 const $=id=>document.getElementById(id);
 const games=buildArcadeCatalog(location,window.ArcadeCodexLinks);
@@ -19,13 +20,13 @@ const tokenFactories=new Map();
 const directoryButtons=[];
 const cabinetGame=createCabinetGame({host:$('game-frame'),onEscape:()=>returnToScene(),onMenu:returnToCabinetMenu,onState:showGameOpening});
 const cabinetSession=createCabinetSession({game:cabinetGame,tokenFor:()=>{if(!tokens.has(selected)&&tokenFactories.has(selected))tokens.set(selected,tokenFactories.get(selected)());return tokens.get(selected);},
-  onStart:()=>{showMode('inserting');$('game-back').focus({preventScroll:true});startPresentation();},
+  onStart:()=>{showMode('inserting');focusCabinetCancel();startPresentation();},
   onReady:attempt=>{controller?.stopPresentation?.();cabinetMenu?.ready(attempt.requestId);showMode('play');setGameExpanded(true);},
-  onError:(error,attempt)=>{cabinetMenu?.error(attempt.requestId,error);showMode('inspect');$('cabinet-lifecycle-status').hidden=false;$('cabinet-lifecycle-status').textContent='This game could not be opened. Try Start again, or return to the aisle.';startPresentation();cabinetMenu?.enabled?cabinetMenu.focus():$('cabinet-play').focus();},
+  onError:(error,attempt)=>{cabinetMenu?.error(attempt.requestId,error);showMode('inspect');$('cabinet-lifecycle-status').hidden=false;$('cabinet-lifecycle-status').textContent='This game could not be opened. Try Start again, or return to the aisle.';updateRecovery('error');startPresentation();cabinetMenu?.enabled?cabinetMenu.focus():$('cabinet-play').focus();},
 });
 const handoff=window.pazneriaRoomHandoff;
 let freshHandoff=!!(handoff?.active&&handoff.room==='arcade'&&handoff.camera==='default-entry-v1'),handoffWait=null,handoffObserver=null;
-const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','cabinet-browse','mobile-fallback','touch-controls'].map($);
+const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','mobile-fallback','touch-controls'].map($);
 function updateNavigationInset() {
   const bottom=Math.ceil($('site-nav').getBoundingClientRect().bottom);
   document.documentElement.style.setProperty('--site-nav-bottom',bottom+'px');
@@ -39,11 +40,11 @@ function observeNavigation() {
 function releaseNavigation() {navigationObserver?.disconnect();navigationObserver=null;}
 function setGameExpanded(expanded) {
   document.body.dataset.gameExpanded=String(expanded);
-  $('game-expand').setAttribute('aria-pressed',String(expanded));
-  $('game-expand').textContent=expanded?'Fit to cabinet':'Open play view';
 }
-function updateGameSizeAvailability() {
-  const available=mode==='play';$('game-expand').hidden=!available;
+function focusCabinetCancel(){if(cabinetMenu?.enabled)cabinetMenu.focus();else $('cabinet-screen-back').focus({preventScroll:true});}
+function updateRecovery(phase=cabinetGame.phase) {
+  const recovery=!cabinetMenu?.enabled&&['inspect','inserting'].includes(mode)&&['delayed','error'].includes(phase);
+  $('cabinet-recovery').hidden=!recovery;$('game-retry').hidden=!recovery;
 }
 function showGameOpening(phase) {
   const visible=['opening','delayed','error'].includes(phase),game=games[selected];
@@ -55,8 +56,8 @@ function showGameOpening(phase) {
   if(mode==='inserting'){
     $('cabinet-lifecycle-status').hidden=false;
     $('cabinet-lifecycle-status').textContent=phase==='delayed'?'The game is taking longer to open. Keep waiting, try again, or return to the aisle.':phase==='error'?'The game could not be opened.':phase==='prepared'?'Token accepted. Opening the game.':`Inserting token · opening ${game?.name||'game'}`;
-    $('game-retry').hidden=phase!=='delayed';
   }
+  updateRecovery(phase);
 }
 function layoutScreen(rect){
   screenMap=placeCabinetScreen(actions,rect,screenProjection);
@@ -67,7 +68,7 @@ function cancelLaunch(){cabinetSession.cancel();if(mode==='inserting'){showMode(
 function returnToCabinetMenu(){if(!controller)return;cabinetMenu?.cancel();controller.pause();showMode('inspect');cabinetMenu?.focus();startPresentation();}
 function syncHandoff() {
   const covered=!!(handoff?.active&&handoff.room==='arcade');
-  handoffTargets.forEach(element=>{element.inert=covered;});
+  handoffTargets.forEach(element=>{element.inert=covered||(element===$('site-nav')&&isCabinetMode(mode));});
   if(covered)return;
   handoffObserver?.disconnect();handoffObserver=null;
   const wait=handoffWait;handoffWait=null;wait?.resolve(wait.token===generation&&mode==='loading'&&!!controller);
@@ -87,9 +88,9 @@ function showMode(next) {
   if(!['play','inserting'].includes(next)){setGameExpanded(false);cabinetSession.cancel();}
   if(!['inspect','inserting'].includes(next))controller?.stopPresentation?.();
   mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='inserting';
-  $('cabinet-menu').hidden=false;$('cabinet-game').hidden=!['play','inserting'].includes(next);$('game-actions').hidden=!['play','inserting'].includes(next);
-  $('cabinet-browse').hidden=next!=='inspect';
-  $('cabinet-lifecycle-status').hidden=next!=='inserting';updateGameSizeAvailability();
+  $('cabinet-menu').hidden=false;$('cabinet-game').hidden=!['play','inserting'].includes(next);
+  $('site-nav').hidden=isCabinetMode(next);$('site-nav').inert=isCabinetMode(next);
+  $('cabinet-lifecycle-status').hidden=next!=='inserting';updateRecovery();
   $('scene-container').setAttribute('aria-busy',String(next==='loading'));
   $('reticle').hidden=next!=='explore';$('target-hint').hidden=true;
   $('touch-controls').hidden=next!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);
@@ -116,8 +117,8 @@ function inspect(index,focus=true,{approach=true}={}) {
   for(const [id,url,label] of [['cabinet-play',game.comingSoon?null:game.url,`Play ${game.name}`],['cabinet-guide',game.guideUrl,`Open ${game.name} guide`]]) {
     const link=$(id);link.hidden=!url;link.setAttribute('aria-label',label);if(url)link.href=url;else link.removeAttribute('href');
   }
-  cabinetMenu?.mount(game);cabinetMenu?.update(0,0);startPresentation();
-  if(focus){if(cabinetMenu?.enabled)cabinetMenu.focus();else (game.comingSoon?$('cabinet-back'):$('cabinet-play')).focus();}
+  cabinetMenu?.mount(game);actions.dataset.craftMenu=String(!!cabinetMenu?.enabled);cabinetMenu?.update(0,0);updateRecovery();startPresentation();
+  if(focus){if(cabinetMenu?.enabled)cabinetMenu.focus();else (game.comingSoon?$('cabinet-screen-back'):$('cabinet-play')).focus();}
 }
 function playCabinet(selection=null,attempt=null) {
   if(!controller||mode!=='inspect'||games[selected]?.comingSoon)return;
@@ -184,7 +185,7 @@ function returnToScene(event) {
       // Removing a focused child document can leave Chrome's top document
       // unfocused. Restore its canvas focus before the focus-gated resume.
       if(!document.hidden)$('scene-container').querySelector('canvas')?.focus({preventScroll:true});
-      startExplore(true,{freeLook:true,capture:!!(event?.isTrusted&&event.type==='click')});
+      startExplore(true,{freeLook:true,capture:canCaptureOnExit(event)});
     }
   }else if(failed)openDirectory();else {showMode('loading');initialize();}
 }
@@ -199,20 +200,24 @@ for(const [index,game] of games.entries()) {
 }
 $('open-games').addEventListener('click',openDirectory);$('controls-games').addEventListener('click',openDirectory);$('open-controls').addEventListener('click',showHelp);$('close-controls').addEventListener('click',returnToScene);
 $('return-to-3d').addEventListener('click',returnToScene);$('retry-loading').addEventListener('click',()=>{loading.begin();status.textContent='Retrying Arcade';showMode('loading');dispose({leaving:true});location.reload();});
-$('cabinet-back').addEventListener('click',returnToScene);$('cabinet-screen-back').addEventListener('click',returnToScene);$('game-back').addEventListener('click',returnToScene);$('cabinet-previous').addEventListener('click',()=>inspect(selected-1,false));$('cabinet-next').addEventListener('click',()=>inspect(selected+1,false));
-$('game-retry').addEventListener('click',()=>{if(mode==='inserting'&&cabinetGame.phase==='delayed'){cancelLaunch();if(cabinetMenu?.enabled)cabinetMenu.cancel();playCabinet();}});
-$('game-expand').addEventListener('click',()=>{if(mode==='play')setGameExpanded(document.body.dataset.gameExpanded!=='true');});
+$('cabinet-screen-back').addEventListener('click',returnToScene);
+$('game-retry').addEventListener('click',()=>{if(mode==='inserting'&&cabinetGame.phase==='delayed')cancelLaunch();if(mode==='inspect')playCabinet();});
 $('cabinet-play').addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();playCabinet();});
 actions.addEventListener('pointermove',e=>{if(!cabinetMenu?.enabled||!['inspect','inserting'].includes(mode))return;const point=screenMap?.uv(e.clientX,e.clientY);if(point)cabinetMenu.pointer({...point,type:'move'});});
 actions.addEventListener('pointerleave',()=>cabinetMenu?.pointer({u:0,v:0,type:'leave'}));
+document.addEventListener('pointerdown',event=>exitOnOutsidePress(event,{
+  interacting:!!controller&&isCabinetMode(mode),
+  contains:e=>actions.contains?.(e.target)||$('cabinet-game').contains?.(e.target)||!!screenMap?.uv(e.clientX,e.clientY)||!!controller?.containsCabinet?.(e.clientX,e.clientY),
+  exit:returnToScene,
+}),true);
 for(const id of ['cabinet-guide','game-full-page'])$(id).addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href,selected);});
 for(const link of document.querySelectorAll('#site-nav a,#mobile-fallback > .actions a'))link.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href);});
 for(const [id,direction] of [['touch-forward',1],['touch-backward',-1]]) {
   const button=$(id);button.addEventListener('pointerdown',e=>{if(!controller||mode!=='explore')return;e.preventDefault();button.setPointerCapture(e.pointerId);controller.setTouchMove(direction);});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>controller?.setTouchMove(0));
 }
-window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','inserting','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene();}else if(['inspect','inserting'].includes(mode)&&actions.contains?.(e.target))cabinetMenu?.key(e);});window.addEventListener('pagehide',()=>dispose({leaving:true}));
+window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','inserting','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene(e);}else if(['inspect','inserting'].includes(mode)&&actions.contains?.(e.target))cabinetMenu?.key(e);});window.addEventListener('pagehide',()=>dispose({leaving:true}));
 window.addEventListener('pageshow',e=>{if(e.persisted){observeNavigation();failed=false;showMode('loading');initialize();}});
 function resumeVisible() {if(mode==='paused'&&!document.hidden&&document.hasFocus())startExplore();}
 window.addEventListener('focus',()=>{resumeVisible();if(mode==='inspect')startPresentation();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&['play','inserting'].includes(mode))returnToScene();else if(!document.hidden&&mode==='inspect')startPresentation();resumeVisible();});
-window.addEventListener('resize',()=>{updateNavigationInset();updateGameSizeAvailability();$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});setGameExpanded(false);updateGameSizeAvailability();observeNavigation();initialize();
+window.addEventListener('resize',()=>{updateNavigationInset();$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});setGameExpanded(false);observeNavigation();initialize();
