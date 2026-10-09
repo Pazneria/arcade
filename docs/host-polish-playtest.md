@@ -4,11 +4,11 @@ Experimental branch: `experiment/arcade-host-polish`.
 Baseline: live PR48 merge `5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75`.
 The branch is local and is not approved for publication.
 
-## Current hold and scope
+## Clearance and scope
 
-CPU/source inspection and tests are permitted. Do not start a browser, local
-server, native UI, renderer, or performance session until the coordinator gives
-explicit graphics clearance. Lab currently owns that window. Keep Library's
+The coordinator explicitly cleared the graphics slot on 2026-10-09. The pass is
+complete; see host-polish-validation.md and the external receipts. Future runs
+require fresh graphics coordination. Keep Library's
 review server at localhost:5418, other workers, benchmark entrants, and the
 Rebound Relay gameplay owner's session untouched.
 
@@ -29,9 +29,9 @@ Claude12 inputs, geometry, default entry pose, and canonical room handoff.
 | Fixed navigation wraps below the directory's fixed 95px top padding in portrait layouts. | Directory follows the measured navigation bottom, resets scroll on opening, and places focus without scroll. | Actual wrapped navigation, heading clearance, keyboard scrolling and resize. |
 | Directory offers only native new-tab game launch. | View cabinet enters the same host inspection flow; native Launch/Guide links remain. | All six selections and renderer-failure fallback. |
 
-The earlier narrow cabinet game viewport is a hypothesis to inspect during play,
-not evidence for an arbitrary layout change. Document actual clipping and usable
-controls before choosing an additional fix.
+The pass confirmed that OSRS chat obscured its inventory at cabinet size. The
+candidate adds reversible Expand game / Fit to cabinet controls and retains the
+same document/profile. Desktop native play and narrow resizing were retested.
 
 ## Session discipline and evidence
 
@@ -47,9 +47,9 @@ errors, renderer/frame lifecycle, and context/server/process cleanup. Assess
 screenshots after each flow. Script assertions support the observations; a
 250ms input smoke test does not stand in for sustained play.
 
-Budget 20–25 minutes of active interaction, with a 30-minute hard stop. Allow a
-separate bounded fix/retest slot only when clearance covers it and the 12:50 UTC
-experiment deadline allows it. Abort promptly if another owner needs graphics.
+The latest coordinator instruction superseded the initial budget with a focused
+30–40 minute pass when useful. Main rendered interaction ran 29 minutes followed
+by mobile and visual checks. Abort promptly if another owner needs graphics.
 This is functional host QA, not an FPS benchmark or a claim about physical
 mouse feel or GPU smoothness.
 

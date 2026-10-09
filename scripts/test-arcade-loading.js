@@ -87,7 +87,7 @@ async function run(){
         if(failure==='first-render'){c.dispose();throw Error('Injected first-render failure');}return c;
       },MutationObserver:Observer,ResizeObserver:NavigationObserver};
     vm.runInNewContext(source,context,{filename:'arcade-app-cpu-fixture.js'});
-    return {q,get,stats,win,doc,storage,app:win.testApp,observers,navigationObservers,finishHandoff,releaseEngine:()=>resolveEngine(engine),
+    return {q,get,stats,win,doc,storage,app:win.testApp,observers,navigationObservers,finishHandoff,releaseEngine:()=>resolveEngine(engine),resize:width=>{context.innerWidth=width;win.emit('resize');},
       async ready(){await q.until(()=>this.app.state.mode==='explore'||this.app.state.mode==='inspect'||this.app.state.failed);},
       async stage(label){await q.until(()=>get('load-status').textContent===label);},};
   }
@@ -200,6 +200,15 @@ async function run(){
     frame.contentWindow.emit('keydown',{code:'Escape'});
     assert.equal(h.app.state.mode,'explore','Removing a focused game restores canvas focus before the controller resumes');assert.equal(h.app.state.controllerActive,true);assert.equal(h.doc.hasFocus(),true);assert.equal(h.stats.captures,0);
     h.app.inspect(0);h.app.playCabinet();h.doc.hidden=true;h.doc.hasFocus=()=>false;h.app.returnToScene();assert.equal(h.app.state.mode,'paused');assert.equal(h.app.state.controllerActive,false,'A hidden return cannot restart rendering');
+  }
+  {
+    const h=harness();await h.ready();h.app.inspect(1);h.app.playCabinet();const frame=h.get('game-frame').children[0];frame.emit('load');
+    h.storage.setItem('game-owned-save','keep');h.get('game-expand').emit('click');
+    assert.equal(h.doc.body.dataset.gameExpanded,'true');assert.equal(h.get('game-expand').textContent,'Fit to cabinet');assert.equal(h.get('game-expand').attrs.get('aria-pressed'),'true');
+    assert.equal(h.get('game-frame').children[0],frame,'Expansion retains the exact current game document');assert.equal(h.app.state.controllerActive,false);assert.equal(h.storage.getItem('game-owned-save'),'keep');
+    h.get('game-expand').emit('click');assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children[0],frame);
+    h.get('game-expand').emit('click');h.resize(390);assert.equal(h.get('game-expand').hidden,true);assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children[0],frame,'Narrow resizing fits the existing game without restarting it');
+    h.resize(1280);assert.equal(h.get('game-expand').hidden,false);h.get('game-expand').emit('click');h.app.returnToScene();assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children.length,0);
   }
   {
     const h=harness();await h.ready();h.app.inspect(0);const event=h.get('cabinet-play').emit('click',{ctrlKey:true});assert.equal(event.defaultPrevented,false);assert.equal(h.app.state.playing,false,'Modified Play preserves normal full-page links');

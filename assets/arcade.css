@@ -36,4 +36,6 @@ h1,h2 {margin:0 0 12px;font-weight:650}p {line-height:1.5}.instructions {font-si
 #cabinet-game iframe:focus-visible {outline:3px solid #9eedff;outline-offset:-3px}
 .game-actions {position:fixed;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:3;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px);width:max-content;padding:6px 10px;background:#160e20eb;border:1px solid #70546b;border-radius:8px}
 .game-actions a {font:inherit;padding:10px 12px;min-height:44px;display:inline-flex;align-items:center}.game-actions span {font-size:12px;color:#dcc8d1;max-width:300px}
+body[data-mode="play"][data-game-expanded="true"] #cabinet-actions {left:16px!important;top:calc(var(--site-nav-bottom,64px) + 12px)!important;width:calc(100% - 32px)!important;height:calc(100dvh - var(--site-nav-bottom,64px) - 108px)!important;border:1px solid #b39578;border-radius:10px}
+body[data-game-expanded="true"] .game-actions span {display:none}
 @media(max-height:500px) {.game-actions span {display:none}.game-actions {bottom:6px;padding:2px 6px}}

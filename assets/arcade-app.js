@@ -25,6 +25,15 @@ function observeNavigation() {
   }
 }
 function releaseNavigation() {navigationObserver?.disconnect();navigationObserver=null;}
+function setGameExpanded(expanded) {
+  document.body.dataset.gameExpanded=String(expanded);
+  $('game-expand').setAttribute('aria-pressed',String(expanded));
+  $('game-expand').textContent=expanded?'Fit to cabinet':'Expand game';
+}
+function updateGameSizeAvailability() {
+  const available=innerWidth>=768;$('game-expand').hidden=!available;
+  if(!available)setGameExpanded(false);
+}
 function showGameOpening(phase) {
   const visible=['opening','delayed','error'].includes(phase),game=games[selected];
   $('game-opening').hidden=!visible;$('game-retry').hidden=!['delayed','error'].includes(phase);
@@ -53,7 +62,7 @@ function storage() {try{return sessionStorage;}catch{return null;}}
 const readState=()=>readReturnState(storage(),{cabinetCount:games.length});
 function save(index) {writeReturnState(storage(),index,{cabinetCount:games.length});}
 function showMode(next) {
-  if(next!=='play')cabinetGame.stop();
+  if(next!=='play'){setGameExpanded(false);cabinetGame.stop();}
   mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='play';
   $('cabinet-menu').hidden=next==='play';$('cabinet-game').hidden=next!=='play';$('game-actions').hidden=next!=='play';
   $('scene-container').setAttribute('aria-busy',String(next==='loading'));
@@ -161,6 +170,7 @@ $('open-games').addEventListener('click',openDirectory);$('controls-games').addE
 $('return-to-3d').addEventListener('click',returnToScene);$('retry-loading').addEventListener('click',()=>{loading.begin();status.textContent='Retrying Arcade';showMode('loading');dispose({leaving:true});location.reload();});
 $('cabinet-back').addEventListener('click',returnToScene);$('game-back').addEventListener('click',returnToScene);$('cabinet-previous').addEventListener('click',()=>inspect(selected-1,false));$('cabinet-next').addEventListener('click',()=>inspect(selected+1,false));
 $('game-retry').addEventListener('click',()=>{if(mode==='play'&&['delayed','error'].includes(cabinetGame.phase))cabinetGame.start(games[selected]);});
+$('game-expand').addEventListener('click',()=>{if(mode==='play'&&innerWidth>=768)setGameExpanded(document.body.dataset.gameExpanded!=='true');});
 $('cabinet-play').addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();playCabinet();});
 for(const id of ['cabinet-guide','game-full-page'])$(id).addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href,selected);});
 for(const link of document.querySelectorAll('#site-nav a,#mobile-fallback > .actions a'))link.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href);});
@@ -172,4 +182,4 @@ window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','play','h
 window.addEventListener('pageshow',e=>{if(e.persisted){observeNavigation();failed=false;showMode('loading');initialize();}});
 function resumeVisible() {if(mode==='paused'&&!document.hidden&&document.hasFocus())startExplore();}
 window.addEventListener('focus',resumeVisible);document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='play')showMode('inspect');resumeVisible();});
-window.addEventListener('resize',()=>{updateNavigationInset();$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});observeNavigation();initialize();
+window.addEventListener('resize',()=>{updateNavigationInset();updateGameSizeAvailability();$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});setGameExpanded(false);updateGameSizeAvailability();observeNavigation();initialize();
