@@ -62,6 +62,7 @@ function harness(THREE, createArcadeController, failureStage = null, callbacks =
   const create = () => createArcadeController(THREE, renderer, world, {
     container: { append(node) { children.add(node); } }, onTarget() {}, onInspect() {}, onHome: callbacks.onHome || (() => {}),
     onPause() { pauses.push(true); }, onFailure(error) { failures.push(error); },
+    onScreenLayout:callbacks.onScreenLayout,
   });
   return { create, renderer, world, stats, canvas, window: windowSurface, document: documentSurface,
     children, frames, pauses, failures,
@@ -92,6 +93,17 @@ async function run() {
     h.canvas.emit('pointerdown',{button:0,pointerId:1,clientX:20,clientY:20});await Promise.resolve();
     assert.equal(h.stats.pointerRequests,1,'A primary scene click deliberately requests pointer lock');
     controller.dispose();
+  }
+  {
+    const h=harness(THREE,createArcadeController),controller=h.create();
+    controller.resume();Object.assign(controller.player,{x:1,z:-5,yaw:.7,pitch:.1,crouch:true});const aisle={...controller.player};
+    controller.focusGame(0);assert.equal(controller.active,false);assert.equal(h.frames.size,0);
+    controller.focusGame(0);controller.returnToAisle();assert.deepEqual(controller.player,aisle,'Changing selections retains the original aisle pose');
+    controller.resume({freeLook:true});const yaw=controller.player.yaw;
+    h.canvas.emit('pointermove',{pointerId:1,pointerType:'mouse',movementX:30,movementY:10});assert(controller.player.yaw<yaw,'Return enables mouse look without an extra click');
+    const afterMouse=controller.player.yaw;h.canvas.emit('pointermove',{pointerId:2,pointerType:'touch',movementX:30});assert.equal(controller.player.yaw,afterMouse,'Touch still requires deliberate drag');
+    h.document.emit('pointerlockchange');assert.equal(controller.active,true,'An unrelated frame unlock cannot pause the aisle');
+    controller.pause();const stopped=controller.player.yaw;h.canvas.emit('pointermove',{pointerId:1,pointerType:'mouse',movementX:30});assert.equal(controller.player.yaw,stopped);controller.dispose();
   }
   for(const interruption of ['pause','dispose','pause-then-resume']){
     const h=harness(THREE,createArcadeController),controller=h.create();let grant;
@@ -229,4 +241,4 @@ async function run() {
 }
 
 if (require.main === module) run().catch(error => { console.error(error); process.exitCode = 1; });
-module.exports = { run };
+module.exports = { run, harness };
