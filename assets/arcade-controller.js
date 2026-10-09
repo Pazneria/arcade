@@ -5,25 +5,25 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   const canvas=renderer.domElement,player=createPlayer(),keys=new Set(),listeners=[];
   const ray=new THREE.Raycaster(),point=new THREE.Vector2(),view=new THREE.Vector3();
   const before={x:player.x,z:player.z},reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-  let leaving=false,inspection=null,aislePose=null,freeLook=false,hadSceneLock=false;
+  let leaving=false,inspection=null,aislePose=null,freeLook=false,hadSceneLock=false,presentation=0,presentationLast=0,presenter=null;
   let disposed=false,started=false,active=false,raf=0,last=0,elapsed=0,lastRender=0,lastPick=0,target=null,gesture=null,touchMove=0,captureEpoch=0,captureRequestEpoch=-1,capturePending=false,ignoredUnlock=false;
   let touch=matchMedia('(pointer: coarse)').matches || innerWidth<768;
   const listen=(el,type,fn,options)=> {el.addEventListener(type,fn,options);listeners.push(()=>el.removeEventListener(type,fn,options));};
   const editable=el=>el instanceof Element && !!el.closest('input,textarea,select,[contenteditable="true"]');
   function cameraPose() {
-    if(inspection?.screen) {
-      const screen=inspection.screen,tan=Math.tan(camera.fov*Math.PI/360);
-      const vertical=Math.max(.2,Math.min(.78,(innerHeight-180)/innerHeight)),horizontal=Math.max(.2,(innerWidth-36)/innerWidth);
-      const distance=Math.max(screen.height/vertical,screen.width/(camera.aspect*horizontal))/(2*tan);
-      camera.position.copy(screen.center).addScaledVector(screen.normal,distance);camera.up.copy(screen.up);camera.lookAt(screen.center);
-    }else{camera.up.set(0,1,0);camera.position.set(player.x,player.eye,player.z);camera.rotation.set(player.pitch,player.yaw,0,'YXZ');}
+    // Inspection uses the player's eye, not a screen-normal camera dolly. The
+    // cabinet's physical tilt remains visible and the lens never changes.
+    camera.up.set(0,1,0);camera.position.set(player.x,player.eye,player.z);camera.rotation.set(player.pitch,player.yaw,0,'YXZ');
     camera.updateMatrixWorld();
   }
   function screenLayout() {
     if(!inspection?.screen)return null;
-    const rect=canvas.getBoundingClientRect(),points=inspection.screen.corners.map(c=>c.clone().project(camera));
-    const left=rect.left+(points[0].x+1)*rect.width/2,top=rect.top+(1-points[0].y)*rect.height/2;
-    return {left,top,width:(points[1].x-points[0].x)*rect.width/2,height:(points[0].y-points[2].y)*rect.height/2};
+    const screen=inspection.screen,rect=canvas.getBoundingClientRect();
+    if(view.copy(camera.position).sub(screen.center).dot(screen.normal)<=0)return null;
+    const points=screen.corners.map(c=>c.clone().project(camera));
+    if(points.some(p=>p.z < -1 || p.z > 1))return null;
+    const quad=points.map(p=>({x:rect.left+(p.x+1)*rect.width/2,y:rect.top+(1-p.y)*rect.height/2}));
+    return {quad,aspect:screen.width/screen.height};
   }
   function clearInput() {keys.clear();gesture=null;touchMove=0;}
   function resize() {
@@ -37,10 +37,12 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     point.set((x-rect.left)/rect.width*2-1,1-(y-rect.top)/rect.height*2);ray.setFromCamera(point,camera);
     const hit=ray.intersectObjects(targetMeshes,false)[0];
     if(!hit) return null;
+    const anchor=hit.object.userData.anchor;
+    if(anchor.screen&&view.copy(camera.position).sub(anchor.screen.center).dot(anchor.screen.normal)<=0)return null;
     // Opaque scene geometry must not hide the selected object. Transparent glow
     // sheets and the invisible interaction volumes are excluded from occlusion.
     const blocker=ray.intersectObjects(scene.children,true).find(i=>!i.object.userData.anchor && i.object.material && !i.object.material.transparent && i.object.material.visible!==false);
-    return canInteract(hit.distance,blocker?.distance) ? hit.object.userData.anchor : null;
+    return canInteract(hit.distance,blocker?.distance) ? anchor : null;
   }
   function select(next) { if(next===target)return;target=next;onTarget(next); }
   function leaveHome() {if(disposed||!active||leaving)return;leaving=true;pause();onHome();}
@@ -71,6 +73,18 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     world.exits?.cancel();
     if(document.pointerLockElement===canvas)document.exitPointerLock();
   }
+  function stopPresentation(){cancelAnimationFrame(presentation);presentation=0;presentationLast=0;presenter=null;}
+  function present(update) {
+    stopPresentation();if(disposed||!inspection)return;
+    presenter=update;
+    function tick(now){
+      presentation=0;if(disposed||!inspection||!presenter||document.hidden||document.hasFocus?.()===false){stopPresentation();return;}
+      const dt=presentationLast?Math.min(.05,(now-presentationLast)/1000):0;presentationLast=now;
+      try{presenter(dt,now);renderOnce();if(presenter)presentation=requestAnimationFrame(tick);}
+      catch(error){stopPresentation();onFailure(error);}
+    }
+    presentation=requestAnimationFrame(tick);
+  }
   function resume(options) {if(disposed||leaving||document.hidden||document.hasFocus?.()===false)return;if(options)freeLook=!!options.freeLook;active=true;last=0;if(!raf)raf=requestAnimationFrame(frame);}
   function rejectLateLock() {if(document.pointerLockElement===canvas){ignoredUnlock=true;document.exitPointerLock();}}
   async function capture() {
@@ -78,20 +92,24 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     try{await canvas.requestPointerLock?.();}catch{/* Drag look remains available. */}
     finally{capturePending=false;if(disposed||!active||token!==captureEpoch)rejectLateLock();}
   }
-  function focusGame(index) {
+  function focusGame(index,{approach=false}={}) {
     const anchor=anchors.find(a=>a.gameIndex===index);if(!anchor)return;
-    if(!aislePose)aislePose={...player};pause();inspection=anchor;
-    if(!anchor.screen) {
-      player.x=anchor.approach.x;player.z=anchor.approach.z;player.eye=1.62;
+    if(!aislePose)aislePose={...player};pause();stopPresentation();inspection=anchor;
+    if(approach||!anchor.screen) {
+      player.x=anchor.approach.x;player.z=anchor.approach.z;player.eye=1.62;player.crouch=false;
+    }
+    {
+      // Look across the cabinet face so both its screen and coin door remain
+      // in a standing view. This is a head turn; x/z/eye and FOV stay fixed.
       view.copy(anchor.position).sub(new THREE.Vector3(player.x,player.eye,player.z));
       player.yaw=Math.atan2(-view.x,-view.z);player.pitch=Math.atan2(view.y,Math.hypot(view.x,view.z));
     }
     renderOnce();
   }
-  function returnToAisle(){inspection=null;if(aislePose)Object.assign(player,aislePose);aislePose=null;renderOnce();}
+  function returnToAisle(){stopPresentation();inspection=null;if(aislePose)Object.assign(player,aislePose);aislePose=null;renderOnce();}
   listen(window,'resize',()=>{try{resize();}catch(error){pause();onFailure(error);}});
-  listen(window,'blur',()=>{pause();onPause('blur');});
-  listen(document,'visibilitychange',()=>{if(document.hidden){pause();onPause('visibility');}});
+  listen(window,'blur',()=>{pause();stopPresentation();onPause('blur');});
+  listen(document,'visibilitychange',()=>{if(document.hidden){pause();stopPresentation();onPause('visibility');}});
   listen(document,'pointerlockchange',()=>{
     if(document.pointerLockElement===canvas){if(!active||disposed||captureRequestEpoch!==captureEpoch)rejectLateLock();else hadSceneLock=true;return;}
     const owned=hadSceneLock;hadSceneLock=false;clearInput();if(ignoredUnlock){ignoredUnlock=false;return;}if(owned&&active){pause();onPause('unlock');}
@@ -132,7 +150,9 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   for(const event of ['pointercancel','lostpointercapture'])listen(canvas,event,()=>{gesture=null;touchMove=0;});
   listen(canvas,'webglcontextlost',e=>{e.preventDefault();pause();onFailure();});
   canvas.setAttribute('tabindex','0');canvas.setAttribute('aria-label','Arcade scene. Move with WASD or arrow keys. Click for mouse look; Controls for help and Games for links.');
-  function dispose() {if(disposed)return;pause();disposed=true;listeners.splice(0).forEach(remove=>remove());world.dispose();renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();}
+  function dispose() {if(disposed)return;stopPresentation();pause();disposed=true;listeners.splice(0).forEach(remove=>remove());world.dispose();renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();}
   try {container.append(canvas);resize();renderOnce();started=true;} catch(error) {dispose();throw error;}
-  return {player,pause,resume,capture,focusGame,dispose,returnToAisle,reset(){world.exits?.cancel();inspection=null;aislePose=null;Object.assign(player,START);renderOnce();},setTouchMove(value){touchMove=value;},get active(){return active;}};
+  return {player,pause,resume,capture,focusGame,present,stopPresentation,dispose,returnToAisle,
+    get cabinet(){return inspection;},getScreenLayout:screenLayout,
+    reset(){stopPresentation();world.exits?.cancel();inspection=null;aislePose=null;Object.assign(player,START);renderOnce();},setTouchMove(value){touchMove=value;},get active(){return active;}};
 }

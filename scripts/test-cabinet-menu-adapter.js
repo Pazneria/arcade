@@ -1,0 +1,33 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),url=source=>'data:text/javascript;base64,'+Buffer.from(source).toString('base64');
+async function run(){
+  const track=url(fs.readFileSync(path.join(root,'assets/cabinet-menu/track-art.js'),'utf8'));
+  const menu=url(fs.readFileSync(path.join(root,'assets/cabinet-menu/racegpt-menu.js'),'utf8').replace("'./track-art.js'",JSON.stringify(track)));
+  const source=fs.readFileSync(path.join(root,'assets/arcade-menu.js'),'utf8').replace("'./cabinet-menu/racegpt-menu.js'",JSON.stringify(menu));
+  const {createCabinetMenu}=await import(url(source));
+  let focus=null,starts=0,cancels=0,backs=0,draws=0;
+  class Node {
+    constructor(){this.listeners=new Map();this.children=[];this.style={};this.dataset={};this.attrs={};}
+    addEventListener(t,fn){this.listeners.set(t,fn);}setAttribute(k,v){this.attrs[k]=v;}
+    append(n){this.children.push(n);n.parent=this;}remove(){this.parent.children=this.parent.children.filter(c=>c!==this);}
+    focus(){focus=this;this.listeners.get('focus')?.();}click(){this.listeners.get('click')?.();}
+  }
+  const gradient={addColorStop(){}},ctx=new Proxy({measureText:s=>({width:s.length*15}),createLinearGradient:()=>gradient,createRadialGradient:()=>gradient,
+    fillRect(){draws++;}},{get:(obj,key)=>obj[key]||(()=>{})});
+  const canvas={width:1280,height:960,getContext:()=>ctx},hotspots=new Node(),native=new Node();
+  globalThis.matchMedia=()=>({matches:true});
+  const display=createCabinetMenu({canvas,hotspots,native,document:{createElement:()=>new Node()},onStart:(selection,attempt)=>{starts++;assert.equal(selection.trackId,display.state.trackId);assert(attempt.signal);},onCancel:()=>cancels++,onBack:()=>backs++});
+  display.mount({name:'RaceGPT'});assert.equal(native.hidden,true);assert.equal(hotspots.children.length,6);display.focus();assert.equal(focus.dataset.action,'start');
+  const start=focus;display.pointer({u:.4,v:.81,type:'move'});assert.equal(focus,start,'Hover does not rebuild or steal the native focused control');
+  const key={code:'ArrowRight',preventDefault(){this.defaultPrevented=true;}};display.key(key);assert.equal(display.state.index,1);assert(key.defaultPrevented);assert.equal(focus,start);
+  start.click();start.click();assert.equal(starts,1);assert.equal(display.state.phase,'loading');
+  const cancel=hotspots.children.find(b=>b.dataset.action==='cancel');assert.equal(cancel.hidden,false);cancel.click();assert.equal(cancels,1);assert.equal(display.state.phase,'menu');
+  start.click();const attempt=display.state.requestId;assert(display.error(attempt,'failure'));assert.equal(display.state.phase,'error');assert.equal(start.hidden,false);
+  start.click();assert(display.ready(display.state.requestId));assert.equal(display.state.phase,'playing');display.cancel();
+  hotspots.children.find(b=>b.dataset.action==='back').click();assert.equal(backs,1);
+  display.update(.016,1200);assert(draws>0,'Adapter invokes the actual renderer without a browser');
+  const launch=new URL(display.launchUrl('https://pazneria.github.io/racegpt/?from=arcade&autoplay=1',{trackId:'technical-bowl'}));assert.equal(launch.searchParams.get('track'),'technical-bowl');assert.equal(launch.searchParams.get('from'),'arcade');assert(!launch.searchParams.has('autoplay'));
+  display.mount({name:'Sword Guys'});assert.equal(native.hidden,false);assert.equal(canvas.hidden,true);assert.equal(hotspots.children.length,0);display.dispose();
+  console.log('Cabinet CPU menu adapter checks passed: actual craft renderer, native focus/hotspots, keyboard track choice, repeat/cancel/error/ready and canonical launch query.');
+}
+run().catch(e=>{console.error(e);process.exitCode=1;});

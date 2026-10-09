@@ -117,6 +117,17 @@ async function run() {
     controller.dispose();assert.equal(h.frames.size,0);assert.equal(h.listenerCount,0);
   }
   {
+    const h=harness(THREE,createArcadeController),controller=h.create();
+    const screen={center:new THREE.Vector3(0,1.35,-2),normal:new THREE.Vector3(0,0,1),width:.6,height:.44,
+      corners:[new THREE.Vector3(-.3,1.57,-2),new THREE.Vector3(.3,1.57,-2),new THREE.Vector3(-.3,1.13,-2),new THREE.Vector3(.3,1.13,-2)]};
+    h.world.anchors[0].screen=screen;Object.assign(controller.player,{x:.2,z:-.8,eye:1.62,yaw:.12,pitch:.04});const aisle={...controller.player};
+    controller.focusGame(0);assert.equal(controller.player.x,aisle.x);assert.equal(controller.player.z,aisle.z);assert.equal(controller.player.eye,aisle.eye);assert.equal(h.world.camera.fov,70);
+    assert.deepEqual(h.world.camera.position.toArray(),[aisle.x,aisle.eye,aisle.z],'Ray selection never dollies or zooms the camera');
+    let updates=0;controller.present(()=>updates++);h.tick(100);h.tick(150);assert.equal(updates,2);assert.equal(controller.active,false);
+    const position={...controller.player};h.window.emit('keydown',{code:'KeyW'});h.tick(200);assert.deepEqual(controller.player,position,'Menu animation cannot move the player');
+    controller.returnToAisle();assert.equal(h.frames.size,0);assert.deepEqual(controller.player,aisle);controller.dispose();
+  }
+  {
     const h=harness(THREE,createArcadeController),controller=h.create();controller.resume();
     h.window.emit('keydown',{code:'Escape',repeat:false});controller.resume();
     h.window.emit('keydown',{code:'Escape',repeat:true});assert.equal(controller.active,true,'Repeated Escape cannot reopen help');

@@ -1,7 +1,7 @@
 // Bounded acceptance, not a benchmark. One fresh background Chrome; sequential
 // contexts. Public game GETs only; no user profile or original benchmark assets.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process');
-const {instrumentApp,instrumentController,ready,checkFixtureSyntax}=require('./test-directory-browser');
+const {instrumentApp,instrumentController,ready,checkFixtureSyntax,playControl,gameDestination}=require('./test-directory-browser');
 const {withDeadline,closeOwnedQA}=require('./arcade-qa-lifecycle');
 const {descendants,alive}=require('./test-arcade-rendered');
 const root=path.resolve(__dirname,'..'),site='https://pazneria.github.io';
@@ -85,7 +85,7 @@ async function actualGames(browser,output,receipt,observe){
       const aisle=await page.evaluate(()=>({...window.arcadeTest.controller.player}));await page.keyboard.press('e');
       await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);
       assert.equal(await page.locator('#cabinet-actions').getAttribute('data-screen-aligned'),'true');await shot(page,output,name+'-selection');
-      assert.equal(await page.locator('#cabinet-play').getAttribute('href'),site+'/'+name+'/');await page.locator('#cabinet-play').click();
+      assert.equal(await page.locator('#cabinet-play').getAttribute('href'),site+'/'+name+'/');await playControl(page,index).click();
       await page.waitForFunction(()=>window.arcadeTest.state.mode==='play');const c=await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot());assert.equal(c.active,false);assert.equal(c.raf,0);
       try {await page.waitForFunction(name=>{const f=document.querySelector('#cabinet-game iframe');try{return f?.contentWindow.location.pathname.startsWith('/'+name+'/')&&f.contentWindow.__arcadeGameQA&&!!f.contentDocument.querySelector('canvas');}catch{return false;}},name,{timeout:15000});}
       catch(error){receipt.failedGame={name,frames:[]};for(const f of page.frames())receipt.failedGame.frames.push({url:f.url(),state:await f.evaluate(()=>({text:document.body?.innerText?.slice(0,2500),qa:window.__arcadeGameQA,canvas:[...document.querySelectorAll('canvas')].map(c=>[c.width,c.height])})).catch(e=>e.message)});await shot(page,output,name+'-failed');throw error;}
@@ -117,8 +117,8 @@ async function actualGames(browser,output,receipt,observe){
       receipt.realGames.push({index,name,url:frame.url(),before,after,returnedKeys,childEscapeReturns:true,gameTeardownStopsCallbacks:true,aislePoseRestored:true,immediateMouseLook:true,arcadePausedWhilePlaying:true,gameOwnedStorageKeysRetained:true,arcadeLocalStorageWrites:0});
       // Reopen the same game, use the persistent Back control, then test full-page
       // launch and actual browser Back with exactly one restored Arcade renderer.
-      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();await page.getByRole('button',{name:'Back to aisle',exact:true}).click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#cabinet-game iframe').count(),0);
-      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();await page.locator('#game-full-page').click();await page.waitForURL(site+'/'+name+'/',{waitUntil:'domcontentloaded'});disposed(navigation.at(-1));
+      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await playControl(page,index).click();await page.getByRole('button',{name:'Back to aisle',exact:true}).click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await page.locator('#cabinet-game iframe').count(),0);
+      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await playControl(page,index).click();await page.locator('#game-full-page').click();await page.waitForURL(gameDestination(site+'/'+name+'/',index),{waitUntil:'domcontentloaded'});disposed(navigation.at(-1));
       await page.goBack({waitUntil:'domcontentloaded'});await withDeadline(ready(page),'Real full-page Back readiness',30000);await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);assert.equal(await page.locator('#scene-container canvas').count(),1);
       receipt.realGames.at(-1).backControlReturns=true;receipt.realGames.at(-1).fullPageDisposes=true;receipt.realGames.at(-1).browserBackRestoresOneRenderer=true;
       console.log('PASS real game screen/input/return/disposal:',name);

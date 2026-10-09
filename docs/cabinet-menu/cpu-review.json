@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-09",
+  "baseCommit": "91cccb406ecdb9a6a733237e62f1040ffcf339cd",
+  "scope": "RaceGPT physical cabinet title/menu artwork and input/launch state machine",
+  "checks": {
+    "node scripts/cabinet-menu-tests.mjs": "PASS",
+    "node node_modules/tsx/dist/cli.mjs scripts/cabinet-boot-tests.ts": "PASS",
+    "npm run typecheck": "PASS",
+    "npm test": "PASS: input/navigation, car physics, seven drivers, PB replay, runtime, model PBs",
+    "npm run smoke:sim": "PASS: Track A codex driver finish 21492ms; checkpoint 12367ms",
+    "npm run build": "PASS; existing large-bundle warning remains",
+    "optional patch applied in isolated clone, typecheck/build": "PASS; source restored afterward",
+    "git apply --check patches/cabinet-start.patch": "PASS",
+    "node --check scripts/review-cabinet-menu.mjs": "PASS",
+    "git diff --exit-code -- src/main.ts src/start.ts src/game src/render": "PASS: default game source preserved"
+  },
+  "visualReview": "PENDING coordinated graphics slot. No browser/GPU process launched. Source paint smoke and CPU font metrics are not screenshot/perspective acceptance.",
+  "physicalCabinetReviewOwner": "01a12227-1f79-77cf-8a23-0b85500500ff",
+  "preparedReview": "scripts/review-cabinet-menu.mjs: one headless browser, GPU/WebGL disabled, loopback-only 5547; no window/focus",
+  "preservation": "Original RaceGPT checkout/assets/version/saves and arcade source/live site untouched; no installs, publication or merge. localhost5418 not used or stopped.",
+  "benchmark": "Craft exercise with acceptance criteria; no score claimed"
+}

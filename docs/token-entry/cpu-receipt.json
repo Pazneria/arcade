@@ -1,0 +1,23 @@
+{
+  "base": "e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5",
+  "graphicsRun": false,
+  "checks": 15,
+  "threeRevision": "169",
+  "files": [
+    {
+      "file": "entry-session.js",
+      "sha256": "03e068837fce2e6c4938604704e95851f992542d15172f2c65e00849c6741df2",
+      "bytes": 6076
+    },
+    {
+      "file": "token-entry.js",
+      "sha256": "5ce7ca46be0b550b357e06cab5b04c8315635578aa66ded356d8bfe3d245a481",
+      "bytes": 1657
+    },
+    {
+      "file": "token-prop.js",
+      "sha256": "ec2f26dd98d4330e1d770419db5bd2f926685af2fc32508c86c5532162cded97",
+      "bytes": 10746
+    }
+  ]
+}

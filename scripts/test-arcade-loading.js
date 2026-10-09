@@ -39,6 +39,8 @@ async function run(){
   }
   const {catalog,navigation}=await require('./load-arcade-modules')();
   const {createCabinetGame,placeCabinetScreen}=await import(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-cabinet.js'),'utf8')));
+  const {createCabinetSession}=await import(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-session.js'),'utf8')));
+  const {screenProjection}=await import(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-screen-projection.js'),'utf8')));
   const codex=require('../codex-link-contract');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert(!/id="(?:welcome|explore)"/.test(html),'Entry has no welcome panel or mandatory Explore button');
@@ -76,7 +78,8 @@ async function run(){
     const engine={WebGLRenderer:Renderer};
     const context={window:win,document:doc,location,sessionStorage:storage,innerWidth:1280,matchMedia:()=>({matches:false}),console:{warn(){}},
       buildArcadeCatalog:catalog.buildArcadeCatalog,...navigation,
-      createCabinetGame:options=>createCabinetGame({...options,document:doc},q.options),placeCabinetScreen,
+      createCabinetGame:options=>createCabinetGame({...options,document:doc},q.options),placeCabinetScreen,createCabinetSession,screenProjection,
+      createCabinetMenu:()=>({enabled:false,mount(){},update(){},dispose(){},cancel(){},focus(){},ready(){},error(){}}),createTokenEntry:()=>{throw Error('Fixture has no token geometry');},
       createLoadingScreen:elements=>createLoadingScreen(elements,q.options),
       __loadEngine:()=>{stats.engines++;if(failure==='import')return Promise.reject(Error('Injected import failure'));return holdEngine?held:Promise.resolve(engine);},
       __createScene(renderer){assert.equal(get('load-status').textContent,'Building scene');stats.worlds++;let disposed=false;return {scene:{},camera:{},textures:[{}],dispose(){if(!disposed){stats.worldDisposals++;disposed=true;}}};},
@@ -102,9 +105,9 @@ async function run(){
     const h=harness();await h.ready();h.app.inspect(0);h.app.playCabinet();assert.match(h.get('game-load-message').textContent,/Opening RaceGPT/);assert.equal(h.get('game-opening').hidden,false);assert.equal(h.get('game-retry').hidden,true);
     const opening=h.get('game-frame').children[0];assert.equal(h.doc.activeElement,h.get('game-back'),'Opening keeps an immediate keyboard escape in the host');assert.equal(opening.inert,true);h.q.expire();assert.match(h.get('game-load-message').textContent,/taking longer/);assert.equal(h.get('game-retry').hidden,false);assert.equal(h.get('game-frame').attrs.get('aria-busy'),'true');
     h.get('game-retry').emit('click');const retry=h.get('game-frame').children[0];assert.notEqual(retry,opening);assert.equal(opening.src,'about:blank');assert.equal(h.get('game-frame').children.length,1);assert.equal(retry.src,'https://pazneria.github.io/racegpt/');
-    retry.emit('load');assert.equal(h.get('game-opening').hidden,true);assert.equal(h.get('game-frame').attrs.get('aria-busy'),'false');assert.equal(h.q.timers.size,0);assert.equal(h.doc.activeElement,retry);assert.equal(retry.inert,false);
+    retry.emit('load');await h.q.flush();assert.equal(h.get('game-opening').hidden,true);assert.equal(h.get('game-frame').attrs.get('aria-busy'),'false');assert.equal(h.q.timers.size,0);assert.equal(h.doc.activeElement,retry);assert.equal(retry.inert,false);
     h.app.returnToScene();assert.equal(h.get('game-frame').children.length,0);assert.equal(h.get('game-opening').hidden,true);assert.equal(h.q.timers.size,0);assert.equal(h.app.state.controllerActive,true);
-    h.app.inspect(0);h.app.playCabinet();const another=h.get('game-frame').children[0];h.get('game-full-page').focus();another.emit('load');assert.equal(h.doc.activeElement,h.get('game-full-page'),'A late load cannot steal focus from another control');
+    h.app.inspect(0);h.app.playCabinet();const another=h.get('game-frame').children[0];h.get('game-full-page').focus();another.emit('load');await h.q.flush();assert.equal(h.doc.activeElement,h.get('game-full-page'),'A late load cannot steal focus from another control');
     h.app.returnToScene();h.app.inspect(0);h.app.playCabinet();const canceled=h.get('game-frame').children[0];h.win.emit('keydown',{code:'Escape'});assert.equal(h.get('game-frame').children.length,0);assert.equal(h.q.timers.size,0);canceled.emit('load');assert.equal(h.app.state.mode,'explore','Late load cannot undo an early Escape');
   }
   {
@@ -184,8 +187,8 @@ async function run(){
   }
   {
     const h=harness();await h.ready();h.app.inspect(0);h.get('cabinet-play').emit('click');
-    assert.equal(h.app.state.mode,'play');assert.equal(h.app.state.controllerActive,false);assert.equal(h.app.state.playing,true);assert.equal(h.get('game-frame').children.length,1);assert.equal(h.stats.navigations.length,0);
-    const frame=h.get('game-frame').children[0];frame.emit('load');frame.contentWindow.emit('keydown',{code:'Escape'});
+    assert.equal(h.app.state.mode,'inserting');assert.equal(h.app.state.controllerActive,false);assert.equal(h.app.state.playing,true);assert.equal(h.get('game-frame').children.length,1);assert.equal(h.stats.navigations.length,0);
+    const frame=h.get('game-frame').children[0];frame.emit('load');await h.q.flush();assert.equal(h.app.state.mode,'play');frame.contentWindow.emit('keydown',{code:'Escape'});
     assert.equal(h.app.state.mode,'explore');assert.equal(h.get('game-frame').children.length,0);assert.equal(h.stats.freeLook,true);assert.equal(h.stats.captures,0,'Escape restores window mouse look without trapping the pointer');
     h.app.inspect(2);h.app.playCabinet();h.get('game-back').emit('click',{isTrusted:true});assert.equal(h.stats.captures,1,'Explicit trusted Back requests lock in its gesture');assert.equal(h.app.state.controllerActive,true);assert.equal(h.stats.aisleReturns,2);
     for(const change of ['help','directory','hidden','pagehide']) {
@@ -195,19 +198,19 @@ async function run(){
     }
   }
   {
-    const h=harness();await h.ready();h.app.inspect(0);h.app.playCabinet();const frame=h.get('game-frame').children[0];frame.emit('load');
+    const h=harness();await h.ready();h.app.inspect(0);h.app.playCabinet();const frame=h.get('game-frame').children[0];frame.emit('load');await h.q.flush();
     const remove=frame.remove.bind(frame);frame.remove=()=>{remove();h.doc.hasFocus=()=>false;};
     frame.contentWindow.emit('keydown',{code:'Escape'});
     assert.equal(h.app.state.mode,'explore','Removing a focused game restores canvas focus before the controller resumes');assert.equal(h.app.state.controllerActive,true);assert.equal(h.doc.hasFocus(),true);assert.equal(h.stats.captures,0);
     h.app.inspect(0);h.app.playCabinet();h.doc.hidden=true;h.doc.hasFocus=()=>false;h.app.returnToScene();assert.equal(h.app.state.mode,'paused');assert.equal(h.app.state.controllerActive,false,'A hidden return cannot restart rendering');
   }
   {
-    const h=harness();await h.ready();h.app.inspect(1);h.app.playCabinet();const frame=h.get('game-frame').children[0];frame.emit('load');
-    h.storage.setItem('game-owned-save','keep');h.get('game-expand').emit('click');
+    const h=harness();await h.ready();h.app.inspect(1);h.app.playCabinet();const frame=h.get('game-frame').children[0];frame.emit('load');await h.q.flush();
+    h.storage.setItem('game-owned-save','keep');assert.equal(h.doc.body.dataset.gameExpanded,'true','Ready opens the deliberate playable viewport without moving the camera');h.get('game-expand').emit('click');h.get('game-expand').emit('click');
     assert.equal(h.doc.body.dataset.gameExpanded,'true');assert.equal(h.get('game-expand').textContent,'Fit to cabinet');assert.equal(h.get('game-expand').attrs.get('aria-pressed'),'true');
     assert.equal(h.get('game-frame').children[0],frame,'Expansion retains the exact current game document');assert.equal(h.app.state.controllerActive,false);assert.equal(h.storage.getItem('game-owned-save'),'keep');
     h.get('game-expand').emit('click');assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children[0],frame);
-    h.get('game-expand').emit('click');h.resize(390);assert.equal(h.get('game-expand').hidden,true);assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children[0],frame,'Narrow resizing fits the existing game without restarting it');
+    h.get('game-expand').emit('click');h.resize(390);assert.equal(h.get('game-expand').hidden,false);assert.equal(h.doc.body.dataset.gameExpanded,'true');assert.equal(h.get('game-frame').children[0],frame,'Narrow resizing preserves a playable viewport and the existing game');
     h.resize(1280);assert.equal(h.get('game-expand').hidden,false);h.get('game-expand').emit('click');h.app.returnToScene();assert.equal(h.doc.body.dataset.gameExpanded,'false');assert.equal(h.get('game-frame').children.length,0);
   }
   {

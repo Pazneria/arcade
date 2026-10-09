@@ -165,13 +165,18 @@
     </section>
     <section id="cabinet-actions" class="panel" aria-labelledby="cabinet-title" hidden>
       <div id="cabinet-menu">
+      <canvas id="cabinet-display" width="1280" height="960" aria-hidden="true" hidden></canvas>
+      <div id="cabinet-hotspots" aria-label="RaceGPT menu" hidden></div>
+      <div id="cabinet-native">
       <h2 id="cabinet-title" aria-live="polite" aria-atomic="true"></h2><p id="cabinet-description"></p>
-      <div class="actions"><a id="cabinet-play" hidden>Play</a><a id="cabinet-guide" hidden>Guide</a><span id="coming-soon" hidden>Coming soon</span><button id="cabinet-back" type="button">Back to aisle</button></div>
-      <div class="actions"><button id="cabinet-previous" type="button">‹ Previous cabinet</button><button id="cabinet-next" type="button">Next cabinet ›</button></div>
+      <div class="actions"><a id="cabinet-play" hidden>Play</a><span id="coming-soon" hidden>Coming soon</span><button id="cabinet-screen-back" type="button">Back</button></div>
       </div>
-      <div id="cabinet-game" hidden><div id="game-frame" aria-busy="false"></div><div id="game-opening" class="game-opening" hidden><p id="game-load-message" role="status" aria-live="polite" aria-atomic="true"></p><button id="game-retry" type="button" hidden>Try again</button></div></div>
+      </div>
     </section>
-    <div id="game-actions" class="game-actions" aria-label="Game controls" hidden><button id="game-back" type="button">Back to aisle</button><button id="game-expand" type="button" aria-pressed="false">Expand game</button><a id="game-full-page">Open full page</a><span>Escape returns to the aisle. Full page is available if the game needs more room.</span></div>
+    <div id="cabinet-browse" class="game-actions" aria-label="Cabinet controls" hidden><button id="cabinet-back" type="button">Back to aisle</button><button id="cabinet-previous" type="button">‹ Previous cabinet</button><button id="cabinet-next" type="button">Next cabinet ›</button><a id="cabinet-guide" hidden>Guide</a></div>
+    <section id="cabinet-game" aria-label="Playing arcade game" hidden><div id="game-frame" aria-busy="false"></div><div id="game-opening" class="game-opening" hidden><p id="game-load-message" role="status" aria-live="polite" aria-atomic="true"></p></div></section>
+    <p id="cabinet-lifecycle-status" class="cabinet-lifecycle-status" role="status" aria-live="polite" aria-atomic="true" hidden></p>
+    <div id="game-actions" class="game-actions" aria-label="Game controls" hidden><button id="game-back" type="button">Back to aisle</button><button id="game-retry" type="button" hidden>Try again</button><button id="game-expand" type="button" aria-pressed="false">Open play view</button><a id="game-full-page">Open full page</a><span>Escape returns to the aisle. Fit to cabinet keeps the same game running.</span></div>
     <section id="mobile-fallback" aria-labelledby="directory-title" hidden>
       <h1 id="directory-title">Games</h1><p id="directory-message" role="status" aria-live="polite">Choose a game.</p>
       <div class="actions"><button id="return-to-3d" type="button" hidden>Return to 3D arcade</button><button id="retry-loading" type="button" hidden>Retry loading</button><a href="/">Home</a><a href="/">Exit Arcade</a></div>

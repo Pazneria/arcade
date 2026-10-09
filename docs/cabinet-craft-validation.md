@@ -1,0 +1,41 @@
+# Standing cabinet interaction: source handoff
+
+This is a craft exercise with acceptance criteria, not a scored benchmark. The implementation is local and unshipped. Rendered acceptance is pending a coordinated graphics slot.
+
+## Provenance and integration
+
+- Isolated checkout: `C:\Users\jmore\Documents\Codex\2026-10-09\task-29\arcade-cabinet-craft`, branch `craft/cabinet-screen-lifecycle`.
+- Preserved baseline: `e88a27f4d27d695d1f0e1b61faa3d0d207d5b9b5`, including the unshipped host polish after live `5feed14ca411bf4050f4df0cc7ba88c7bb7a9c75`.
+- RaceGPT menu: `15dec9dd764d927c2b8d547d85fad5dc8d9c8fc9`, copied unchanged from task-30 into `assets/cabinet-menu/`. The game itself remains separate. Its optional start bridge is not applied by this integration.
+- Token entry: `651c25e1caacc98e9f2c6fc131149c3e91248f5c`, copied unchanged from task-31 into `assets/token-entry/`.
+- Existing checkouts, frozen benchmark source/vendor, saved version archives, native game saves and localhost:5418 are untouched. No software installation, publication, merge, browser window or focus action occurred.
+
+## Resulting interaction
+
+Selecting a cabinet with E/ray or pointer preserves the current player's x/z and eye height. A head turn across the cabinet face keeps the screen and coin door in view. The camera stays at the player and retains FOV 70. Directory/browsing selection uses the existing safe standing approach; Back restores the original aisle pose. The menu uses the actual tilted screen's four projected corners. Native buttons and the Canvas2D drawing occupy that same projective plane, and hover mapping uses its inverse.
+
+RaceGPT's four track choices use the menu worker's actual canonical track IDs. Arrow navigation and normal native button focus/activation work on the screen. The host keeps a larger persistent Back/browse/Guide control bar available as well. Generic cabinets have compact on-screen menus; coming-soon cabinets cannot launch.
+
+Start creates one current launch session and one inert game document. The token is allocated lazily on the real existing coin-door frame at `[-.065,.085,.033]`, follows the original tilt/scale and is driven by the host's presentation loop. Its 0.92-second insertion and the current document load must both complete before input/focus is released. Reduced motion uses the worker's stationary 0.10-second acknowledgment with the same load barrier.
+
+After insertion, gameplay opens in a deliberate, reversible play viewport without moving the cabinet camera. Fit to cabinet retains the same iframe and native game state. Narrow resizing keeps a usable play viewport and persistent Back. RaceGPT opens its existing native menu on the selected `?track=` course; a native Start is still required without the separately reviewed game bridge. Iframe load is a document handoff boundary, not a claim that the game engine is ready.
+
+Repeated Start shares one attempt; Escape/Back, menu Cancel, replacement, blur/visibility interruption and page disposal invalidate late work and remove the unused child document. A soft delay after ten seconds offers retry/back/full page. Error returns a retryable menu. A late successful document load cannot steal focus from a different host control. Returning focuses the scene before resuming mouse look and preserves the existing trusted-click pointer-lock and free-look fallback behavior.
+
+## CPU evidence
+
+`npm test` runs the repository checks plus focused session/menu/token tests, using event/Canvas recorders and real Three geometry without a browser, server, WebGL context or GPU session. Evidence is recorded in `docs/cabinet-craft-cpu.txt` and `docs/cabinet-craft-source-receipt.json`.
+
+The focused checks cover both barrier orders, repeated Start, obsolete loads after cancellation/retry, failure/retry, focus movement during opening, normalized pointer round trips against real world screen points, unchanged standing camera/lens, input paused during menu animation, presentation-loop cleanup, native hotspot focus and actual menu renderer invocation. The token worker's 15 CPU checks are rerun in the integration tree, including geometry, parent transforms, clipping-shader structure, cancellation and disposal.
+
+The original art still constructs 184 visible meshes, 66,514 triangles, 149 static merge buckets, 78 procedural textures and 31 colliders before lazy token attachment. `arcade-art.js` is unchanged; only the scene source hash in the derived art manifest is refreshed for the added attachment metadata. Saved-version SHA256 checks and the canonical room-handoff checks pass. These are structural/source measurements, not frame-performance measurements.
+
+## Pending rendered acceptance and slot request
+
+All three workers attempted the supported parent messaging route to `01a10ff2-2238-7405-b646-fd99c65d100b`; it returned `thread not found`. Worker-to-worker messaging worked while they were active. Final platform notification is the available handoff route.
+
+Request a coordinated integration slot of at most five minutes after the title/token standalone review slots. `scripts/review-cabinet-craft.cjs` is prepared and syntax-checked; it has never been launched. It requires `ARCADE_GRAPHICS_SLOT=parent-approved`, uses exactly one headless Chromium process with SwiftShader and one disposable context, fulfills only local candidate/native review-build GETs, blocks other traffic/writes, opens no browser windows, starts no HTTP server and never touches port 5418. A 150-second review deadline and owned-resource cleanup are enforced.
+
+Planned evidence: standing physical menu and selected-track screenshots; token/slot visibility and occlusion at the actual cabinet; delayed opening/Escape/obsolete-load rejection; native RaceGPT selected-track input through the game viewport; same-document resize/Fit/Back; generic and coming-soon physical menus; source/browser/backend/viewport receipt and complete cleanup.
+
+That short harness is explicitly targeted. It does not establish holistic arrival/discovery, one-minute sustained gameplay, physical mouse feel, GPU smoothness, real cross-origin engine-error detection or visual-quality acceptance. Review actual screenshots, refine concrete issues, and record any still-unmet acceptance items before considering the work complete.

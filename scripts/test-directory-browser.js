@@ -55,7 +55,7 @@ function instrumentController(source) {
   renderer.dispose=()=>{__rendererDisposals++;return __rendererDispose();};
   renderer.forceContextLoss=()=>{__contextLosses++;return __contextLoss();};
   const ray=new THREE.Raycaster(),point=new THREE.Vector2(),view=new THREE.Vector3();`,'controller counters');
-  return replaceOnce(source,'  return {player,pause,resume,capture,focusGame,dispose,',`
+  return replaceOnce(source,'  return {player,pause,resume,capture,focusGame,',`
   const __test={
     snapshot(){return {disposed,active,raf,renderCount:__renders,worldDisposeCount:__worldDisposals,
       rendererDisposeCount:__rendererDisposals,contextLossCount:__contextLosses,listenerCount:listeners.length,
@@ -84,10 +84,10 @@ function instrumentController(source) {
     unblock(){if(!__blocker)return;scene.remove(__blocker);__blocker.geometry.dispose();__blocker.material.dispose();__blocker=null;renderOnce();},
     freezeElapsed(){elapsed=0;renderOnce();},
     camera(){return {position:camera.position.toArray(),pitch:camera.rotation.x,yaw:camera.rotation.y,order:camera.rotation.order,fov:camera.fov,near:camera.near,far:camera.far,aspect:camera.aspect};},
-    graphics(){const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER),version:gl.getParameter(gl.VERSION)};},
+    graphics(){const gl=renderer.getContext(),ext=gl.getExtension('WEBGL_debug_renderer_info');return {vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER),version:gl.getParameter(gl.VERSION),contextLost:gl.isContextLost(),programs:renderer.info.programs.map(p=>({name:p.name,linked:gl.getProgramParameter(p.program,gl.LINK_STATUS),log:gl.getProgramInfoLog(p.program)}))};},
     loseContext(){renderer.forceContextLoss();}
   };
-  return {__test,player,pause,resume,capture,focusGame,dispose,`,'controller return');
+  return {__test,player,pause,resume,capture,focusGame,`,'controller return');
 }
 const appFixture=instrumentApp(read('assets/arcade-app.js'));
 const controllerFixture=instrumentController(read('assets/arcade-controller.js'));
@@ -191,7 +191,9 @@ function assertDisposed(receipt,label) {
 async function inspectAndVisit(page,index,action,receipts,entry) {
   await page.evaluate(i=>window.arcadeTest.inspect(i),index);
   await page.waitForFunction(i=>window.arcadeTest.state.mode==='inspect'&&window.arcadeTest.state.selected===i,index);
-  const link=page.locator(action==='guide'?'#cabinet-guide':'#cabinet-play'),destination=await link.getAttribute('href');
+  const link=action==='guide'?page.locator('#cabinet-guide'):playControl(page,index);
+  const base=await page.locator(action==='guide'?'#cabinet-guide':'#cabinet-play').getAttribute('href');
+  const destination=action==='play'?gameDestination(base,index):base;
   const count=receipts.length,pages=page.context().pages().length;
   await link.focus();await page.keyboard.press('Enter');
   if(action==='play') {
@@ -204,10 +206,10 @@ async function inspectAndVisit(page,index,action,receipts,entry) {
     await page.waitForTimeout(100);assert.equal((await page.evaluate(()=>window.arcadeTest.controller.__test.snapshot())).renderCount,before.renderCount,'Arcade does not render behind the game');
     if(new URL(destination).origin===new URL(entry).origin) {
       await page.frameLocator('#cabinet-game iframe').locator('body').press('Escape');await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await frame.count(),0,'Child Escape removes its game document');
-      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();
+      await page.evaluate(i=>window.arcadeTest.inspect(i),index);await playControl(page,index).click();
     }
     await page.getByRole('button',{name:'Back to aisle',exact:true}).click();await page.waitForFunction(()=>window.arcadeTest.state.mode==='explore');assert.equal(await frame.count(),0,'Back removes the game document');
-    await page.evaluate(i=>window.arcadeTest.inspect(i),index);await page.locator('#cabinet-play').click();await page.locator('#game-full-page').click();
+    await page.evaluate(i=>window.arcadeTest.inspect(i),index);await playControl(page,index).click();await page.locator('#game-full-page').click();
   }
   await page.waitForURL(destination,{waitUntil:'domcontentloaded'});
   assert.equal(page.context().pages().length,pages,'Cabinet action stays in the same tab');
@@ -220,6 +222,8 @@ async function inspectAndVisit(page,index,action,receipts,entry) {
   assert.equal(await page.locator('#scene-container canvas').count(),1,'Back produces exactly one live renderer');
   assert.equal(await page.evaluate(()=>window.arcadeTest.controller.active),false);
 }
+function playControl(page,index){return page.locator(index===0?'#cabinet-hotspots [data-action="start"]':'#cabinet-play');}
+function gameDestination(base,index){const url=new URL(base);if(index===0)url.searchParams.set('track','banked-shakedown');return url.href;}
 async function assertPopup(page,locator) {
   const destination=await locator.getAttribute('href'),promise=page.waitForEvent('popup');await locator.click();const popup=await promise;
   try{await popup.waitForLoadState('domcontentloaded');assert.equal(popup.url(),destination);
@@ -272,7 +276,7 @@ async function checkCabinetCatalog(page) {
   await page.evaluate(()=>window.arcadeTest.inspect(0));
   for(let index=0;index<6;index++) {
     assert.equal(await page.locator('#cabinet-title').innerText(),names[index]);
-    assert.equal(await page.locator('#cabinet-play').isVisible(),![3,4].includes(index));
+    assert.equal(await playControl(page,index).isVisible(),![3,4].includes(index));
     assert.equal(await page.locator('#cabinet-guide').isVisible(),![3,4].includes(index));
     assert.equal(await page.locator('#coming-soon').isVisible(),[3,4].includes(index));
     if([3,4].includes(index)){assert.equal(await page.locator('#cabinet-play').getAttribute('href'),null);assert.equal(await page.locator('#cabinet-guide').getAttribute('href'),null);}
@@ -446,4 +450,4 @@ if(require.main===module) {
   if(process.argv.includes('--check-fixtures')){try{checkFixtureSyntax();}catch(error){console.error(error);process.exitCode=1;}}
   else run().catch(error=>{console.error(error);process.exitCode=1;});
 }
-module.exports={instrumentApp,instrumentController,checkFixtureSyntax,createFixtureServer,routeAll,ready,runCase};
+module.exports={instrumentApp,instrumentController,checkFixtureSyntax,createFixtureServer,routeAll,ready,runCase,playControl,gameDestination};

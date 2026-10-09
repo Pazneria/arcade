@@ -51,6 +51,8 @@ function canvas() {
   }
   const controllerSource=fs.readFileSync(path.join(root,'assets/arcade-controller.js'),'utf8').replace("'./arcade-motion.js'",JSON.stringify(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-motion.js'),'utf8'))));
   const {createArcadeController}=await import(moduleUrl(controllerSource)),{harness}=require('./test-arcade-controller');
+  const {screenProjection}=await load('assets/arcade-screen-projection.js');
+  const {sampleTokenPose}=await load('assets/token-entry/entry-session.js');
   const canvasDocument=global.document;
   for(const [width,height] of [[1280,720],[390,844],[800,390]]) {
     let layout;const h=harness(THREE,createArcadeController,null,{onScreenLayout:rect=>{layout=rect;}});
@@ -58,14 +60,23 @@ function canvas() {
     Object.assign(h.world,{scene:world.scene,camera:world.camera,anchors:world.anchors,colliders:world.colliders,animate:world.animate});
     const controller=h.create(),aisle={...controller.player};
     for(const anchor of world.anchors.filter(a=>a.kind==='game')) {
-      controller.focusGame(anchor.gameIndex);assert.deepEqual(controller.player,aisle,'Inspecting an actual screen preserves the aisle pose');
-      assert.equal(h.frames.size,0);assert(layout&&layout.width>70&&layout.height>70);
-      assert(layout.left>=17.9&&layout.top>=height*.1);assert(layout.left+layout.width<=width-17.9&&layout.top+layout.height<=height-60,'Screen controls remain clear of window edges/navigation');
-      const corners=anchor.screen.corners.map(point=>point.clone().project(world.camera));
-      assert(Math.abs(corners[0].y-corners[1].y)<1e-8&&Math.abs(corners[0].x-corners[2].x)<1e-8,'Framing keeps the actual tilted screen parallel to the native control plane');
-      assert(Math.abs(layout.width/layout.height-anchor.screen.width/anchor.screen.height)<1e-8,'Game document fits the actual screen aspect');
+      controller.focusGame(anchor.gameIndex,{approach:true});
+      assert.equal(controller.player.eye,1.62);assert.equal(controller.player.x,anchor.approach.x);assert.equal(controller.player.z,anchor.approach.z);
+      assert.deepEqual(world.camera.position.toArray(),[controller.player.x,1.62,controller.player.z],'Camera stays at the standing player, including short/mobile viewports');assert.equal(world.camera.fov,70);
+      assert.equal(h.frames.size,0);assert(layout?.quad);const map=screenProjection(layout.quad,800,800/layout.aspect);assert(map,'Physical screen is a valid projective plane');
+      for(const [u,v] of [[0,0],[1,0],[0,1],[1,1],[.18,.78],[.75,.32]]){
+        const point=map.point(u,v),mapped=map.uv(point.x,point.y);
+        if(u>0&&u<1&&v>0&&v<1){assert(mapped);assert(Math.abs(mapped.u-u)<1e-8&&Math.abs(mapped.v-v)<1e-8);}
+        const expected=anchor.screen.corners[0].clone().lerp(anchor.screen.corners[1],u).add(anchor.screen.corners[2].clone().sub(anchor.screen.corners[0]).multiplyScalar(v)).project(world.camera);
+        assert(Math.abs(point.x-(expected.x+1)*width/2)<1e-7&&Math.abs(point.y-(1-expected.y)*height/2)<1e-7,'Pointer projection agrees with the actual world screen point');
+      }
+      assert(anchor.tokenMount?.parent,'Insertion attaches to an existing coin-door frame');
+      for(const seconds of [0,.15,.45,.7]){
+        const pose=sampleTokenPose(seconds),point=new THREE.Vector3().fromArray(pose.position).add(new THREE.Vector3().fromArray(anchor.tokenMount.position)).applyMatrix4(anchor.tokenMount.parent.matrixWorld).project(world.camera);
+        assert(point.x>-1&&point.x<1&&point.y>-1&&point.y<1,`Token center stays in the standing view for cabinet ${anchor.gameIndex}`);
+      }
     }
-    controller.returnToAisle();assert.equal(layout,null);controller.dispose();assert.equal(h.listenerCount,0);
+    controller.returnToAisle();assert.deepEqual(controller.player,aisle);assert.equal(layout,null);controller.dispose();assert.equal(h.listenerCount,0);
   }
   global.document=canvasDocument;
   world.scene.updateMatrixWorld(true);

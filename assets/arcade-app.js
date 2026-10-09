@@ -2,6 +2,10 @@ import {buildArcadeCatalog} from './arcade-catalog.js';
 import {readReturnState,writeReturnState,clearReturnState,navigateAfterDispose} from './arcade-navigation.js';
 import {createLoadingScreen} from './arcade-loading.js';
 import {createCabinetGame,placeCabinetScreen} from './arcade-cabinet.js';
+import {screenProjection} from './arcade-screen-projection.js';
+import {createCabinetMenu} from './arcade-menu.js';
+import {createTokenEntry} from './token-entry/token-entry.js';
+import {createCabinetSession} from './arcade-session.js';
 
 const $=id=>document.getElementById(id);
 const games=buildArcadeCatalog(location,window.ArcadeCodexLinks);
@@ -9,11 +13,19 @@ const controls=$('controls'),directory=$('mobile-fallback'),actions=$('cabinet-a
 const loading=createLoadingScreen({root:$('scene-loading'),status,steps:[...document.querySelectorAll('.loading-steps li')]});
 let controller=null,failed=false,mode='loading',selected=-1,loadPromise=null,generation=0,pending=null,pendingSceneFocus=false;
 let navigationObserver=null;
+let screenMap=null,cabinetMenu=null;
+const tokens=new Map();
+const tokenFactories=new Map();
 const directoryButtons=[];
 const cabinetGame=createCabinetGame({host:$('game-frame'),onEscape:()=>returnToScene(),onState:showGameOpening});
+const cabinetSession=createCabinetSession({game:cabinetGame,tokenFor:()=>{if(!tokens.has(selected)&&tokenFactories.has(selected))tokens.set(selected,tokenFactories.get(selected)());return tokens.get(selected);},
+  onStart:()=>{showMode('inserting');$('game-back').focus({preventScroll:true});startPresentation();},
+  onReady:attempt=>{controller?.stopPresentation?.();cabinetMenu?.ready(attempt.requestId);showMode('play');setGameExpanded(true);},
+  onError:(error,attempt)=>{cabinetMenu?.error(attempt.requestId,error);showMode('inspect');$('cabinet-lifecycle-status').hidden=false;$('cabinet-lifecycle-status').textContent='This game could not be opened. Try Start again, or return to the aisle.';startPresentation();cabinetMenu?.enabled?cabinetMenu.focus():$('cabinet-play').focus();},
+});
 const handoff=window.pazneriaRoomHandoff;
 let freshHandoff=!!(handoff?.active&&handoff.room==='arcade'&&handoff.camera==='default-entry-v1'),handoffWait=null,handoffObserver=null;
-const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','mobile-fallback','touch-controls'].map($);
+const handoffTargets=['scene-container','site-nav','controls','cabinet-actions','cabinet-browse','mobile-fallback','touch-controls'].map($);
 function updateNavigationInset() {
   const bottom=Math.ceil($('site-nav').getBoundingClientRect().bottom);
   document.documentElement.style.setProperty('--site-nav-bottom',bottom+'px');
@@ -28,11 +40,10 @@ function releaseNavigation() {navigationObserver?.disconnect();navigationObserve
 function setGameExpanded(expanded) {
   document.body.dataset.gameExpanded=String(expanded);
   $('game-expand').setAttribute('aria-pressed',String(expanded));
-  $('game-expand').textContent=expanded?'Fit to cabinet':'Expand game';
+  $('game-expand').textContent=expanded?'Fit to cabinet':'Open play view';
 }
 function updateGameSizeAvailability() {
-  const available=innerWidth>=768;$('game-expand').hidden=!available;
-  if(!available)setGameExpanded(false);
+  const available=mode==='play';$('game-expand').hidden=!available;
 }
 function showGameOpening(phase) {
   const visible=['opening','delayed','error'].includes(phase),game=games[selected];
@@ -41,8 +52,18 @@ function showGameOpening(phase) {
   $('game-load-message').textContent=phase==='opening'?`Opening ${game?.name||'game'}…`
     :phase==='delayed'?'This game is taking longer to open. Keep waiting, try again, or open it full page.'
     :phase==='error'?'This game could not be opened. Try again, or open it full page.':'';
-  if(phase==='opening'&&mode==='play'&&!document.hidden&&document.hasFocus())$('game-back').focus({preventScroll:true});
+  if(mode==='inserting'){
+    $('cabinet-lifecycle-status').hidden=false;
+    $('cabinet-lifecycle-status').textContent=phase==='delayed'?'The game is taking longer to open. Keep waiting, try again, or return to the aisle.':phase==='error'?'The game could not be opened.':phase==='prepared'?'Token accepted. Opening the game.':`Inserting token · opening ${game?.name||'game'}`;
+    $('game-retry').hidden=phase!=='delayed';
+  }
 }
+function layoutScreen(rect){
+  screenMap=placeCabinetScreen(actions,rect,screenProjection);
+  placeCabinetScreen($('cabinet-game'),rect,screenProjection);
+}
+function startPresentation(){controller?.present?.((dt,time)=>{cabinetMenu?.update(dt,time);tokens.get(selected)?.update(dt);});}
+function cancelLaunch(){cabinetSession.cancel();if(mode==='inserting'){showMode('inspect');startPresentation();cabinetMenu?.focus();}}
 function syncHandoff() {
   const covered=!!(handoff?.active&&handoff.room==='arcade');
   handoffTargets.forEach(element=>{element.inert=covered;});
@@ -62,9 +83,12 @@ function storage() {try{return sessionStorage;}catch{return null;}}
 const readState=()=>readReturnState(storage(),{cabinetCount:games.length});
 function save(index) {writeReturnState(storage(),index,{cabinetCount:games.length});}
 function showMode(next) {
-  if(next!=='play'){setGameExpanded(false);cabinetGame.stop();}
-  mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='play';
-  $('cabinet-menu').hidden=next==='play';$('cabinet-game').hidden=next!=='play';$('game-actions').hidden=next!=='play';
+  if(!['play','inserting'].includes(next)){setGameExpanded(false);cabinetSession.cancel();}
+  if(!['inspect','inserting'].includes(next))controller?.stopPresentation?.();
+  mode=next;document.body.dataset.mode=next;controls.hidden=next!=='help';directory.hidden=next!=='directory';actions.hidden=next!=='inspect'&&next!=='inserting';
+  $('cabinet-menu').hidden=false;$('cabinet-game').hidden=!['play','inserting'].includes(next);$('game-actions').hidden=!['play','inserting'].includes(next);
+  $('cabinet-browse').hidden=next!=='inspect';
+  $('cabinet-lifecycle-status').hidden=next!=='inserting';updateGameSizeAvailability();
   $('scene-container').setAttribute('aria-busy',String(next==='loading'));
   $('reticle').hidden=next!=='explore';$('target-hint').hidden=true;
   $('touch-controls').hidden=next!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);
@@ -77,27 +101,30 @@ function openDirectory() {
   updateNavigationInset();window.scrollTo(0,0);$('directory-title').tabIndex=-1;$('directory-title').focus({preventScroll:true});
 }
 function releasePending() {const owned=pending;pending=null;owned?.world?.dispose();owned?.renderer.dispose();owned?.renderer.forceContextLoss();}
-function dispose({leaving=false}={}) {if(leaving)releaseNavigation();generation++;pendingSceneFocus=false;cabinetGame.stop();cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
+function dispose({leaving=false}={}) {if(leaving)releaseNavigation();generation++;pendingSceneFocus=false;cabinetSession.cancel();cabinetMenu?.dispose();cabinetMenu=null;tokens.forEach(token=>token.dispose());tokens.clear();tokenFactories.clear();cancelHandoff();loading.cancel();controller?.dispose();controller=null;releasePending();loadPromise=null;}
 async function navigate(url,index=null) {
   if(index!==null)save(index);else clearReturnState(storage());
   loading.begin();status.textContent='Leaving Arcade';showMode('loading');
   await navigateAfterDispose(url,{dispose:()=>dispose({leaving:true}),navigate:destination=>location.assign(destination)});
 }
-function inspect(index,focus=true) {
+function inspect(index,focus=true,{approach=true}={}) {
   if(!controller)return;
-  cabinetGame.stop();
-  selected=(index+games.length)%games.length;const game=games[selected];controller.focusGame(selected);if(!controller)return;showMode('inspect');
+  cabinetSession.cancel();
+  selected=(index+games.length)%games.length;const game=games[selected];controller.focusGame(selected,{approach});if(!controller)return;showMode('inspect');
   $('cabinet-title').textContent=game.name;$('cabinet-description').textContent=game.description;$('coming-soon').hidden=!game.comingSoon;
   for(const [id,url,label] of [['cabinet-play',game.comingSoon?null:game.url,`Play ${game.name}`],['cabinet-guide',game.guideUrl,`Open ${game.name} guide`]]) {
     const link=$(id);link.hidden=!url;link.setAttribute('aria-label',label);if(url)link.href=url;else link.removeAttribute('href');
   }
-  if(focus) (game.comingSoon?$('cabinet-back'):$('cabinet-play')).focus();
+  cabinetMenu?.mount(game);cabinetMenu?.update(0,0);startPresentation();
+  if(focus){if(cabinetMenu?.enabled)cabinetMenu.focus();else (game.comingSoon?$('cabinet-back'):$('cabinet-play')).focus();}
 }
-function playCabinet() {
+function playCabinet(selection=null,attempt=null) {
   if(!controller||mode!=='inspect'||games[selected]?.comingSoon)return;
+  if(cabinetMenu?.enabled&&!attempt){cabinetMenu.start();return;}
   controller.pause();save(selected);const game=games[selected];
-  $('game-full-page').href=game.url;$('game-full-page').setAttribute('aria-label',`Open ${game.name} full page`);
-  showMode('play');if(!cabinetGame.start(game)){inspect(selected);return;}
+  const launch=selection&&game.name==='RaceGPT'?{...game,url:cabinetMenu.launchUrl(game.url,selection)}:game;
+  $('game-full-page').href=launch.url;$('game-full-page').setAttribute('aria-label',`Open ${game.name} full page`);
+  cabinetSession.start(launch,{signal:attempt?.signal,requestId:attempt?.id});
 }
 function showFailure() {failed=true;dispose();loading.hide();showMode('directory');$('return-to-3d').hidden=true;$('retry-loading').hidden=false;$('directory-message').textContent='The 3D arcade is unavailable. Retry loading or choose a game below.';}
 async function initialize() {
@@ -119,9 +146,12 @@ async function initialize() {
       pending=null;
       controller=createArcadeController(THREE,renderer,world,{
         container:$('scene-container'),onTarget:anchor=>{const hint=$('target-hint');hint.hidden=!anchor;if(anchor)hint.textContent=anchor.kind==='home'?'E / tap · Home / Exit':`E / tap · ${games[anchor.gameIndex].name}`;},
-        onInspect:inspect,onHome:()=>navigate('/'),onPause:reason=>{if(mode==='explore'){if(reason==='help'||reason==='unlock')showHelp();else showMode('paused');}},onResume:()=>{if(mode==='paused')startExplore();},onFailure:showFailure,
-        onScreenLayout:rect=>placeCabinetScreen(actions,rect)
+        onInspect:index=>inspect(index,true,{approach:false}),onHome:()=>navigate('/'),onPause:reason=>{if(mode==='explore'){if(reason==='help'||reason==='unlock')showHelp();else showMode('paused');}else if(mode==='inserting')returnToScene();},onResume:()=>{if(mode==='paused')startExplore();},onFailure:showFailure,
+        onScreenLayout:layoutScreen
       });
+      const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+      for(const anchor of world.anchors||[])if(anchor.kind==='game'&&anchor.tokenMount)tokenFactories.set(anchor.gameIndex,()=>createTokenEntry({THREE,parent:anchor.tokenMount.parent,mount:anchor.tokenMount,reducedMotion:()=>reducedMotion.matches}));
+      cabinetMenu=createCabinetMenu({canvas:$('cabinet-display'),hotspots:$('cabinet-hotspots'),native:$('cabinet-native'),onStart:playCabinet,onBack:returnToScene,onCancel:cancelLaunch});
       if(!await loading.stage(3,'Opening Arcade')||token!==generation)return null;
       $('return-to-3d').hidden=false;$('retry-loading').hidden=true;
       if(defaultEntry){
@@ -146,7 +176,7 @@ function startExplore(focus=false,{capture=false,freeLook}={}) {
   if(controller.active&&pendingSceneFocus){pendingSceneFocus=false;$('scene-container').querySelector('canvas')?.focus({preventScroll:true});}
 }
 function returnToScene(event) {
-  cabinetGame.stop();
+  cabinetSession.cancel();cabinetMenu?.cancel();
   if(controller){
     controller.returnToAisle?.();
     if(controller){
@@ -168,18 +198,20 @@ for(const [index,game] of games.entries()) {
 }
 $('open-games').addEventListener('click',openDirectory);$('controls-games').addEventListener('click',openDirectory);$('open-controls').addEventListener('click',showHelp);$('close-controls').addEventListener('click',returnToScene);
 $('return-to-3d').addEventListener('click',returnToScene);$('retry-loading').addEventListener('click',()=>{loading.begin();status.textContent='Retrying Arcade';showMode('loading');dispose({leaving:true});location.reload();});
-$('cabinet-back').addEventListener('click',returnToScene);$('game-back').addEventListener('click',returnToScene);$('cabinet-previous').addEventListener('click',()=>inspect(selected-1,false));$('cabinet-next').addEventListener('click',()=>inspect(selected+1,false));
-$('game-retry').addEventListener('click',()=>{if(mode==='play'&&['delayed','error'].includes(cabinetGame.phase))cabinetGame.start(games[selected]);});
-$('game-expand').addEventListener('click',()=>{if(mode==='play'&&innerWidth>=768)setGameExpanded(document.body.dataset.gameExpanded!=='true');});
+$('cabinet-back').addEventListener('click',returnToScene);$('cabinet-screen-back').addEventListener('click',returnToScene);$('game-back').addEventListener('click',returnToScene);$('cabinet-previous').addEventListener('click',()=>inspect(selected-1,false));$('cabinet-next').addEventListener('click',()=>inspect(selected+1,false));
+$('game-retry').addEventListener('click',()=>{if(mode==='inserting'&&cabinetGame.phase==='delayed'){cancelLaunch();if(cabinetMenu?.enabled)cabinetMenu.cancel();playCabinet();}});
+$('game-expand').addEventListener('click',()=>{if(mode==='play')setGameExpanded(document.body.dataset.gameExpanded!=='true');});
 $('cabinet-play').addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();playCabinet();});
+actions.addEventListener('pointermove',e=>{if(!cabinetMenu?.enabled||!['inspect','inserting'].includes(mode))return;const point=screenMap?.uv(e.clientX,e.clientY);if(point)cabinetMenu.pointer({...point,type:'move'});});
+actions.addEventListener('pointerleave',()=>cabinetMenu?.pointer({u:0,v:0,type:'leave'}));
 for(const id of ['cabinet-guide','game-full-page'])$(id).addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href,selected);});
 for(const link of document.querySelectorAll('#site-nav a,#mobile-fallback > .actions a'))link.addEventListener('click',e=>{if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;e.preventDefault();navigate(e.currentTarget.href);});
 for(const [id,direction] of [['touch-forward',1],['touch-backward',-1]]) {
   const button=$(id);button.addEventListener('pointerdown',e=>{if(!controller||mode!=='explore')return;e.preventDefault();button.setPointerCapture(e.pointerId);controller.setTouchMove(direction);});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>controller?.setTouchMove(0));
 }
-window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene();}});window.addEventListener('pagehide',()=>dispose({leaving:true}));
+window.addEventListener('keydown',e=>{if(e.code==='Escape'&&['inspect','inserting','play','help'].includes(mode)){e.preventDefault();if(!e.repeat)returnToScene();}else if(['inspect','inserting'].includes(mode)&&actions.contains?.(e.target))cabinetMenu?.key(e);});window.addEventListener('pagehide',()=>dispose({leaving:true}));
 window.addEventListener('pageshow',e=>{if(e.persisted){observeNavigation();failed=false;showMode('loading');initialize();}});
 function resumeVisible() {if(mode==='paused'&&!document.hidden&&document.hasFocus())startExplore();}
-window.addEventListener('focus',resumeVisible);document.addEventListener('visibilitychange',()=>{if(document.hidden&&mode==='play')showMode('inspect');resumeVisible();});
+window.addEventListener('focus',()=>{resumeVisible();if(mode==='inspect')startPresentation();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&['play','inserting'].includes(mode))returnToScene();else if(!document.hidden&&mode==='inspect')startPresentation();resumeVisible();});
 window.addEventListener('resize',()=>{updateNavigationInset();updateGameSizeAvailability();$('touch-controls').hidden=mode!=='explore'||!(matchMedia('(pointer: coarse)').matches||innerWidth<768);});setGameExpanded(false);updateGameSizeAvailability();observeNavigation();initialize();

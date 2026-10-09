@@ -3,7 +3,7 @@
 export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=globalThis.document}, {
   setTimer=(callback,ms)=>setTimeout(callback,ms),clearTimer=id=>clearTimeout(id),slowAfterMs=10000,
 }={}) {
-  let frame=null,removeKeys=null,timer=0,phase='idle',openingFocus=null;
+  let frame=null,removeKeys=null,timer=0,phase='idle',openingFocus=null,releaseAllowed=true,documentLoaded=false,readyResolve=null,readyReject=null;
   function state(next) {if(next===phase)return;phase=next;onState(next);}
   function clearWait() {if(timer)clearTimer(timer);timer=0;}
   function clearKeys() {
@@ -11,14 +11,17 @@ export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=glo
     try{remove?.();}catch{/* A game may have navigated its WindowProxy cross-origin. */}
   }
   function stop() {
-    clearWait();clearKeys();state('idle');openingFocus=null;
+    clearWait();clearKeys();state('idle');openingFocus=null;documentLoaded=false;
+    readyResolve?.(false);readyResolve=null;readyReject=null;
     if(!frame)return;
     const owned=frame;frame=null;owned.removeEventListener('load',loaded);owned.removeEventListener('error',failed);
     try{owned.src='about:blank';}finally{owned.remove();}
   }
   function loaded(event) {
     if(!frame||(event?.currentTarget&&event.currentTarget!==frame))return;
-    const owned=frame;clearWait();clearKeys();owned.inert=false;owned.tabIndex=0;state('loaded');
+    const owned=frame;clearWait();clearKeys();documentLoaded=true;readyResolve?.(true);readyResolve=null;readyReject=null;
+    if(!releaseAllowed){state('prepared');return;}
+    owned.inert=false;owned.tabIndex=0;state('loaded');
     if(frame!==owned)return;
     try {
       const child=frame?.contentWindow;
@@ -36,12 +39,17 @@ export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=glo
   }
   function failed(event) {
     if(!frame||(event?.currentTarget&&event.currentTarget!==frame))return;
-    clearWait();state('error');
+    clearWait();readyReject?.(new Error('The game document could not be opened.'));readyResolve=null;readyReject=null;state('error');
   }
-  function start(game) {
+  let ready=Promise.resolve(false);
+  function start(game,{deferFocus=false}={}) {
     stop();if(game.comingSoon||!game.url)return false;
-    const url=new URL(game.url,doc.baseURI);
+    let url;try{url=new URL(game.url,doc.baseURI);}catch{return false;}
     if(!['http:','https:'].includes(url.protocol))return false;
+    releaseAllowed=!deferFocus;documentLoaded=false;ready=new Promise((resolve,reject)=>{readyResolve=resolve;readyReject=reject;});
+    // Consumers may attach after start; avoid an unhandled rejection on an
+    // immediate document error while retaining rejection for the barrier.
+    ready.catch(()=>{});
     frame=doc.createElement('iframe');frame.title=game.name+' game';frame.inert=true;frame.tabIndex=-1;
     frame.setAttribute('allow','fullscreen');frame.setAttribute('allowfullscreen','');
     frame.addEventListener('load',loaded);frame.addEventListener('error',failed);frame.src=url.href;host.append(frame);
@@ -49,11 +57,19 @@ export function createCabinetGame({host,onEscape,onState=()=>{},document:doc=glo
     timer=setTimer(()=>{if(frame!==owned||phase!=='opening')return;timer=0;state('delayed');},slowAfterMs);
     return true;
   }
-  return {start,stop,get active(){return !!frame;},get phase(){return phase;}};
+  function release(){if(!frame||!documentLoaded)return false;releaseAllowed=true;loaded({currentTarget:frame});return true;}
+  return {start,stop,release,get ready(){return ready;},get active(){return !!frame;},get phase(){return phase;}};
 }
 
-export function placeCabinetScreen(element,rect) {
+export function placeCabinetScreen(element,rect,projection=null) {
+  if(rect?.quad){
+    const map=projection?.(rect.quad,800,800/rect.aspect);
+    element.dataset.screenAligned=String(!!map);element.dataset.screenProjected=String(!!map);
+    element.style.left='0px';element.style.top='0px';element.style.width=map?map.width+'px':'';element.style.height=map?map.height+'px':'';
+    element.style.transform=map?.css||'';element.style.transformOrigin='0 0';
+    return map;
+  }
   const aligned=rect&&[rect.left,rect.top,rect.width,rect.height].every(Number.isFinite)&&rect.width>70&&rect.height>70;
-  element.dataset.screenAligned=String(!!aligned);
+  element.dataset.screenAligned=String(!!aligned);element.dataset.screenProjected='false';element.style.transform='';
   for(const key of ['left','top','width','height'])element.style[key]=aligned?rect[key]+'px':'';
 }

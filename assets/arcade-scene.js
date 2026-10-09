@@ -166,6 +166,7 @@ const geometryCache = new Map(), textureCache = new Map();
 let environmentTarget, disposed = false;
 const anchors = [], targetMeshes = [];
 const cabinetScreens = new WeakMap();
+const cabinetCoinDoors = new WeakMap();
 const sideSignatures = new WeakMap();
 function shortTitle(title) { const words=title.split(' '), middle=Math.ceil(words.length/2);return words.slice(0,middle).join(' ')+'\n'+words.slice(middle).join(' '); }
 function cachedGeometry(key, create) { if (!geometryCache.has(key)) geometryCache.set(key, create()); return geometryCache.get(key); }
@@ -190,7 +191,9 @@ function addGameAnchor(object, gameIndex) {
   const width = object.userData.W || 1.16, depth = object.userData.D || 1;
   const position = new THREE.Vector3(0, 1.2, depth / 2 + 0.1).applyMatrix4(object.matrixWorld);
   const approach = new THREE.Vector3(0, 0, depth / 2 + 1.05).applyMatrix4(object.matrixWorld);
-  const anchor = { id: 'game-' + gameIndex, gameIndex, position, approach, yaw: object.rotation.y, kind: 'game' };
+  const anchor = { id: 'game-' + gameIndex, gameIndex, position, approach, yaw: object.rotation.y, kind: 'game',cabinetRoot:object };
+  const coin=cabinetCoinDoors.get(object);
+  if(coin)anchor.tokenMount={parent:coin,position:[-.065,.085,.033],rotation:[0,0,0]};
   const surface=cabinetScreens.get(object);
   if(surface) {
     const {frame,width,height,cy,z}=surface;frame.updateMatrixWorld(true);
@@ -1206,6 +1209,8 @@ function artMaterials(key, uMin, uMax, vMax) {
 }
 function addCoinDoor(parent, x, y, z, s = 1, insertCol = '#c0101a') {
   const g = new THREE.Group(); g.position.set(x, y, z); g.scale.setScalar(s); parent.add(g);
+  let cabinet=parent;while(cabinet.parent&&cabinet.parent!==staticRoot)cabinet=cabinet.parent;
+  cabinetCoinDoors.set(cabinet,g);
   box(0.29, 0.38, 0.006, M.darkMetal, g, 0, 0, 0.003);
   box(0.265, 0.355, 0.012, M.coinDoor, g, 0, 0, 0.008);
   const key = insertCol;

@@ -1,0 +1,16 @@
+PASS ready first still completes exactly once after insertion
+PASS insertion first has static waiting state and no fake readiness
+PASS external cancellation aborts work and old success cannot complete retry
+PASS old failure is isolated from a new session
+PASS errors and thrown preload support retry without stranded work
+PASS pre-aborted requests do not start work; listeners detach after settlement
+PASS reduced motion is stationary and uses the same readiness barrier
+PASS host hook failures cannot strand completion and onStart can cancel
+PASS state hooks may cancel before start without resurrecting the prop
+PASS timestep partitions, contact alignment and final occlusion are deterministic
+PASS all real Three geometry is finite, reeded edge is instanced, mount follows parent
+PASS mouth shader clips only owned materials and supports instanced world transforms
+PASS idle costs no pose/matrix updates; disposal frees every owned resource once
+PASS borrowed environment textures survive reset and disposal
+PASS no private render loop, timers, loaders or host camera edits
+{"checks":15,"threeRevision":"169","tokenDuration":0.92,"reducedDuration":0.1,"graphics":false}
