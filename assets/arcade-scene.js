@@ -1,5 +1,6 @@
 // Derivative of completed Claude12 / starlite-arcade-claude. See arcade-source.json.
 // Authored source is preserved at its pinned Lab commit; this module is separate.
+import {createSlidingExits} from './arcade-exits.js';
 export function createArcadeScene(THREE, renderer, games) {
 const titles = games.map(g => g.name.toUpperCase());
 const TAU = Math.PI * 2;
@@ -23,6 +24,13 @@ const dynRoot = new THREE.Group();    // animated / special objects
 scene.add(staticRoot, dynRoot);
 
 const colliders = [];
+const doorPanels = new Map();
+const exits = createSlidingExits((spec,open)=>doorPanels.get(spec.id)?.forEach((group,index)=>{group.position.x=spec.panels[index].travel*open;}));
+colliders.push(...exits.colliders);
+function doorPanel(id) {
+  const group=new THREE.Group();dynRoot.add(group);
+  if(!doorPanels.has(id))doorPanels.set(id,[]);doorPanels.get(id).push(group);return group;
+}
 function addCollider(x0, z0, x1, z1) {
   colliders.push({ x0: Math.min(x0, x1), x1: Math.max(x0, x1), z0: Math.min(z0, z1), z1: Math.max(z0, z1) });
 }
@@ -194,6 +202,7 @@ function addExitAnchor(id, x, z, width) {
 }
 function dispose() {
   if(disposed)return;disposed=true;
+  exits.dispose();doorPanels.clear();
   const geometries = new Set(geometryCache.values()), materials = new Set(), textures = new Set(allTextures);
   scene.traverse(o => { if (o.geometry) geometries.add(o.geometry); for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m) { materials.add(m); for (const value of Object.values(m)) if (value?.isTexture) textures.add(value); } });
   geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); environmentTarget?.dispose(); scene.clear(); geometryCache.clear(); textureCache.clear();
@@ -1606,6 +1615,7 @@ function buildRoom() {
   const carpet = carpetMaterial(wear);
   carpet.map.repeat.set(9.9 / 1.7, 11 / 1.7);
   mesh(new THREE.PlaneGeometry(9.9, 11), carpet, staticRoot, 1.35, 0, -5.5, -Math.PI / 2);
+  mesh(new THREE.PlaneGeometry(1, .65), carpet, staticRoot, -2.75, 0, -11.325, -Math.PI / 2);
   // --- ceilings
   const cg = new THREE.PlaneGeometry(x1 - x0, z1 - z0); scaleUV(cg, (x1 - x0) / 1.2, (z1 - z0) / 1.2);
   mesh(cg, M.ceil, staticRoot, 0, h, (z0 + z1) / 2, Math.PI / 2);
@@ -1619,7 +1629,9 @@ function buildRoom() {
   }
   // --- walls (room on the left of travel direction => normal points inward)
   wallStrip(x0, z1, x0, z0, 0, h, 0);                       // left
-  wallStrip(x0, z0, x1, z0, 0, h, 11);                      // far
+  wallStrip(x0, z0, -3.25, z0, 0, h, 11);                  // rear exit opening
+  wallStrip(-3.25, z0, -2.25, z0, 2.2, h, 11.35, false);
+  wallStrip(-2.25, z0, x1, z0, 0, h, 12.35);
   wallStrip(x1, z0, x1, ALC.z0, 0, h, 18.2);                // right, back part
   wallStrip(x1, ALC.z0, x1, ALC.z1, ALC.h, h, 24.3, false); // header over the alcove
   wallStrip(x1, ALC.z1, x1, z1, 0, h, 27.7);                // right, front part
@@ -1637,7 +1649,13 @@ function buildRoom() {
   box(0.06, 0.06, ALC.z1 - ALC.z0 + 0.06, M.alu, staticRoot, x1 - 0.01, ALC.h - 0.03, (ALC.z0 + ALC.z1) / 2);
   for (const z of [ALC.z0, ALC.z1]) box(0.06, ALC.h, 0.06, M.alu, staticRoot, x1, ALC.h / 2, z);
   // colliders for the shell
-  addCollider(-6, 0, 8, 2); addCollider(-6, -13, 8, z0); addCollider(-6, -13, x0, 2);
+  addCollider(-6, 0, -1, 2);addCollider(1, 0, 8, 2);
+  addCollider(-6, -13, -3.25, z0);addCollider(-2.25, -13, 8, z0);
+  addCollider(-6, -13, x0, 2);
+  // Short landing boundaries also contain a failed/blocked navigation attempt.
+  addCollider(-1, .65, 1, 2);addCollider(-3.25, -13, -2.25, -11.65);
+  addCollider(-1.04,-.06,-.96,.06);addCollider(.96,-.06,1.04,.06);
+  addCollider(-3.25,-11.02,-3.2,-10.96);addCollider(-2.3,-11.02,-2.25,-10.96);
   addCollider(x1, -13, 8, ALC.z0); addCollider(x1, ALC.z1, 8, 2); addCollider(ALC.x1, -13, 8, 2);
 
   buildEntrance();
@@ -1657,21 +1675,22 @@ function buildEntrance() {
   // door frame
   const fr = M.alu, z = 0;
   box(0.08, 2.3, 0.12, fr, staticRoot, -1.0, 1.15, z); box(0.08, 2.3, 0.12, fr, staticRoot, 1.0, 1.15, z);
-  box(2.08, 0.08, 0.12, fr, staticRoot, 0, 2.25, z); box(0.04, 2.22, 0.1, fr, staticRoot, 0, 1.11, z);
+  box(2.08, 0.08, 0.12, fr, staticRoot, 0, 2.25, z);
   for (const sx of [-1, 1]) {
-    const cx = sx * 0.5;
-    box(0.9, 0.12, 0.05, fr, staticRoot, cx, 0.06, z); box(0.9, 0.06, 0.05, fr, staticRoot, cx, 2.18, z);
-    box(0.05, 2.2, 0.05, fr, staticRoot, cx - 0.45 * sx * -1 + 0.0, 1.1, z);
-    mesh(new THREE.PlaneGeometry(0.88, 2.0), M.glass, staticRoot, cx, 1.12, z - 0.01, 0, Math.PI, 0);
+    const cx = sx * 0.5, panel=doorPanel('home-entrance');
+    box(0.9, 0.12, 0.05, fr, panel, cx, 0.06, z); box(0.9, 0.06, 0.05, fr, panel, cx, 2.18, z);
+    box(0.05, 2.2, 0.05, fr, panel, cx + 0.45 * sx, 1.1, z);
+    box(0.02, 2.22, 0.1, fr, panel, sx*.01, 1.11, z);
+    mesh(new THREE.PlaneGeometry(0.88, 2.0), M.glass, panel, cx, 1.12, z - 0.01, 0, Math.PI, 0);
     // push bar
-    box(0.62, 0.035, 0.035, M.chrome, staticRoot, cx, 1.02, z - 0.08);
-    for (const bx of [-0.3, 0.3]) box(0.03, 0.04, 0.07, M.chrome, staticRoot, cx + bx, 1.02, z - 0.045);
+    box(0.62, 0.035, 0.035, M.chrome, panel, cx, 1.02, z - 0.08);
+    for (const bx of [-0.3, 0.3]) box(0.03, 0.04, 0.07, M.chrome, panel, cx + bx, 1.02, z - 0.045);
     // kick plate
-    box(0.86, 0.22, 0.004, M.steel, staticRoot, cx, 0.24, z - 0.03);
+    box(0.86, 0.22, 0.004, M.steel, panel, cx, 0.24, z - 0.03);
   }
   // hours decal (reads correctly from outside, mirrored from inside)
   const hours = new THREE.MeshBasicMaterial({ map: (() => { const t = labelTexture(['STARLITE ARCADE', 'OPEN DAILY 2PM – 11PM', 'TOKENS · PRIZES · FUN'], 'rgba(0,0,0,0)', 'rgba(255,255,255,0.9)', 512, 160, 28); return t; })(), transparent: true, depthWrite: false });
-  mesh(new THREE.PlaneGeometry(0.6, 0.19), hours, staticRoot, -0.5, 1.55, -0.02, 0, Math.PI, 0);
+  mesh(new THREE.PlaneGeometry(0.6, 0.19), hours, doorPanels.get('home-entrance')[0], -0.5, 1.55, -0.02, 0, Math.PI, 0);
   // window
   box(1.9, 0.08, 0.14, fr, staticRoot, 2.3, 0.95, 0); box(1.9, 0.08, 0.14, fr, staticRoot, 2.3, 2.35, 0);
   box(0.08, 1.48, 0.14, fr, staticRoot, 1.4, 1.65, 0); box(0.08, 1.48, 0.14, fr, staticRoot, 3.2, 1.65, 0); box(0.04, 1.4, 0.1, fr, staticRoot, 2.3, 1.65, 0);
@@ -1916,11 +1935,13 @@ function buildProps() {
   box(0.02, 0.3, 0.15, M.steel, g, 3.59, 0.85, -0.8);
   // exit door on the far wall
   const ex = -2.75, zf = ROOM.z0 + 0.01;
-  box(1.0, 2.2, 0.06, M.alu, g, ex, 1.1, zf);
-  box(0.9, 2.1, 0.05, new THREE.MeshStandardMaterial({ color: 0x3a3c48, roughness: 0.5, metalness: 0.4 }), g, ex, 1.05, zf + 0.02);
-  box(0.75, 0.05, 0.05, M.chrome, g, ex, 1.0, zf + 0.08);
-  for (const sx of [-0.36, 0.36]) box(0.05, 0.08, 0.06, M.darkMetal, g, ex + sx, 1.0, zf + 0.06);
-  box(0.8, 0.18, 0.004, new THREE.MeshStandardMaterial({ color: 0x808088, roughness: 0.5, metalness: 0.6 }), g, ex, 0.15, zf + 0.047);
+  for(const sx of [-.475,.475])box(.05,2.2,.06,M.alu,g,ex+sx,1.1,zf);
+  box(1,.05,.06,M.alu,g,ex,2.175,zf);
+  const exitPanel=doorPanel('home-exit');
+  box(0.9, 2.1, 0.05, new THREE.MeshStandardMaterial({ color: 0x3a3c48, roughness: 0.5, metalness: 0.4 }), exitPanel, ex, 1.05, zf + 0.02);
+  box(0.75, 0.05, 0.05, M.chrome, exitPanel, ex, 1.0, zf + 0.08);
+  for (const sx of [-0.36, 0.36]) box(0.05, 0.08, 0.06, M.darkMetal, exitPanel, ex + sx, 1.0, zf + 0.06);
+  box(0.8, 0.18, 0.004, new THREE.MeshStandardMaterial({ color: 0x808088, roughness: 0.5, metalness: 0.6 }), exitPanel, ex, 0.15, zf + 0.047);
   const exitT = labelTexture(['EXIT'], '#0b3a18', '#7dff9a', 256, 96, 64);
   box(0.36, 0.14, 0.06, new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 }), g, ex, 2.4, zf + 0.03);
   mesh(new THREE.PlaneGeometry(0.32, 0.11), new THREE.MeshBasicMaterial({ map: exitT, color: new THREE.Color(1.6, 1.6, 1.6) }), g, ex, 2.4, zf + 0.062);
@@ -2035,6 +2056,6 @@ function animate(t, dt) {
 
 try {
 const calls = build();
-return {scene, camera, colliders, anchors, targetMeshes, animate, textures:allTextures, calls, dispose};
+return {scene, camera, colliders, anchors, targetMeshes, exits, animate, textures:allTextures, calls, dispose};
 } catch(error) { dispose(); throw error; }
 }

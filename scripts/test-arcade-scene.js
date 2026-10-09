@@ -32,7 +32,8 @@ function canvas() {
   const fakeThree={...THREE,PMREMGenerator:class{fromScene(){return {texture:new THREE.Texture(),dispose(){environmentDisposed=true;}};}dispose(){}}};
   const {catalog}=await require('./load-arcade-modules')();
   const games=catalog.buildArcadeCatalog(new URL('https://pazneria.github.io/arcade/'),require('../codex-link-contract'));
-  const {createArcadeScene}=await load('assets/arcade-scene.js');
+  const sceneSource=fs.readFileSync(path.join(root,'assets/arcade-scene.js'),'utf8').replace("'./arcade-exits.js'",JSON.stringify(moduleUrl(fs.readFileSync(path.join(root,'assets/arcade-exits.js'),'utf8'))));
+  const {createArcadeScene}=await import(moduleUrl(sceneSource));
   const world=createArcadeScene(fakeThree,fakeRenderer,games);
   assert.equal(world.camera.fov,70);assert.equal(world.camera.near,.03);assert.equal(world.camera.far,40);
   assert.equal(world.anchors.length,8,'Six catalog anchors and two Home doors');
@@ -53,6 +54,20 @@ function canvas() {
     assert(canInteract(hit.distance,blocker?.distance),`Target ${anchor.id} must be usable from its approach`);
   }
   world.camera.position.set(0,1.62,-0.95);world.animate(1,0.016);
+  for(const [id,x,z,yaw] of [['home-entrance',0,-.95,Math.PI],['home-exit',-2.75,-10,0]]) {
+    const exitWorld=createArcadeScene(fakeThree,fakeRenderer,games);
+    const walking={x,z,yaw,eye:1.62,crouch:false};let crossing=null;
+    for(let step=0;step<50&&!crossing;step++) {
+      exitWorld.exits.update(walking,.05);const before={...walking};
+      movePlayer(walking,{forward:1,strafe:0,run:true},.05,exitWorld.colliders);
+      crossing=exitWorld.exits.crossed(before,walking);
+    }
+    assert.equal(crossing,id,`${id} must have a passable shell opening after sliding`);
+    exitWorld.scene.updateMatrixWorld(true);
+    const ray=new THREE.Raycaster(new THREE.Vector3(x,1.3,z),new THREE.Vector3(0,0,id==='home-entrance'?1:-1),0,1.5);
+    assert(!ray.intersectObjects(exitWorld.scene.children,true).some(i=>!i.object.userData.anchor&&!i.object.material.transparent&&i.object.material.visible!==false),`${id} has no solid geometry across the open doorway`);
+    exitWorld.dispose();
+  }
   const stats={meshes:0,vertices:0,triangles:0,materials:new Set(),textures:world.textures.length,staticMergeBuckets:world.calls,colliders:world.colliders.length};
   world.scene.traverse(o=>{if(!o.isMesh||o.material.visible===false)return;stats.meshes++;stats.vertices+=o.geometry.attributes.position.count;stats.triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;stats.materials.add(o.material);});
   const materialCount=stats.materials.size;delete stats.materials;

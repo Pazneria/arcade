@@ -4,6 +4,8 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   const {scene,camera,anchors,targetMeshes,colliders}=world;
   const canvas=renderer.domElement,player=createPlayer(),keys=new Set(),listeners=[];
   const ray=new THREE.Raycaster(),point=new THREE.Vector2(),view=new THREE.Vector3();
+  const before={x:player.x,z:player.z},reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+  let leaving=false;
   let disposed=false,started=false,active=false,raf=0,last=0,elapsed=0,lastRender=0,lastPick=0,target=null,gesture=null,touchMove=0,captureEpoch=0,captureRequestEpoch=-1,capturePending=false,ignoredUnlock=false;
   let touch=matchMedia('(pointer: coarse)').matches || innerWidth<768;
   const listen=(el,type,fn,options)=> {el.addEventListener(type,fn,options);listeners.push(()=>el.removeEventListener(type,fn,options));};
@@ -27,7 +29,8 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     return canInteract(hit.distance,blocker?.distance) ? hit.object.userData.anchor : null;
   }
   function select(next) { if(next===target)return;target=next;onTarget(next); }
-  function activate(anchor) { if(!anchor||!active)return; if(anchor.kind==='home')onHome(); else onInspect(anchor.gameIndex); }
+  function leaveHome() {if(disposed||!active||leaving)return;leaving=true;pause();onHome();}
+  function activate(anchor) { if(!anchor||!active)return; if(anchor.kind==='home')leaveHome(); else onInspect(anchor.gameIndex); }
   function renderOnce() {
     if(disposed)return;
     try {cameraPose();scene.updateMatrixWorld(true);world.animate(elapsed,0);renderer.render(scene,camera);}
@@ -35,10 +38,14 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   }
   function frame(now) {
     if(!active||disposed)return;
+    if(document.hidden||document.hasFocus?.()===false){pause();onPause('blur');return;}
     try {
     raf=requestAnimationFrame(frame);
     const dt=last?Math.min((now-last)/1000,0.05):0;last=now;elapsed+=dt;
+    world.exits?.update(player,dt,{reducedMotion:reducedMotion.matches});
+    before.x=player.x;before.z=player.z;
     movePlayer(player,{forward:(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)+touchMove,strafe:(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0),run:keys.has('ShiftLeft')||keys.has('ShiftRight')},dt,colliders);
+    if(world.exits?.crossed(before,player)){leaveHome();return;}
     cameraPose();
     if(touch && now-lastRender<1000/30)return;
     lastRender=now;scene.updateMatrixWorld(true);world.animate(elapsed,dt);renderer.render(scene,camera);
@@ -47,9 +54,10 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   }
   function pause() {
     active=false;captureEpoch++;cancelAnimationFrame(raf);raf=0;last=0;clearInput();select(null);
+    world.exits?.cancel();
     if(document.pointerLockElement===canvas)document.exitPointerLock();
   }
-  function resume() {if(disposed||document.hidden)return;active=true;last=0;if(!raf)raf=requestAnimationFrame(frame);}
+  function resume() {if(disposed||leaving||document.hidden||document.hasFocus?.()===false)return;active=true;last=0;if(!raf)raf=requestAnimationFrame(frame);}
   function rejectLateLock() {if(document.pointerLockElement===canvas){ignoredUnlock=true;document.exitPointerLock();}}
   async function capture() {
     if(touch||disposed||!active||capturePending)return;const token=captureEpoch;captureRequestEpoch=token;capturePending=true;
@@ -76,7 +84,7 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
     if(!active)return;
     if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'].includes(e.code)){keys.add(e.code);e.preventDefault();}
     if(e.code==='KeyE'&&!e.repeat){e.preventDefault();activate(pick());}
-    if(e.code==='KeyR'&&!e.repeat){Object.assign(player,START);player.crouch=false;}
+    if(e.code==='KeyR'&&!e.repeat){world.exits?.cancel();Object.assign(player,START);player.crouch=false;}
     if(e.code==='KeyC'&&!e.repeat)player.crouch=!player.crouch;
     if(e.code==='Tab'){pause();onPause('keyboard');}
   });
@@ -107,5 +115,5 @@ export function createArcadeController(THREE, renderer, world, {onTarget,onInspe
   canvas.setAttribute('tabindex','0');canvas.setAttribute('aria-label','Arcade scene. Move with WASD or arrow keys. Click for mouse look; Controls for help and Games for links.');
   function dispose() {if(disposed)return;pause();disposed=true;listeners.splice(0).forEach(remove=>remove());world.dispose();renderer.setAnimationLoop(null);renderer.dispose();renderer.forceContextLoss();canvas.remove();}
   try {container.append(canvas);resize();renderOnce();started=true;} catch(error) {dispose();throw error;}
-  return {player,pause,resume,capture,focusGame,dispose,reset(){Object.assign(player,START);renderOnce();},setTouchMove(value){touchMove=value;},get active(){return active;}};
+  return {player,pause,resume,capture,focusGame,dispose,reset(){world.exits?.cancel();Object.assign(player,START);renderOnce();},setTouchMove(value){touchMove=value;},get active(){return active;}};
 }
