@@ -1,25 +1,25 @@
 {
-  "build": "2026.11.01.22",
+  "build": "2026.11.01.29",
   "type": "playable-only preview candidate; not deployed",
-  "asset_cache_version": "20261101-22",
+  "asset_cache_version": "20261101-29",
   "entrypoint": "index.html",
   "no_forced_refresh": true,
   "renderer": "Three.js r185 / WebGL 2 depth buffer",
   "gpu_browser_tested": false,
-  "scope": "Exterior blockout; no interiors, story, combat or playable door.",
-  "data_limits": "Source terrain/footprints are measured or imagery-derived as cited; lower terrain, approach road, facade openings, entrance and Warden ruin are approximations. Lighthouse position and 1910 inventory dimensions have cited sources.",
+  "scope": "Exterior blockout with operable entrance and provisional vestibule; steeper fictional lower slopes and smoothed shorter road; no cellblock, story or combat.",
+  "data_limits": "Source-land surface preserved from build 27. Lower flanks, plain, road, entry and intact Warden House are approximate; road is not certified for vehicles. Lighthouse dimensions and source terrain are cited.",
   "files": {
     "ATTRIBUTION.html": {
-      "bytes": 6172,
-      "sha256": "88b7a58048e8b047596650809501e700f9c70892edebd66334d6ee4de933bcc0"
+      "bytes": 6721,
+      "sha256": "0774ff7a52011f6620a1f0f6dc044d3fc7e418b3fc953687b21bba25a6efeb86"
     },
     "LICENSES.txt": {
-      "bytes": 607,
-      "sha256": "495c123e53f59867c2e1827c14bec20678783b36cf862758cb40d482172a4a2a"
+      "bytes": 644,
+      "sha256": "604eec7a8e73fcf06058d916d1c7551c44129d7a14b713a0b567ea17a58b12ad"
     },
     "architecture.mjs": {
-      "bytes": 16766,
-      "sha256": "f5f163c0c10c3b73eda04d8a29cabb832f739318bfc7cb7df2f8d72cbd8a97e9"
+      "bytes": 18315,
+      "sha256": "fe933143b5f7286f117c28df5d9de930ef0414b3cc99bbc605d617c38869d761"
     },
     "data/additional_buildings.json": {
       "bytes": 3047,
@@ -46,44 +46,52 @@
       "sha256": "05c7844820790b5548d95944d6abed12f2425a711b2edac7c9c78f114dcc56ae"
     },
     "data/landmark_sources.json": {
-      "bytes": 2095,
-      "sha256": "ecede595b74ab3e03d2506dac5bd9fcb890ab221bd3410ae09814e10f1e4d750"
+      "bytes": 2206,
+      "sha256": "2a91a83597dd8ffef29676a74e85e39c8c5a13a2f18243bea31c67cc47cea4e7"
     },
     "data/playable_height_f32le.bin": {
       "bytes": 3968004,
-      "sha256": "aea393659f150facddcdb1b232a49dadb1656e932c77121f1fb3db06f54e1d0f"
+      "sha256": "e49d8e0c3a641edd31bc82cc08ac3e31da49e32e95c541edbf77b393a2195e86"
     },
     "data/playable_terrain_contract.json": {
-      "bytes": 23988,
-      "sha256": "492b8d13a7fd3f756cf2bbc2baa8d0056b61796a95adc95f94da4e7df54c90ef"
+      "bytes": 18690,
+      "sha256": "0216ce732882b075ca6df8d3c3e4205614d3e407dfdbb0099c0f61297891fe0a"
     },
     "data/road_mask_u8.bin": {
       "bytes": 992001,
-      "sha256": "0426b757321697d2f280d4e6b6502dbc648af25003bbcb8c0e05e84fa9d4a408"
+      "sha256": "48ac0f3bea39fafdcb69a28421682ca5062ccf7c94d74233b397e190bf0f4b4d"
     },
     "data/walk.js": {
-      "bytes": 7078,
-      "sha256": "630146a807601a59a86e90c673ef6a3894a8312baeef0f61ff2bc6974eb867a9"
+      "bytes": 8707,
+      "sha256": "4a1214b9d07ce8043bfc4ecef38f1fcfec8d0821270ba22b9acb81d7386e748e"
+    },
+    "entry_door.mjs": {
+      "bytes": 6738,
+      "sha256": "67f5fcf3f58aeb0767cdeb436a62f2f717a6b5419ed3c97b833f090f0a91545d"
+    },
+    "entry_room.mjs": {
+      "bytes": 4105,
+      "sha256": "48ea8ffe91ccfe1669e0368576325c15788b9681bd5029e922c05fb6e6f7634f"
     },
     "game.mjs": {
-      "bytes": 10489,
-      "sha256": "1730e6b2f4757e93834bb1d6c51c8cd13f6f8449d96a28040ca3205185631a19"
+      "bytes": 12955,
+      "sha256": "fc081d5a0f8eb1f0993f5905746e371e2858d9de86130c213fb08581865ef315"
     },
     "geometry.mjs": {
       "bytes": 7991,
       "sha256": "8a6958d2695702079225c564f5a9804f161ddc96c341b1998402baf72b5adf15"
     },
     "index.html": {
-      "bytes": 1364,
-      "sha256": "4533948fb7229c886e8a361e424bfba78f2d5fff5351d520052ddac041d06e10"
+      "bytes": 1475,
+      "sha256": "33512dce790cbc1a8714d1d6ec4d99b52f98e0ff86c9e85258d946ec73b22726"
     },
     "lighthouse.mjs": {
       "bytes": 5331,
       "sha256": "81b394a15429b8e9c9af6c208b8edb54f2e64591f335f903f18a8f8cb8b3d0eb"
     },
     "movement_vertical.mjs": {
-      "bytes": 1481,
-      "sha256": "4a5f16d6972d4be47a12bcbcd36ead2a0357267a6300651fe665f75ea7bdb967"
+      "bytes": 1758,
+      "sha256": "ac2cd13e3c9ac6f736c45ff4b1a6da75e58e2ddbb4a7547139747ec7a5b50ef5"
     },
     "playable_terrain.mjs": {
       "bytes": 6298,
@@ -98,16 +106,24 @@
       "sha256": "a0c22c258cfd8061e2c99b75ab1ae9a0610b0d5c36df1bd6439709d274af7376"
     },
     "style.css": {
-      "bytes": 1578,
-      "sha256": "f61eda13f3b4f689930172302696049be34c968ec26410001d3a5dc68975261e"
+      "bytes": 1815,
+      "sha256": "462c66b7825e10c6eff3d0a3939cba16e3e9ce9d8355e046e1cf4a99d3413438"
     },
     "textures/cellhouse_concrete.png": {
       "bytes": 105708,
       "sha256": "3e85ae23450c4155408ea957b5bc7f6cc3033dbb262fa22e3b23407d6da12ff6"
     },
+    "textures/door_painted_steel.png": {
+      "bytes": 19527,
+      "sha256": "4f7758a89f074eaea59cdbac47afb91709d657fa41c870ce3224e8a4eb48822c"
+    },
     "textures/industrial_concrete.png": {
       "bytes": 111100,
       "sha256": "db9d029717d0e6316ba8f019c01483c44060d7d62f4868d10b5e3bb08acbb877"
+    },
+    "textures/window_glass.png": {
+      "bytes": 18656,
+      "sha256": "f5cbfd0b7ca89f9d84696ccf241f23ec6b6338e7d0f511baffe3c8cc08a96046"
     },
     "vendor/THREE-LICENSE.txt": {
       "bytes": 1081,
@@ -122,8 +138,8 @@
       "sha256": "9873b92caefa8726d237513896bae5469e9fbb6abd196e50005a9ff5c9546baa"
     },
     "warden_ruin.mjs": {
-      "bytes": 3690,
-      "sha256": "330c5a6b9f35094cd355bd32fe3fb64267cea6f6f134317e4443d3d0ba33988f"
+      "bytes": 8450,
+      "sha256": "6a601f19ab6393741b7c864ecdf410a8fa5701ce8f374796e1f7afbd78f759eb"
     }
   }
 }

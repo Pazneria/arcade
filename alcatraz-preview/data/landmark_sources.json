@@ -11,11 +11,12 @@
     "modeled_details": "Lantern piers, gallery, rail, windows and rotation are visual interpretations of an NPS photo, not measured plans; no interior. The former attached keeper quarters are not yet modeled."
   },
   "warden_house": {
-    "status": "Photo-informed approximate present-day roofless ruin, not the intact 1934–1963 prison-era residence; burned in 1970.",
+    "status": "Reference-inspired intact exterior during the 1934–1963 prison era; the real house later burned in 1970.",
     "nps_source": "https://www.nps.gov/places/16-warden-s-house.htm",
     "position": "Approximate mapped center x97.158,z-21.376. Center is not a survey; photographic object coordinates differ by many metres.",
     "map_source": "https://mapcarta.com/W27996789",
     "map_attribution": "© OpenStreetMap contributors, https://www.openstreetmap.org/copyright ; ODbL 1.0",
-    "limitations": "20 by 12 m footprint, orientation, wall openings, breach, chimney and height are inferred visual blockout proportions, not measured and not a 1962 reconstruction. Other real structures may be absent."
+    "limitations": "20 by 12 m footprint, orientation, low hipped roofs, Mission Revival parapets, glazing, veranda, chimney, and opening positions are interpreted approximations from period imagery, not surveyed; no interior or keeper quarters are modeled.",
+    "historical_reference": "https://www.hmdb.org/PhotoFullSize.asp?PhotoID=865605"
   }
 }

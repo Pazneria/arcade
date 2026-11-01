@@ -15,15 +15,17 @@ export function setJumpHeld(state,held,groundY){
  }
  return false;
 }
-export function updateJump(state,groundY,dt){
+export function updateJump(state,groundY,dt,ceilingY=null,bodyHeight=1.8){
  if(!Number.isFinite(groundY))throw Error('Jump lost terrain support');
+ const ceiling=Number.isFinite(ceilingY)?ceilingY-bodyHeight:Infinity;if(!Number.isFinite(bodyHeight)||bodyHeight<=0||ceiling<groundY-1e-7)throw Error('Invalid ceiling clearance');
  if(!Number.isFinite(dt)||dt<=0){if(state.grounded)state.footY=groundY;return state.footY}
  // The game already bounds frame delta to .1 s. Analytic integration is stable
  // and independent of frame rate on a stationary ground surface.
  dt=Math.min(dt,.1);
  if(state.grounded){state.footY=groundY;state.velocity=0;return state.footY}
- const next=state.footY+state.velocity*dt-.5*GRAVITY*dt*dt;
+ let next=state.footY+state.velocity*dt-.5*GRAVITY*dt*dt;
  state.velocity-=GRAVITY*dt;
+ if(next>ceiling){next=ceiling;if(state.velocity>0)state.velocity=0}
  if(next<=groundY){state.footY=groundY;state.velocity=0;state.grounded=true}
  else state.footY=next;
  return state.footY;
