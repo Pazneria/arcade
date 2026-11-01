@@ -1,23 +1,23 @@
 {
-  "build": "2026.11.01.11",
+  "build": "2026.11.01.12",
   "type": "static public preview candidate; publication pending",
-  "asset_cache_version": "20261101-11",
+  "asset_cache_version": "20261101-12",
   "entrypoint": "index.html",
   "no_forced_refresh": true,
   "renderer": "Three.js r185 / WebGL 2 depth buffer",
   "gpu_browser_tested": false,
   "files": {
     "ATTRIBUTION.html": {
-      "bytes": 4903,
-      "sha256": "5bf612b4db036591dedfd282b6abc1ecc5560db78f34a9ca6bdc6bf2b39f44a0"
+      "bytes": 5085,
+      "sha256": "5cce63acf764494b2fa635d052deec49451a8a22b519d341eaf6182a77052e84"
     },
     "LICENSES.txt": {
-      "bytes": 375,
-      "sha256": "9ec1e7b1ab7c8d5d79a75f0eceb21cc1d3c42bdd0d7f512ed6cde6d0d23cc2e5"
+      "bytes": 484,
+      "sha256": "48ba081968cf39708022121e5315ff0d0244b3528f532c0cead044aa198a1d86"
     },
     "architecture.mjs": {
-      "bytes": 9014,
-      "sha256": "6c6a5aa0cb7a58abaa9816e8ab033224e9f2026031be5fb1a493564d26c7d419"
+      "bytes": 9864,
+      "sha256": "90f78c318849300d4bcfe0a12b145504ddcfdf2a31df46c9ba8d322017cd830e"
     },
     "data/additional_buildings.json": {
       "bytes": 3047,
@@ -60,8 +60,8 @@
       "sha256": "ad9064a91d406a6fbf42f0e49ea59e567099acc176099de80ddb72f8ed838cd2"
     },
     "game.mjs": {
-      "bytes": 9343,
-      "sha256": "42562d07839a1e7bff269bed3d40930caef1a70345bd0237b93df1f5b6dbc165"
+      "bytes": 10086,
+      "sha256": "0b1cf5f80d6b0ca0f7c4af427abe00bcd30eb6ac335a20d87d51e4fb404c3eb4"
     },
     "geometry.mjs": {
       "bytes": 7991,
@@ -69,7 +69,7 @@
     },
     "index.html": {
       "bytes": 1396,
-      "sha256": "bb1837131c30e48f1f1ec22572e79a823b1d5c191e04bbba6d9eac971d02bb7c"
+      "sha256": "f89de77e64e73e29b3befe9846dbc1f01610434e5a7f917554647df56ce5cc9e"
     },
     "movement_vertical.mjs": {
       "bytes": 1481,
@@ -90,6 +90,14 @@
     "style.css": {
       "bytes": 1578,
       "sha256": "f61eda13f3b4f689930172302696049be34c968ec26410001d3a5dc68975261e"
+    },
+    "textures/cellhouse_concrete.png": {
+      "bytes": 105708,
+      "sha256": "3e85ae23450c4155408ea957b5bc7f6cc3033dbb262fa22e3b23407d6da12ff6"
+    },
+    "textures/industrial_concrete.png": {
+      "bytes": 111100,
+      "sha256": "db9d029717d0e6316ba8f019c01483c44060d7d62f4868d10b5e3bb08acbb877"
     },
     "vendor/THREE-LICENSE.txt": {
       "bytes": 1081,
