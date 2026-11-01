@@ -1,4 +1,5 @@
-import {buildArcadeCatalog} from './arcade-catalog.js';
+import {buildArcadeCatalog} from './arcade-catalog.js?v=dc-window-20261101-1';
+import {createDeadCircuitWindow} from './dead-circuit-window.js?v=dc-window-20261101-1';
 import {readReturnState,writeReturnState,clearReturnState,navigateAfterDispose} from './arcade-navigation.js';
 import {createLoadingScreen} from './arcade-loading.js';
 import {createCabinetGame,placeCabinetScreen} from './arcade-cabinet.js';
@@ -19,6 +20,19 @@ let screenMap=null,cabinetMenu=null,approvedArt=null;
 const tokens=new Map();
 const tokenFactories=new Map();
 const directoryButtons=[];
+const deadCircuitWindow=createDeadCircuitWindow({
+  onPark:()=>{controller?.pause();controller?.stopPresentation?.();},
+  onStatus:syncDeadCircuitStatus,
+  onReturn:()=>{if(mode==='inspect'&&games[selected]?.id==='dead-circuit'){startPresentation();$('cabinet-play').focus({preventScroll:true});}},
+});
+function syncDeadCircuitStatus(phase=deadCircuitWindow.status){
+  if(games[selected]?.id!=='dead-circuit')return;
+  const open=deadCircuitWindow.active;
+  $('cabinet-play').textContent=open?'Return to game':'Play in new tab';
+  $('cabinet-play').setAttribute('aria-label',open?'Return to Dead Circuit game tab':'Play Dead Circuit (opens in a new tab)');
+  $('cabinet-lifecycle-status').hidden=phase==='idle';
+  $('cabinet-lifecycle-status').textContent=phase==='blocked'?'Your browser blocked the new tab. Opening the game here.':open?'Dead Circuit is open in its own tab. Play returns to that run.':'';
+}
 const cabinetGame=createCabinetGame({host:$('game-frame'),onEscape:()=>returnToScene(),onMenu:returnToCabinetMenu,onState:showGameOpening});
 const cabinetSession=createCabinetSession({game:cabinetGame,tokenFor:()=>{if(!tokens.has(selected)&&tokenFactories.has(selected))tokens.set(selected,tokenFactories.get(selected)());return tokens.get(selected);},
   onStart:()=>{showMode('inserting');focusCabinetCancel();startPresentation();},
@@ -64,7 +78,7 @@ function layoutScreen(rect){
   screenMap=placeCabinetScreen(actions,rect,screenProjection);
   placeCabinetScreen($('cabinet-game'),rect,screenProjection);
 }
-function startPresentation(){controller?.present?.((dt,time)=>{cabinetMenu?.update(dt,time);tokens.get(selected)?.update(dt);});}
+function startPresentation(){if(games[selected]?.id==='dead-circuit'&&deadCircuitWindow.active)return;controller?.present?.((dt,time)=>{cabinetMenu?.update(dt,time);tokens.get(selected)?.update(dt);});}
 function cancelLaunch(){cabinetSession.cancel();if(mode==='inserting'){showMode('inspect');startPresentation();cabinetMenu?.focus();}}
 function returnToCabinetMenu(){if(!controller)return;cabinetMenu?.cancel();controller.pause();showMode('inspect');cabinetMenu?.focus();startPresentation();}
 function syncHandoff() {
@@ -119,12 +133,14 @@ function inspect(index,focus=true,{approach=true}={}) {
     const link=$(id);link.hidden=!url;link.setAttribute('aria-label',label);if(url)link.href=url;else link.removeAttribute('href');
   }
   cabinetMenu?.mount(game);actions.dataset.craftMenu=String(!!cabinetMenu?.enabled);cabinetMenu?.update(0,0);updateRecovery();startPresentation();
+  if(game.id==='dead-circuit'){syncDeadCircuitStatus();$('cabinet-description').textContent=game.description+' Opens in a separate game tab.';}
   if(focus){if(cabinetMenu?.enabled)cabinetMenu.focus();else (game.comingSoon?$('cabinet-screen-back'):$('cabinet-play')).focus();}
 }
 function playCabinet(selection=null,attempt=null) {
   if(!controller||mode!=='inspect'||games[selected]?.comingSoon)return;
   if(cabinetMenu?.enabled&&!attempt){cabinetMenu.start();return;}
   controller.pause();save(selected);const game=games[selected];
+  if(game.id==='dead-circuit'){deadCircuitWindow.open(game);return;}
   const launch=selection&&game.name==='RaceGPT'?{...game,url:cabinetMenu.launchUrl(game.url,selection),nativeBridge:'racegpt-v1'}:game;
   $('game-full-page').href=launch.url;$('game-full-page').setAttribute('aria-label',`Open ${game.name} full page`);
   cabinetSession.start(launch,{signal:attempt?.signal,requestId:attempt?.id});
@@ -138,7 +154,7 @@ async function initialize() {
     try {
       if(!await loading.stage(0,'Loading engine')||token!==generation)return null;
       approvedArt??=createApprovedCabinetArt();
-      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js'),import('./arcade-controller.js'),approvedArt.ready]);
+      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js?v=dc-window-20261101-1'),import('./arcade-controller.js'),approvedArt.ready]);
       if(token!==generation)return null;
       if(!await loading.stage(1,'Building scene')||token!==generation)return null;
       const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',stencil:false});pending={renderer,world:null};
@@ -196,7 +212,7 @@ for(const [index,game] of games.entries()) {
   const description=document.createElement('p');description.textContent=game.description;const links=document.createElement('div');links.className='actions fallback-card-actions';
   const view=document.createElement('button');view.type='button';view.textContent='View cabinet';view.hidden=true;view.setAttribute('aria-label',`View ${game.name} cabinet`);view.addEventListener('click',()=>{if(controller)inspect(index);});directoryButtons.push(view);links.append(view);
   for(const [url,label,accessible] of [[game.comingSoon?null:game.url,'Launch',`Launch ${game.name} (opens in new tab)`],[game.guideUrl,'Guide',`Open ${game.name} guide (opens in new tab)`]]) {
-    if(!url)continue;const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent=label;link.setAttribute('aria-label',accessible);link.addEventListener('click',()=>{save(index);controller?.pause();});links.append(link);
+    if(!url)continue;const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent=label;link.setAttribute('aria-label',accessible);link.addEventListener('click',event=>{save(index);controller?.pause();if(game.id==='dead-circuit'&&label==='Launch'&&event.button===0&&!event.ctrlKey&&!event.metaKey&&!event.shiftKey&&!event.altKey){event.preventDefault();deadCircuitWindow.open(game);}});links.append(link);
   }
   if(game.comingSoon){const label=document.createElement('span');label.textContent='Coming soon';links.append(label);}card.append(title,description,links);$('fallback-grid').append(card);
 }

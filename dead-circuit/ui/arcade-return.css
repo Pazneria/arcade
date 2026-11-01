@@ -1,0 +1,4 @@
+.arcade-return{display:block;width:max-content;max-width:100%;min-height:44px;margin-top:18px;padding:12px 16px;border:1px solid #829476;background:#14251ed9;color:#dce4ca;font:600 11px/1.5 'IBM Plex Mono',monospace;letter-spacing:.07em;text-decoration:none}
+.arcade-return:hover{background:#30422b;color:#fff0c0}.arcade-return:focus-visible{outline:3px solid #eed993;outline-offset:4px}
+#overlay{align-items:flex-start;overflow-y:auto}#overlay .panel{margin-block:auto;flex-shrink:0}
+#milestoneScreen{overflow-y:auto}
