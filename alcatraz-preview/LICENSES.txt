@@ -1,0 +1,3 @@
+Microsoft US Building Footprints data, served by Esri MSBFP2: Open Data Commons Open Database License (ODbL) 1.0. Source: https://github.com/microsoft/USBuildingFootprints ; license: https://opendatacommons.org/licenses/odbl/1-0/ .
+The adapted footprint database is offered under ODbL 1.0. Original and adapted GeoJSON, and the runtime scene database containing the transformed geometry, are available in this bundle. See ATTRIBUTION.html and data/footprint_manifest.txt for attribution, source links, processing, and uncertainty.
+USGS CA San Francisco B23 2023 bare-earth and maximum-surface elevation data are identified in ATTRIBUTION.html. Source and derivative dimensions are not represented as surveyed architecture.

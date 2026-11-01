@@ -1,0 +1,49 @@
+{
+  "build": "2026.11.01.4",
+  "type": "static public preview",
+  "asset_cache_version": "20261101-04",
+  "no_forced_refresh": true,
+  "entrypoint": "index.html",
+  "files": {
+    "ATTRIBUTION.html": {
+      "bytes": 2832,
+      "sha256": "3686f4fb24bca26815db7a9f15e1841aa0a7dcc8722f509ff6e61232931e1add"
+    },
+    "LICENSES.txt": {
+      "bytes": 723,
+      "sha256": "f300f4343a73a5519b37c0d3e908eca5d83396969ac1436dce4f81d22476fc1c"
+    },
+    "alcatraz_scene.json": {
+      "bytes": 9514360,
+      "sha256": "06ee9774aa30245cab6d49e296a6e62c3aee5beb862d9ba9fb566594d4aabdb3"
+    },
+    "data/footprint_manifest.txt": {
+      "bytes": 2258,
+      "sha256": "54847e425d1a3f68eab780804d4c55b13fabf1b551d2c9c0594e90ace83ee2d2"
+    },
+    "data/footprints_derived.geojson": {
+      "bytes": 33732,
+      "sha256": "05c7844820790b5548d95944d6abed12f2425a711b2edac7c9c78f114dcc56ae"
+    },
+    "data/footprints_original.geojson": {
+      "bytes": 11561,
+      "sha256": "de456225f5f135dda766319e0d541b314ca83221bb89bc49ad511302b9c0c7d8"
+    },
+    "index.html": {
+      "bytes": 2898,
+      "sha256": "b87d2bbd52b0cf980e9d1d5149218a7dc3be9b74d00bc1b64cf50db25f2f2422"
+    },
+    "style.css": {
+      "bytes": 1626,
+      "sha256": "8502dd6cb9cf995cb1d24ca6e404069e0c50d5c841d543367d763216aa950adf"
+    },
+    "viewer.js": {
+      "bytes": 14609,
+      "sha256": "983fe2c3e5846266e59b90eaae803c5f491d72e23bbed1c08bdba8cd63bb909a"
+    },
+    "walk.js": {
+      "bytes": 3882,
+      "sha256": "08dfbe4fafc0bb7515065b13f35ea23ba35174cf1827ebbfd0ae1a7543642469"
+    }
+  }
+}
