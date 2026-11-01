@@ -1,0 +1,21 @@
+{
+  "lighthouse": {
+    "identification": "Alcatraz Lighthouse, not the separate water tower",
+    "position": "US Coast Guard LNM 11-45-2024 rounded 37.82623 N, 122.42214 W, projected to EPSG:7131 x=77.7924, z=-11.3810; metre-scale approximate location",
+    "position_source": "https://www.navcen.uscg.gov/sites/default/files/pdf/lnms/lnm11452024.pdf",
+    "dimensions": "1910 station inventory: 13 ft 9 in base, 10 ft 8 in parapet, 90 ft 2.25 in base to ventilator ball; modeled as 4.191 m, 3.2512 m, and 27.48915 m. Square base to tapered octagonal shaft.",
+    "inventory_source": "https://uslhs.org/gr/inventory/light_station_report.php?id=7",
+    "height_uncertainty": "NPS calls the structure 95 ft, while USCG lists 84 ft. Their reference points may differ; do not claim a precise surveyed height. The 2023 unclassified maximum-surface grid peaks 69.73 m NAVD88 at x78,z-11, about 28.75 m above modeled bare-earth center, possibly including equipment.",
+    "nps_source": "https://www.nps.gov/places/000/alcatraz-lighthouse.htm",
+    "uscg_source": "https://media.defense.gov/2018/Jul/09/2001940159/0/0/0/LHCA.PDF",
+    "modeled_details": "Lantern piers, gallery, rail, windows and rotation are visual interpretations of an NPS photo, not measured plans; no interior. The former attached keeper quarters are not yet modeled."
+  },
+  "warden_house": {
+    "status": "Photo-informed approximate present-day roofless ruin, not the intact 1934–1963 prison-era residence; burned in 1970.",
+    "nps_source": "https://www.nps.gov/places/16-warden-s-house.htm",
+    "position": "Approximate mapped center x97.158,z-21.376. Center is not a survey; photographic object coordinates differ by many metres.",
+    "map_source": "https://mapcarta.com/W27996789",
+    "map_attribution": "© OpenStreetMap contributors, https://www.openstreetmap.org/copyright ; ODbL 1.0",
+    "limitations": "20 by 12 m footprint, orientation, wall openings, breach, chimney and height are inferred visual blockout proportions, not measured and not a 1962 reconstruction. Other real structures may be absent."
+  }
+}

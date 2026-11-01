@@ -3,3 +3,5 @@ Three.js r185: MIT License; see vendor/THREE-LICENSE.txt.
 Microsoft US Building Footprints, served by Esri: Open Data Commons Open Database License 1.0 (ODbL), https://opendatacommons.org/licenses/odbl/1-0/ . Attribution and both original and adapted subset databases are provided via ATTRIBUTION.html and data/. Other scene source credits and limitations are linked there.
 
 Concrete wall textures: original procedural assets created for this prototype; no third-party image assets.
+
+Approximate Warden House mapped point: © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright .

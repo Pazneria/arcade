@@ -1,23 +1,25 @@
 {
-  "build": "2026.11.01.12",
-  "type": "static public preview candidate; publication pending",
-  "asset_cache_version": "20261101-12",
+  "build": "2026.11.01.22",
+  "type": "playable-only preview candidate; not deployed",
+  "asset_cache_version": "20261101-22",
   "entrypoint": "index.html",
   "no_forced_refresh": true,
   "renderer": "Three.js r185 / WebGL 2 depth buffer",
   "gpu_browser_tested": false,
+  "scope": "Exterior blockout; no interiors, story, combat or playable door.",
+  "data_limits": "Source terrain/footprints are measured or imagery-derived as cited; lower terrain, approach road, facade openings, entrance and Warden ruin are approximations. Lighthouse position and 1910 inventory dimensions have cited sources.",
   "files": {
     "ATTRIBUTION.html": {
-      "bytes": 5085,
-      "sha256": "5cce63acf764494b2fa635d052deec49451a8a22b519d341eaf6182a77052e84"
+      "bytes": 6172,
+      "sha256": "88b7a58048e8b047596650809501e700f9c70892edebd66334d6ee4de933bcc0"
     },
     "LICENSES.txt": {
-      "bytes": 484,
-      "sha256": "48ba081968cf39708022121e5315ff0d0244b3528f532c0cead044aa198a1d86"
+      "bytes": 607,
+      "sha256": "495c123e53f59867c2e1827c14bec20678783b36cf862758cb40d482172a4a2a"
     },
     "architecture.mjs": {
-      "bytes": 9864,
-      "sha256": "90f78c318849300d4bcfe0a12b145504ddcfdf2a31df46c9ba8d322017cd830e"
+      "bytes": 16766,
+      "sha256": "f5f163c0c10c3b73eda04d8a29cabb832f739318bfc7cb7df2f8d72cbd8a97e9"
     },
     "data/additional_buildings.json": {
       "bytes": 3047,
@@ -43,6 +45,10 @@
       "bytes": 33732,
       "sha256": "05c7844820790b5548d95944d6abed12f2425a711b2edac7c9c78f114dcc56ae"
     },
+    "data/landmark_sources.json": {
+      "bytes": 2095,
+      "sha256": "ecede595b74ab3e03d2506dac5bd9fcb890ab221bd3410ae09814e10f1e4d750"
+    },
     "data/playable_height_f32le.bin": {
       "bytes": 3968004,
       "sha256": "aea393659f150facddcdb1b232a49dadb1656e932c77121f1fb3db06f54e1d0f"
@@ -56,20 +62,24 @@
       "sha256": "0426b757321697d2f280d4e6b6502dbc648af25003bbcb8c0e05e84fa9d4a408"
     },
     "data/walk.js": {
-      "bytes": 7023,
-      "sha256": "ad9064a91d406a6fbf42f0e49ea59e567099acc176099de80ddb72f8ed838cd2"
+      "bytes": 7078,
+      "sha256": "630146a807601a59a86e90c673ef6a3894a8312baeef0f61ff2bc6974eb867a9"
     },
     "game.mjs": {
-      "bytes": 10086,
-      "sha256": "0b1cf5f80d6b0ca0f7c4af427abe00bcd30eb6ac335a20d87d51e4fb404c3eb4"
+      "bytes": 10489,
+      "sha256": "1730e6b2f4757e93834bb1d6c51c8cd13f6f8449d96a28040ca3205185631a19"
     },
     "geometry.mjs": {
       "bytes": 7991,
       "sha256": "8a6958d2695702079225c564f5a9804f161ddc96c341b1998402baf72b5adf15"
     },
     "index.html": {
-      "bytes": 1396,
-      "sha256": "f89de77e64e73e29b3befe9846dbc1f01610434e5a7f917554647df56ce5cc9e"
+      "bytes": 1364,
+      "sha256": "4533948fb7229c886e8a361e424bfba78f2d5fff5351d520052ddac041d06e10"
+    },
+    "lighthouse.mjs": {
+      "bytes": 5331,
+      "sha256": "81b394a15429b8e9c9af6c208b8edb54f2e64591f335f903f18a8f8cb8b3d0eb"
     },
     "movement_vertical.mjs": {
       "bytes": 1481,
@@ -110,6 +120,10 @@
     "vendor/three.module.min.mjs": {
       "bytes": 365554,
       "sha256": "9873b92caefa8726d237513896bae5469e9fbb6abd196e50005a9ff5c9546baa"
+    },
+    "warden_ruin.mjs": {
+      "bytes": 3690,
+      "sha256": "330c5a6b9f35094cd355bd32fe3fb64267cea6f6f134317e4443d3d0ba33988f"
     }
   }
 }
