@@ -1,7 +1,7 @@
 {
-  "build": "2026.11.01.10",
+  "build": "2026.11.01.11",
   "type": "static public preview candidate; publication pending",
-  "asset_cache_version": "20261101-10",
+  "asset_cache_version": "20261101-11",
   "entrypoint": "index.html",
   "no_forced_refresh": true,
   "renderer": "Three.js r185 / WebGL 2 depth buffer",
@@ -56,24 +56,32 @@
       "sha256": "0426b757321697d2f280d4e6b6502dbc648af25003bbcb8c0e05e84fa9d4a408"
     },
     "data/walk.js": {
-      "bytes": 4602,
-      "sha256": "b7caafc1c9edc32366c027abf28ab67dcb5b4a1900737cf713afbbb8ab9f2332"
+      "bytes": 7023,
+      "sha256": "ad9064a91d406a6fbf42f0e49ea59e567099acc176099de80ddb72f8ed838cd2"
     },
     "game.mjs": {
-      "bytes": 8396,
-      "sha256": "1c8baf914acaaefa7cca9e671be19c13b62a70dc11b3799d50fcded5e4340085"
+      "bytes": 9343,
+      "sha256": "42562d07839a1e7bff269bed3d40930caef1a70345bd0237b93df1f5b6dbc165"
     },
     "geometry.mjs": {
       "bytes": 7991,
       "sha256": "8a6958d2695702079225c564f5a9804f161ddc96c341b1998402baf72b5adf15"
     },
     "index.html": {
-      "bytes": 1393,
-      "sha256": "93acf9b19da1ca55bca678cb036d28ebfd5684c5c4303b9ec8790b41c6f0f54a"
+      "bytes": 1396,
+      "sha256": "bb1837131c30e48f1f1ec22572e79a823b1d5c191e04bbba6d9eac971d02bb7c"
+    },
+    "movement_vertical.mjs": {
+      "bytes": 1481,
+      "sha256": "4a5f16d6972d4be47a12bcbcd36ead2a0357267a6300651fe665f75ea7bdb967"
     },
     "playable_terrain.mjs": {
       "bytes": 6298,
       "sha256": "9ea5301d17be3b69aea35d29a4a8cd08ad4f17b94ab9f8b42a7a859a8ef991c0"
+    },
+    "skycam.mjs": {
+      "bytes": 1321,
+      "sha256": "dfb3f0ad641fa945e50a258fbd6fc604e2e4859f8c69666ad5e963e56a48de51"
     },
     "spawn.mjs": {
       "bytes": 1200,
