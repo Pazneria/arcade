@@ -1,0 +1,103 @@
+{
+  "buildings": [
+    {
+      "id": 7811972,
+      "render_status": "provisional_solid",
+      "name": "Probable Model Industries (location match)",
+      "outline": [
+        [
+          -220.7157,
+          -211.4231
+        ],
+        [
+          -210.067,
+          -227.1847
+        ],
+        [
+          -194.3973,
+          -216.6436
+        ],
+        [
+          -203.1092,
+          -203.8752
+        ],
+        [
+          -184.3467,
+          -191.3424
+        ],
+        [
+          -189.8094,
+          -183.2371
+        ],
+        [
+          -201.8721,
+          -191.3377
+        ],
+        [
+          -204.1569,
+          -188.1161
+        ],
+        [
+          -219.0355,
+          -198.0983
+        ],
+        [
+          -213.4069,
+          -206.5344
+        ]
+      ],
+      "base": 11.47434139251709,
+      "height": 14.495658607482909,
+      "roof_elevation_navd88": 25.97,
+      "confidence": "estimated",
+      "roof": "flat",
+      "era": "imagery vintage unknown / 2023 surface",
+      "source": "Microsoft US Building Footprints / Esri MSBFP2; USGS 2023 2 m maximum surface",
+      "uncertainty": "Approximate imagery-derived footprint and median maximum-surface plane; not surveyed walls, architectural height or historical reconstruction. Surface can contain vegetation/equipment; bare earth under structures interpolated.",
+      "foundation_min": 1.620011806488037,
+      "ground_sample_count": 708,
+      "ground_candidate_count": 708,
+      "dsm_interior_count": 110,
+      "dsm_whole_count": 181,
+      "roof_method": "interior 2 m median"
+    },
+    {
+      "id": 16579355,
+      "render_status": "source_only_unidentified",
+      "name": "Unidentified footprint 16579355",
+      "outline": [
+        [
+          -155.8356,
+          -218.3156
+        ],
+        [
+          -155.839,
+          -230.9715
+        ],
+        [
+          -143.3356,
+          -230.9748
+        ],
+        [
+          -143.3322,
+          -218.319
+        ]
+      ],
+      "base": 14.60661792755127,
+      "height": 1.7983820724487316,
+      "roof_elevation_navd88": 16.405,
+      "confidence": "estimated",
+      "roof": "flat",
+      "era": "imagery vintage unknown / 2023 surface",
+      "source": "Microsoft US Building Footprints / Esri MSBFP2; USGS 2023 2 m maximum surface",
+      "uncertainty": "Approximate imagery-derived footprint and median maximum-surface plane; not surveyed walls, architectural height or historical reconstruction. Surface can contain vegetation/equipment; bare earth under structures interpolated.",
+      "foundation_min": 14.542872428894043,
+      "ground_sample_count": 169,
+      "ground_candidate_count": 169,
+      "dsm_interior_count": 16,
+      "dsm_whole_count": 36,
+      "roof_method": "interior 2 m median"
+    }
+  ],
+  "provenance": "Expanded same licensed Microsoft US Building Footprints / Esri MSBFP2 query; projected EPSG:7131 with GDAL, same local origin; elevations 2023 NAVD88. Identity for 7811972 is a location-based match to Model Industries; 16579355 unidentified."
+}

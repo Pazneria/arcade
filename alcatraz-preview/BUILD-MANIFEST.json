@@ -1,19 +1,37 @@
 {
-  "build": "2026.11.01.4",
-  "type": "static public preview",
-  "asset_cache_version": "20261101-04",
-  "no_forced_refresh": true,
+  "build": "2026.11.01.10",
+  "type": "static public preview candidate; publication pending",
+  "asset_cache_version": "20261101-10",
   "entrypoint": "index.html",
+  "no_forced_refresh": true,
+  "renderer": "Three.js r185 / WebGL 2 depth buffer",
+  "gpu_browser_tested": false,
   "files": {
     "ATTRIBUTION.html": {
-      "bytes": 2832,
-      "sha256": "3686f4fb24bca26815db7a9f15e1841aa0a7dcc8722f509ff6e61232931e1add"
+      "bytes": 4903,
+      "sha256": "5bf612b4db036591dedfd282b6abc1ecc5560db78f34a9ca6bdc6bf2b39f44a0"
     },
     "LICENSES.txt": {
-      "bytes": 723,
-      "sha256": "f300f4343a73a5519b37c0d3e908eca5d83396969ac1436dce4f81d22476fc1c"
+      "bytes": 375,
+      "sha256": "9ec1e7b1ab7c8d5d79a75f0eceb21cc1d3c42bdd0d7f512ed6cde6d0d23cc2e5"
     },
-    "alcatraz_scene.json": {
+    "architecture.mjs": {
+      "bytes": 9014,
+      "sha256": "6c6a5aa0cb7a58abaa9816e8ab033224e9f2026031be5fb1a493564d26c7d419"
+    },
+    "data/additional_buildings.json": {
+      "bytes": 3047,
+      "sha256": "758534e932df92ddaf82e795d766c67d4de245981895baad0fa2017640f99c66"
+    },
+    "data/additional_footprints_original.geojson": {
+      "bytes": 1074,
+      "sha256": "88349012baa55a2b4e570af204316d4cefa9e6fb2b45d8889a06c297979a746b"
+    },
+    "data/alcatraz_footprints.geojson": {
+      "bytes": 11561,
+      "sha256": "de456225f5f135dda766319e0d541b314ca83221bb89bc49ad511302b9c0c7d8"
+    },
+    "data/alcatraz_scene.json": {
       "bytes": 9514360,
       "sha256": "06ee9774aa30245cab6d49e296a6e62c3aee5beb862d9ba9fb566594d4aabdb3"
     },
@@ -21,29 +39,61 @@
       "bytes": 2258,
       "sha256": "54847e425d1a3f68eab780804d4c55b13fabf1b551d2c9c0594e90ace83ee2d2"
     },
-    "data/footprints_derived.geojson": {
+    "data/footprints_epsg7131_with_roof_stats.geojson": {
       "bytes": 33732,
       "sha256": "05c7844820790b5548d95944d6abed12f2425a711b2edac7c9c78f114dcc56ae"
     },
-    "data/footprints_original.geojson": {
-      "bytes": 11561,
-      "sha256": "de456225f5f135dda766319e0d541b314ca83221bb89bc49ad511302b9c0c7d8"
+    "data/playable_height_f32le.bin": {
+      "bytes": 3968004,
+      "sha256": "aea393659f150facddcdb1b232a49dadb1656e932c77121f1fb3db06f54e1d0f"
+    },
+    "data/playable_terrain_contract.json": {
+      "bytes": 23988,
+      "sha256": "492b8d13a7fd3f756cf2bbc2baa8d0056b61796a95adc95f94da4e7df54c90ef"
+    },
+    "data/road_mask_u8.bin": {
+      "bytes": 992001,
+      "sha256": "0426b757321697d2f280d4e6b6502dbc648af25003bbcb8c0e05e84fa9d4a408"
+    },
+    "data/walk.js": {
+      "bytes": 4602,
+      "sha256": "b7caafc1c9edc32366c027abf28ab67dcb5b4a1900737cf713afbbb8ab9f2332"
+    },
+    "game.mjs": {
+      "bytes": 8396,
+      "sha256": "1c8baf914acaaefa7cca9e671be19c13b62a70dc11b3799d50fcded5e4340085"
+    },
+    "geometry.mjs": {
+      "bytes": 7991,
+      "sha256": "8a6958d2695702079225c564f5a9804f161ddc96c341b1998402baf72b5adf15"
     },
     "index.html": {
-      "bytes": 2898,
-      "sha256": "b87d2bbd52b0cf980e9d1d5149218a7dc3be9b74d00bc1b64cf50db25f2f2422"
+      "bytes": 1393,
+      "sha256": "93acf9b19da1ca55bca678cb036d28ebfd5684c5c4303b9ec8790b41c6f0f54a"
+    },
+    "playable_terrain.mjs": {
+      "bytes": 6298,
+      "sha256": "9ea5301d17be3b69aea35d29a4a8cd08ad4f17b94ab9f8b42a7a859a8ef991c0"
+    },
+    "spawn.mjs": {
+      "bytes": 1200,
+      "sha256": "a0c22c258cfd8061e2c99b75ab1ae9a0610b0d5c36df1bd6439709d274af7376"
     },
     "style.css": {
-      "bytes": 1626,
-      "sha256": "8502dd6cb9cf995cb1d24ca6e404069e0c50d5c841d543367d763216aa950adf"
+      "bytes": 1578,
+      "sha256": "f61eda13f3b4f689930172302696049be34c968ec26410001d3a5dc68975261e"
     },
-    "viewer.js": {
-      "bytes": 14609,
-      "sha256": "983fe2c3e5846266e59b90eaae803c5f491d72e23bbed1c08bdba8cd63bb909a"
+    "vendor/THREE-LICENSE.txt": {
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
     },
-    "walk.js": {
-      "bytes": 3882,
-      "sha256": "08dfbe4fafc0bb7515065b13f35ea23ba35174cf1827ebbfd0ae1a7543642469"
+    "vendor/three.core.min.mjs": {
+      "bytes": 385386,
+      "sha256": "05b2609338c76cd65daf74f3ac515bc9a5045e1b3b33edc07d8c9bd55250fa90"
+    },
+    "vendor/three.module.min.mjs": {
+      "bytes": 365554,
+      "sha256": "9873b92caefa8726d237513896bae5469e9fbb6abd196e50005a9ff5c9546baa"
     }
   }
 }
