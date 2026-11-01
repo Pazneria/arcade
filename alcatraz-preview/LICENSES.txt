@@ -5,3 +5,6 @@ Microsoft US Building Footprints, served by Esri: Open Data Commons Open Databas
 Concrete, painted-steel door and sky-tinted window textures: original procedural assets created for this prototype; no third-party image assets.
 
 Approximate Warden House mapped point: © OpenStreetMap contributors, ODbL 1.0, https://www.openstreetmap.org/copyright .
+
+Three.js r185 GLTFLoader and utility add-ons: MIT, see vendor/THREE-LICENSE.txt. Import paths were adapted to local modules.
+MPFB human core base and targets: CC0; generated clothing and materials; see assets/MPFB-SAMPLE-LICENSE.txt.

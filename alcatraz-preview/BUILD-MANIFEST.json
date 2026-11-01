@@ -1,25 +1,33 @@
 {
-  "build": "2026.11.01.29",
+  "build": "2026.11.01.30",
   "type": "playable-only preview candidate; not deployed",
-  "asset_cache_version": "20261101-29",
+  "asset_cache_version": "20261101-30",
   "entrypoint": "index.html",
   "no_forced_refresh": true,
   "renderer": "Three.js r185 / WebGL 2 depth buffer",
   "gpu_browser_tested": false,
-  "scope": "Exterior blockout with operable entrance and provisional vestibule; steeper fictional lower slopes and smoothed shorter road; no cellblock, story or combat.",
-  "data_limits": "Source-land surface preserved from build 27. Lower flanks, plain, road, entry and intact Warden House are approximate; road is not certified for vehicles. Lighthouse dimensions and source terrain are cited.",
+  "scope": "Exterior blockout, provisional entrance vestibule and one static rough MPFB human sample; no animation, cellblock, story or combat.",
+  "data_limits": "Source land and references as cited. Fictional lower flanks, plain, road, entry and intact Warden House are approximate. Human is a visual test, not a historical uniform.",
   "files": {
     "ATTRIBUTION.html": {
-      "bytes": 6721,
-      "sha256": "0774ff7a52011f6620a1f0f6dc044d3fc7e418b3fc953687b21bba25a6efeb86"
+      "bytes": 7208,
+      "sha256": "d328eb8be4ebf7899d6f07c790fefe3ca8df4a8c82df79fa570683c6218d8b2f"
     },
     "LICENSES.txt": {
-      "bytes": 644,
-      "sha256": "604eec7a8e73fcf06058d916d1c7551c44129d7a14b713a0b567ea17a58b12ad"
+      "bytes": 879,
+      "sha256": "b75d4a639ff6aba1c4dabfa8a9eb09f648d751130b2dc14ec750d644e97fa91d"
     },
     "architecture.mjs": {
       "bytes": 18315,
       "sha256": "fe933143b5f7286f117c28df5d9de930ef0414b3cc99bbc605d617c38869d761"
+    },
+    "assets/MPFB-SAMPLE-LICENSE.txt": {
+      "bytes": 1616,
+      "sha256": "b0eff31e73ee4b29ade662838f4b1655f746dfac485714fe38174abee9aad853"
+    },
+    "assets/mpfb-neutral-adult.glb": {
+      "bytes": 857096,
+      "sha256": "6e649af0a593857db8001e3328ad9571e32529c40c99dc6934d9cc41184cfdcf"
     },
     "data/additional_buildings.json": {
       "bytes": 3047,
@@ -74,16 +82,20 @@
       "sha256": "48ea8ffe91ccfe1669e0368576325c15788b9681bd5029e922c05fb6e6f7634f"
     },
     "game.mjs": {
-      "bytes": 12955,
-      "sha256": "fc081d5a0f8eb1f0993f5905746e371e2858d9de86130c213fb08581865ef315"
+      "bytes": 13214,
+      "sha256": "4c797625c205434cb18dc3583cc713ac32c52088dd174b3117a7586dc3495e35"
     },
     "geometry.mjs": {
       "bytes": 7991,
       "sha256": "8a6958d2695702079225c564f5a9804f161ddc96c341b1998402baf72b5adf15"
     },
+    "human_sample.mjs": {
+      "bytes": 1477,
+      "sha256": "da91092feb57e8a2e9540848847bb15c7e57c45756c41b99e70d732bf82649da"
+    },
     "index.html": {
       "bytes": 1475,
-      "sha256": "33512dce790cbc1a8714d1d6ec4d99b52f98e0ff86c9e85258d946ec73b22726"
+      "sha256": "546c7891eed11cc1f6d649f5c12fbebd0c71feafdcd072ff2900828abfdcc419"
     },
     "lighthouse.mjs": {
       "bytes": 5331,
@@ -128,6 +140,18 @@
     "vendor/THREE-LICENSE.txt": {
       "bytes": 1081,
       "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    },
+    "vendor/addons/loaders/GLTFLoader.mjs": {
+      "bytes": 114982,
+      "sha256": "53bf9ebdabd5d9f11027ebc8d4358b642a6232cb799057e35641c996e109128a"
+    },
+    "vendor/addons/utils/BufferGeometryUtils.mjs": {
+      "bytes": 37643,
+      "sha256": "03b012fee11e268e98000a2a8e222d1f78c878f6cc99cc0ee658f9c8af043361"
+    },
+    "vendor/addons/utils/SkeletonUtils.mjs": {
+      "bytes": 11557,
+      "sha256": "90968bdb88584371d98042586ab68bee246bd2d82a68fd80942a456308ba31db"
     },
     "vendor/three.core.min.mjs": {
       "bytes": 385386,
