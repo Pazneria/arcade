@@ -1,0 +1,15 @@
+/* Scoped to one physical screen; every other cabinet retains its presentation. */
+#cabinet-actions[data-game='dead-circuit']{background:#14251d}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-native{position:relative;padding:48px 48px 30px;justify-content:flex-start;overflow-y:auto;background:linear-gradient(180deg,#14251df5 0%,#14251df5 52%,#14251da6 100%),url('./cabinet-screens/dead-circuit-field.svg') 65% center/auto 100%;color:#eee6c9}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-title{order:1;font-family:Impact,'Arial Black',sans-serif;font-size:120px;font-weight:900;line-height:.85;letter-spacing:-.035em;text-transform:uppercase;margin:62px 0 24px;max-width:680px;color:#e9e5c8}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-description{order:2;font-family:Consolas,monospace;font-size:26px;line-height:1.4;color:#b9c7a7;margin:0 0 22px}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-native>.actions{order:4;display:grid;gap:16px;margin:18px 0 0}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-play{display:block;min-height:84px;padding:21px 24px;border:2px solid #f3dda7;border-radius:2px;background:#e8c77e;color:#17271d;font:900 37px Impact,'Arial Black',sans-serif;letter-spacing:.04em;text-transform:uppercase}
+#cabinet-actions[data-game='dead-circuit'] #cabinet-screen-back{min-height:64px;border:2px solid #6f8169;border-radius:2px;background:#14251dc9;color:#d4ddc5;font:600 25px Consolas,monospace;text-transform:uppercase}
+#dead-circuit-cabinet-note{order:3;font-family:Consolas,monospace}#dead-circuit-cabinet-note[hidden]{display:none}
+.dc-field-label{position:absolute;top:43px;left:48px;color:#e5a47b;font-size:22px;letter-spacing:.1em}
+.dc-field-facts{display:flex;gap:42px;border-block:1px solid #8ca77d66;padding:18px 0;margin:0 0 15px}.dc-field-facts span{font-size:17px;letter-spacing:.07em;color:#a9bc99}.dc-field-facts b{display:block;margin-bottom:6px;color:#e8ddbb;font:bold 38px Impact,sans-serif;letter-spacing:.02em}
+#cabinet-actions[data-game='dead-circuit'] #dead-circuit-cabinet-note p{font-size:20px;line-height:1.5;color:#a2b895;margin:0 0 12px}
+#cabinet-actions[data-game='dead-circuit'] .cabinet-lifecycle-status{padding:15px 20px;background:#14251df5;border:1px solid #91a47a;color:#e5d6ad}
+#cabinet-actions[data-game='dead-circuit'] :is(a,button):focus-visible{outline:5px solid #f2d99c;outline-offset:5px}
+@media(prefers-reduced-motion:reduce){#cabinet-actions[data-game='dead-circuit'] *{animation:none;transition:none}}

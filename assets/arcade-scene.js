@@ -1,7 +1,7 @@
 // Derivative of completed Claude12 / starlite-arcade-claude. See arcade-source.json.
 // Authored source is preserved at its pinned Lab commit; this module is separate.
 import {createSlidingExits} from './arcade-exits.js';
-import { CABINET_LAYOUT, paintMarquee, paintSideSignature, buildLoungeProps } from './arcade-art.js?v=dc-window-20261101-1';
+import { CABINET_LAYOUT, paintMarquee, paintSideSignature, buildLoungeProps } from './arcade-art.js?v=dc-field-20261101-1';
 export function createArcadeScene(THREE, renderer, games) {
 const titles = games.map(g => g.name.toUpperCase());
 const TAU = Math.PI * 2;

@@ -1,5 +1,5 @@
-import {buildArcadeCatalog} from './arcade-catalog.js?v=dc-window-20261101-1';
-import {createDeadCircuitWindow} from './dead-circuit-window.js?v=dc-window-20261101-1';
+import {buildArcadeCatalog} from './arcade-catalog.js?v=dc-field-20261101-1';
+import {createDeadCircuitWindow} from './dead-circuit-window.js?v=dc-field-20261101-1';
 import {readReturnState,writeReturnState,clearReturnState,navigateAfterDispose} from './arcade-navigation.js';
 import {createLoadingScreen} from './arcade-loading.js';
 import {createCabinetGame,placeCabinetScreen} from './arcade-cabinet.js';
@@ -129,11 +129,20 @@ function inspect(index,focus=true,{approach=true}={}) {
   cabinetSession.cancel();
   selected=(index+games.length)%games.length;const game=games[selected];controller.focusGame(selected,{approach});if(!controller)return;showMode('inspect');
   $('cabinet-title').textContent=game.name;$('cabinet-description').textContent=game.description;$('coming-soon').hidden=!game.comingSoon;
+  actions.dataset.game=game.id||'';
+  $('cabinet-screen-back').textContent=game.id==='dead-circuit'?'Back to aisle':'Back';
+  let fieldNote=$('dead-circuit-cabinet-note');
+  if(game.id==='dead-circuit'&&!fieldNote){
+    fieldNote=document.createElement('div');fieldNote.id='dead-circuit-cabinet-note';
+    fieldNote.innerHTML='<span class="dc-field-label">SONOMA PLAZA / FIELD 01</span><div class="dc-field-facts"><span><b>10:00</b> HOLD OUT</span><span><b>ONE RUN</b> MAKE IT COUNT</span></div><p>Keyboard + mouse · Single player<br>Opens in its own game tab.</p>';
+    $('cabinet-native').append(fieldNote);
+  }
+  if(fieldNote)fieldNote.hidden=game.id!=='dead-circuit';
   for(const [id,url,label] of [['cabinet-play',game.comingSoon?null:game.url,`Play ${game.name}`],['cabinet-guide',game.guideUrl,`Open ${game.name} guide`]]) {
     const link=$(id);link.hidden=!url;link.setAttribute('aria-label',label);if(url)link.href=url;else link.removeAttribute('href');
   }
   cabinetMenu?.mount(game);actions.dataset.craftMenu=String(!!cabinetMenu?.enabled);cabinetMenu?.update(0,0);updateRecovery();startPresentation();
-  if(game.id==='dead-circuit'){syncDeadCircuitStatus();$('cabinet-description').textContent=game.description+' Opens in a separate game tab.';}
+  if(game.id==='dead-circuit'){syncDeadCircuitStatus();$('cabinet-description').textContent='A town gone quiet. A horde closing in. Keep moving, build your kit, and outlast the streets.';}
   if(focus){if(cabinetMenu?.enabled)cabinetMenu.focus();else (game.comingSoon?$('cabinet-screen-back'):$('cabinet-play')).focus();}
 }
 function playCabinet(selection=null,attempt=null) {
@@ -154,7 +163,7 @@ async function initialize() {
     try {
       if(!await loading.stage(0,'Loading engine')||token!==generation)return null;
       approvedArt??=createApprovedCabinetArt();
-      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js?v=dc-window-20261101-1'),import('./arcade-controller.js'),approvedArt.ready]);
+      const [THREE,{createArcadeScene},{createArcadeController}]=await Promise.all([import('./vendor/three.module.js'),import('./arcade-scene.js?v=dc-field-20261101-1'),import('./arcade-controller.js'),approvedArt.ready]);
       if(token!==generation)return null;
       if(!await loading.stage(1,'Building scene')||token!==generation)return null;
       const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',stencil:false});pending={renderer,world:null};

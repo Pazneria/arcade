@@ -10,7 +10,7 @@ export function createDeadCircuitWindow({view=window,location=view.location,onPa
     url.searchParams.set('from','arcade');url.searchParams.set('arcadeWindow','1');
     url.searchParams.set('arcadeParentOrigin',location.origin);
     url.searchParams.set('arcadeSession',session);
-    url.searchParams.set('v','dc-window-20261101-1');
+    url.searchParams.set('v','dc-field-20261101-1');
     return url;
   }
   function open(game){
