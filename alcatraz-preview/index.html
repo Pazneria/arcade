@@ -1,7 +1,43 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Alcatraz — game blockout</title><link rel="stylesheet" href="style.css?v=20261101-30"></head><body>
-<canvas id="game" tabindex="0" aria-label="Alcatraz first-person game view"></canvas>
-<div id="corner"><a href="ATTRIBUTION.html?v=20261101-30">Sources</a></div><div id="reticle" aria-hidden="true">·</div><div id="notice" role="status"></div>
-<button id="interact" hidden aria-label="Open entrance door"></button>
-<div id="overlay"><div class="card"><h1>ALCATRAZ</h1><p id="message">Building the island…</p><button id="play" hidden>Click to explore</button><p id="help">W A S D to move · mouse to look · Shift to sprint · Space to jump<br>E entrance door · F sky cam · Q / E up / down · R home · Esc pause</p><p class="small">Early game blockout. Lower terrain and road are fictional; the entrance vestibule is provisional. <a href="ATTRIBUTION.html?v=20261101-30">Sources</a></p></div></div>
-<div id="touchpad" aria-label="Touch walking controls"><button data-key="KeyW" aria-label="Forward">▲</button><div><button data-key="KeyA" aria-label="Left">◀</button><button data-key="KeyS" aria-label="Back">▼</button><button data-key="KeyD" aria-label="Right">▶</button></div></div>
-<script src="data/walk.js?v=20261101-30"></script><script type="module" src="game.mjs?v=20261101-30"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Alcatraz</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;height:100%;background:#1c2024;overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#efe9dc}
+  #view{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #menu{position:fixed;inset:0;display:flex;align-items:flex-end;background:linear-gradient(90deg,rgba(14,17,20,.8),rgba(14,17,20,.12) 62%,rgba(14,17,20,0))}
+  #menu.hidden,#loading.hidden{display:none}
+  .panel{padding:0 0 9vh 7vw;max-width:420px}
+  h1{font-size:64px;letter-spacing:.14em;font-weight:400;margin:0 0 4px}
+  .sub{font-size:15px;letter-spacing:.06em;opacity:.8;margin:0 0 30px}
+  button{font:inherit;font-size:17px;letter-spacing:.14em;text-transform:uppercase;background:#e6dfcf;color:#1b1e21;border:0;padding:13px 40px;cursor:pointer}
+  button:hover:enabled{background:#fff}
+  button:disabled{opacity:.55;cursor:wait}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:5px 18px;margin:30px 0 0;font:13px/1.4 system-ui,sans-serif;opacity:.86}
+  dt{font-weight:600}dd{margin:0}
+  #loading{margin-top:12px;font:13px system-ui,sans-serif;opacity:.75}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="menu"><div class="panel">
+  <h1>ALCATRAZ</h1>
+  <p class="sub">Island exterior, prison era</p>
+  <button id="play" disabled>Loading</button>
+  <div id="loading">Preparing terrain and buildings</div>
+  <p><a href="credits.html" style="color:#efe9dc;font:13px system-ui,sans-serif">Sources, license &amp; data</a></p>
+  <dl>
+    <dt>WASD / mouse</dt><dd>Walk and look</dd>
+    <dt>Shift</dt><dd>Run</dd>
+    <dt>Space</dt><dd>Jump</dd>
+    <dt>F</dt><dd>Fly on or off</dd>
+    <dt>Q / E</dt><dd>Fly down / up</dd>
+    <dt>R</dt><dd>Back to the entrance</dd>
+    <dt>Esc</dt><dd>Pause</dd>
+  </dl>
+</div></div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

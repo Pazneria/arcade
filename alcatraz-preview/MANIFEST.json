@@ -1,0 +1,87 @@
+[
+  {
+    "path": "CREDITS.md",
+    "size_bytes": 2596,
+    "sha256": "bf1fb6f45d013f440b72241a1aba1cd830b027afe08460dfb8e0a9c5fe96b11b"
+  },
+  {
+    "path": "credits.html",
+    "size_bytes": 1766,
+    "sha256": "7c0f52052946e26b1e7b28a359fa581ce2aede8787c09cc0ab77819d300a48ce"
+  },
+  {
+    "path": "data/LICENSE-ODbL.txt",
+    "size_bytes": 571,
+    "sha256": "24301b8b7d344e04e8d688c2615fab779b2987192e6bd63cb972c9e7f5b9c616"
+  },
+  {
+    "path": "data/footprints.json",
+    "size_bytes": 2813,
+    "sha256": "b688e4a470efebf18e6f65d6685619caac84dfdf96ebc28496da083a7d699fbe"
+  },
+  {
+    "path": "data/terrain.json",
+    "size_bytes": 794,
+    "sha256": "9cc5977027e032f66ee44ef3c4c1465707c071fc41d3c2cad5d1847a4905b7a5"
+  },
+  {
+    "path": "data/terrain_height.f32",
+    "size_bytes": 2679600,
+    "sha256": "fd376c6d3c388d6e21e0f78eb229dfe109257a00c43fe0ae5fc387ef02359c8c"
+  },
+  {
+    "path": "data/terrain_surface.rgba",
+    "size_bytes": 2679600,
+    "sha256": "599f50af97363b3bb6e21c34494f87259c842bbc73bded591de3cb43443b5ad9"
+  },
+  {
+    "path": "data/trees.json",
+    "size_bytes": 2731,
+    "sha256": "7ceb6a3a4d7c4598cd28fe56c8c707069ee1970e243507aa021e52527662b821"
+  },
+  {
+    "path": "index.html",
+    "size_bytes": 1960,
+    "sha256": "036c833e3e8c4551919682301b6c3a444de96906a0ca13003a7e70c68203d1fa"
+  },
+  {
+    "path": "source-data/LICENSE-ODbL.txt",
+    "size_bytes": 571,
+    "sha256": "24301b8b7d344e04e8d688c2615fab779b2987192e6bd63cb972c9e7f5b9c616"
+  },
+  {
+    "path": "source-data/expanded_footprints_11.geojson",
+    "size_bytes": 13803,
+    "sha256": "c4a98595da57e5ef0e3dfb3a2a07bdaad31aac857c3a50c922fa51b9b8ca04ff"
+  },
+  {
+    "path": "source-data/expanded_footprints_epsg7131.geojson",
+    "size_bytes": 8035,
+    "sha256": "94417cb2a458cd43604632cec2a3425ec50c50c94567b56b60eaa2f1136113e0"
+  },
+  {
+    "path": "src/geom.js",
+    "size_bytes": 15431,
+    "sha256": "b671cbe69561fc3f9116082f1ae6da5422ec80618724715d7e02f2daee05fc0b"
+  },
+  {
+    "path": "src/main.js",
+    "size_bytes": 3625,
+    "sha256": "20ff75c6cc4e980b41f5757c60700b68326d247b020f526b470aba5908fa38a9"
+  },
+  {
+    "path": "src/physics.js",
+    "size_bytes": 6831,
+    "sha256": "69843543b5d11c5ba11e47831d5c39736758057780dc7e98c00a23f7fbe40236"
+  },
+  {
+    "path": "src/render.js",
+    "size_bytes": 22365,
+    "sha256": "6bd0e543ad2f2662d003d35856316559e55db71d4a5d43f4e8a96c9a5f1749d0"
+  },
+  {
+    "path": "src/world.js",
+    "size_bytes": 32006,
+    "sha256": "540f1202e0d57081fec221c4bfcb508a652e44d7a8a3a9b38f3bd82fe370f432"
+  }
+]

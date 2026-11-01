@@ -1,0 +1,35 @@
+{
+  "width": 870,
+  "height": 770,
+  "x0": -334.5,
+  "z0": -409.5,
+  "spacing": 1,
+  "plain": -15,
+  "flank": {
+    "run_m": 38,
+    "variation_m": 9,
+    "profile": "1-(1-t)^2 from blurred shore height to plain"
+  },
+  "road": {
+    "width_m": 6,
+    "shoulder_m": 6,
+    "length_m": 948.5,
+    "max_grade_pct": 12.3,
+    "start_y": -15,
+    "end_y": 41.6,
+    "measured_cells_graded": 9804,
+    "max_cut_m": 11.45,
+    "max_fill_m": 13.85
+  },
+  "stats": {
+    "cells_measured_exact": 78280,
+    "cells_road_graded": 9804,
+    "cells_flank_fiction": 63353,
+    "cells_plain_fiction": 518463,
+    "speck_cells_treated_as_flank": 0,
+    "land_cells_unchanged": 77488,
+    "land_cells_changed": 10596,
+    "measured_max_m": 42.792510986328125,
+    "gameplay_land_max_m": 42.792510986328125
+  }
+}

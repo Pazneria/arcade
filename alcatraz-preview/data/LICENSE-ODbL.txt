@@ -1,0 +1,9 @@
+Microsoft US Building Footprints, served by Esri MSBFP2.
+The original and adapted footprint databases in this release are available under
+the Open Data Commons Open Database License 1.0 (ODbL):
+https://opendatacommons.org/licenses/odbl/1-0/
+Source: https://github.com/microsoft/USBuildingFootprints
+Original extract and projected extract: ../source-data/
+Runtime transformed geometry and surface statistics: ../data/footprints.json
+Runtime geometry method: ../src/world.js and ../src/geom.js
+Additional attribution and data limitations: ../CREDITS.md and ../credits.html
