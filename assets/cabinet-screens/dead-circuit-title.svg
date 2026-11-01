@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+<rect width="800" height="1000" fill="#152722"/><path d="M0 670 300 440 480 470 800 250V1000H0" fill="#20392e"/>
+<g fill="none" stroke="#769579" opacity=".2"><path d="M0 390H800M0 520H800M0 650H800M0 780H800M160 0V1000M320 0V1000M480 0V1000M640 0V1000"/></g>
+<rect x="30" y="30" width="740" height="940" fill="none" stroke="#a6b69a"/>
+<text x="60" y="96" fill="#bac6a7" font-family="monospace" font-size="21" letter-spacing="5">SONOMA PLAZA / FIELD 01</text>
+<text x="52" y="278" fill="#eee6c9" font-family="Impact,Arial Black,sans-serif" font-weight="900" font-size="176" letter-spacing="-7">DEAD</text>
+<text x="52" y="420" fill="#e78254" font-family="Impact,Arial Black,sans-serif" font-weight="900" font-size="151" letter-spacing="-7">CIRCUIT</text>
+<g fill="#aab28e"><path d="M160 740V590L400 505 640 590V740ZM365 550V440H435V550Z"/><path d="M350 446 400 413 450 446Z"/></g>
+<path d="M140 591 400 495 660 591 650 608 400 521 150 608Z" fill="#556e54"/>
+<g fill="#1b3026"><path d="M230 740V655A32 32 0 0 1 294 655V740ZM368 740V625A32 32 0 0 1 432 625V740ZM506 740V655A32 32 0 0 1 570 655V740Z"/><path d="M384 476V450H416V476Z"/></g>
+<path d="M60 794H740" stroke="#e78254" stroke-width="3"/><text x="60" y="848" fill="#eee6c9" font-family="monospace" font-size="29" letter-spacing="3">10 MINUTES. KEEP MOVING.</text>
+<text x="60" y="909" fill="#aabb9d" font-family="monospace" font-size="21" letter-spacing="3">SURVIVAL FPS / KEYBOARD + MOUSE</text>
+</svg>

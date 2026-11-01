@@ -82,6 +82,13 @@ export function buildArcadeCatalog(location, codexLinks = null) {
       guideUrl: `${publishedSiteOrigin}/rebound-relay/wiki/`,
       thumbnail: './assets/cabinet-screens/rebound-relay-title.webp',
     },
+    {
+      id: 'dead-circuit',
+      name: 'Dead Circuit',
+      description: 'Hold out in Sonoma Plaza. Fight the horde, build your kit, and survive ten minutes. Desktop keyboard and mouse.',
+      url: `${resolveGameUrl(18765, '/arcade/dead-circuit/')}?map=sonoma`,
+      thumbnail: './assets/cabinet-screens/dead-circuit-title.svg',
+    },
   ];
   return Object.freeze(games.map((game) => Object.freeze({
     ...game,

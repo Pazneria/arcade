@@ -273,6 +273,7 @@ const GAMES = {
   tide: { title: titles[2], short: shortTitle(titles[2]), bank: 'WAVECREST', c: ['#19d3c5', '#ff6f61', '#ffd27a', '#06283a', '#b8fff4'], glow: 0x30e0d0, portrait: false, labels: ['STEP', 'SPIN', 'CLAP', 'POSE'], hs: 'TOP DANCERS' },
   kite: { title: titles[3], short: shortTitle(titles[3]), bank: 'WAVECREST', c: ['#ffb347', '#ff5e8a', '#4b1f5c', '#1a0d2e', '#fff1d6'], glow: 0xff7a8a, portrait: false, labels: ['LUNGE', 'GUST', 'DIVE', 'LOOP'], hs: 'SKY CHAMPIONS' },
   light: { title: titles[5], short: shortTitle(titles[5]), bank: 'STARLITE', c: ['#ffcf4a', '#e2384d', '#fff3c4', '#0a1638', '#36c6e8'], glow: 0x6fb8ff, portrait: false, labels: ['BEAM', 'HORN'], hs: 'KEEPERS OF THE LIGHT' },
+  circuit: { title: titles[6], short: shortTitle(titles[6]), bank: 'VOLT-TEK', c: ['#e77b49', '#304d3b', '#eee6c9', '#152722', '#bfc69b'], glow: 0xb7c695, portrait: true, labels: ['FIRE', 'DASH', 'RELOAD'], hs: 'SURVIVE THE STREETS' },
 };
 
 // --- small motif painters (shared by marquees, side art, posters) -------------
@@ -1049,6 +1050,17 @@ vec3 game(vec2 p, float t){
 
 function screenMaterial(key, offset) {
   const G = GAMES[key];
+  if(key==='circuit'){
+    const cv=cnv(480,640),g=cv.getContext('2d');
+    g.fillStyle='#152722';g.fillRect(0,0,480,640);g.strokeStyle='#8c9e7d';g.strokeRect(18,18,444,604);
+    g.fillStyle='#b7c8a5';g.font='18px monospace';g.fillText('SONOMA / FIELD 01',36,65);
+    g.fillStyle='#eee6c9';g.font='900 92px Impact, sans-serif';g.fillText('DEAD',32,196);
+    g.fillStyle='#e78254';g.font='900 83px Impact, sans-serif';g.fillText('CIRCUIT',32,280);
+    g.fillStyle='#57715a';g.beginPath();g.moveTo(70,423);g.lineTo(240,355);g.lineTo(410,423);g.closePath();g.fill();g.fillRect(85,423,310,105);g.fillRect(217,316,46,74);
+    g.fillStyle='#152722';for(const x of [125,215,305])g.fillRect(x,454,44,74);
+    g.fillStyle='#d6d9b9';g.font='20px monospace';g.fillText('10 MINUTES. KEEP MOVING.',36,570);
+    return new THREE.MeshBasicMaterial({map:tex(cv),toneMapped:false});
+  }
   const aspect = G.portrait ? 0.75 : 4 / 3;
   const res = G.portrait ? [224, 288] : [320, 240];
   const mat = new THREE.ShaderMaterial({
@@ -1316,7 +1328,7 @@ function buildVoltTek(key, offset, btnColors, stickColor) {
   const [aL, aR] = artMaterials(key, 0, 0.84, 1.84);
   const st = sidePanels(g, shape, W, D, 0.012, aL, aR, M.tA, 0.004);
   const Wi = W - 2 * st;
-  const front = new THREE.MeshStandardMaterial({ color: key === 'crater' ? 0x6a1420 : 0x2a1260, roughness: 0.45 });
+  const front = new THREE.MeshStandardMaterial({ color: key === 'circuit' ? 0x243b2d : key === 'crater' ? 0x6a1420 : 0x2a1260, roughness: 0.45 });
   slab(g, D, [0.72, 0], [0.72, 0.1], Wi, 0.02, M.kick);
   slab(g, D, [0.72, 0.1], [0.72, 0.84], Wi, 0.02, front);
   // stripes across the lower front
@@ -2020,6 +2032,12 @@ function build() {
   const slots = [cabinets[0], cabinets[1], cabinets[2], cabinets[3], extra, feature];
   slots.forEach((object, gameIndex) => addGameAnchor(object, gameIndex));
   cabinets.push(extra);
+  // Append a seventh anchor; existing cabinet indices and return positions stay valid.
+  if(games[6]?.id==='dead-circuit') {
+    const circuit=buildVoltTek('circuit',14.3,['orange','yellow','red'],'black');
+    circuit.position.set(ROOM.x1-0.03-circuit.userData.D/2,0,-4.65);
+    circuit.rotation.y=-Math.PI/2;staticRoot.add(circuit);cabinets.push(circuit);addGameAnchor(circuit,6);
+  }
   addExitAnchor('home-entrance', 0, -0.02, 1.72);
   addExitAnchor('home-exit', -2.75, -10.88, 1.0);
   // colliders for cabinets

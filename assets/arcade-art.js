@@ -16,6 +16,7 @@ const signatures = {
   'GHOST SIGNAL': {lines:['GHOST','SIGNAL'], face:MONO, ink:'#fff0e4', accent:'#ff91b0', field:'#241126', motif:'signal'},
   'NIGHT COURIER': {lines:['NIGHT','COURIER'], face:SANS, italic:true, ink:'#f6ecff', accent:'#72d9ed', field:'#171329', motif:'route'},
   'REBOUND RELAY': {lines:['REBOUND','RELAY'], face:SANS, ink:'#fff1be', accent:'#6de1ea', field:'#091c3c', motif:'relay'},
+  'DEAD CIRCUIT': {lines:['DEAD','CIRCUIT'], face:SANS, ink:'#eee6c9', accent:'#e77b49', field:'#152722', motif:'circuit'},
 };
 
 function signature(title) {
@@ -50,6 +51,9 @@ function emblem(g, motif, x, y, size, ink) {
   } else if (motif === 'route') {
     g.moveTo(-.9,.65);g.lineTo(-.2,.65);g.lineTo(.25,-.65);g.lineTo(.9,-.65);
     g.moveTo(.5,-.95);g.lineTo(.95,-.65);g.lineTo(.5,-.3);
+  } else if (motif === 'circuit') {
+    g.moveTo(-1,0);g.lineTo(-.45,0);g.lineTo(-.2,-.65);g.lineTo(.2,.65);g.lineTo(.45,0);g.lineTo(1,0);
+    g.moveTo(-1,-.5);g.lineTo(-.65,-.5);g.moveTo(.65,.5);g.lineTo(1,.5);
   } else if (motif === 'relay') {
     for(const sx of [-.6,.25]) {g.moveTo(sx-.3,-.6);g.lineTo(sx+.25,0);g.lineTo(sx-.3,.6);}
   } else {

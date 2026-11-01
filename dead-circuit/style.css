@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{font-family:'IBM Plex Mono',monospace;color:#eee9d7;background:#101512}*{box-sizing:border-box}body{margin:0;overflow:hidden}canvas,#vignette,#flash,#hurt,#hud,#overlay{position:fixed;inset:0;width:100%;height:100%}canvas{display:block}#vignette{pointer-events:none;background:radial-gradient(ellipse at center,transparent 38%,#090d0bd9 120%);z-index:1}#flash,#hurt{pointer-events:none;z-index:2;opacity:0}#flash{background:#ffdf87}#hurt{background:radial-gradient(ellipse,transparent 36%,#b10f0acc 100%)}#hud{pointer-events:none;z-index:3;padding:28px 34px;display:flex;flex-direction:column;justify-content:space-between;text-shadow:0 2px 8px #000}.top,.bottom{display:flex;justify-content:space-between;align-items:flex-start}.eyebrow,.wavebox span{display:block;color:#c6cfad;font-size:10px;letter-spacing:.2em;font-weight:600}.brand{font:800 16px 'Barlow Condensed',sans-serif;letter-spacing:.12em;margin-top:5px}.brand span{color:#e56338}.wavebox{text-align:right}.wavebox strong{font:900 48px/.9 'Barlow Condensed',sans-serif;color:#f5d57a}.bottom{align-items:end}.health strong,.ammo strong,.score strong{font:900 53px/.9 'Barlow Condensed',sans-serif}.health small,.ammo small{font:700 19px 'Barlow Condensed',sans-serif;color:#bbc3a6}.bar{width:150px;height:5px;background:#ffffff33;margin-top:9px}.bar div{height:100%;width:100%;background:#ed704b}.score{text-align:center}.score strong{display:block;color:#f4d477;font-size:42px;letter-spacing:.05em}.score small{font-size:10px;color:#c9d1b4;letter-spacing:.16em}.ammo{text-align:right}.ammo #reload{display:block;color:#c5caae;font-size:10px;letter-spacing:.14em;margin-top:8px}#crosshair{position:fixed;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);z-index:4;pointer-events:none;opacity:.85}#crosshair:before,#crosshair:after{content:'';position:absolute;background:#f2f2dd;box-shadow:0 0 3px #111}#crosshair:before{left:10px;top:2px;width:2px;height:18px}#crosshair:after{top:10px;left:2px;width:18px;height:2px}#hitmark{position:fixed;left:50%;top:50%;transform:translate(-50%,-51%);font:700 55px Arial;color:#ffdf76;z-index:5;opacity:0;pointer-events:none}#announce{position:absolute;top:18%;left:50%;transform:translateX(-50%);font:900 54px 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#f5d57a;text-align:center;opacity:0}#pop{position:absolute;left:54%;top:46%;font:900 25px 'Barlow Condensed',sans-serif;color:#f7d879;opacity:0}#overlay{z-index:8;background:linear-gradient(90deg,#111c17f5 0%,#1a2822ed 46%,#101713a8 100%);display:flex;align-items:center;padding:6vw}.panel{max-width:650px}.kicker,.foot{font-size:10px;letter-spacing:.2em;color:#f3cc73}.kicker{border-left:3px solid #ec7046;padding-left:12px}h1{font:900 clamp(76px,11vw,156px)/.72 'Barlow Condensed',Impact,sans-serif;letter-spacing:-.035em;margin:40px 0 28px}h1 em{color:#e56b43;font-style:normal}p{font-size:14px;line-height:1.7;color:#cbd2ba}button{margin:24px 0 40px;border:0;background:#ead47e;color:#1d261b;font:900 18px 'Barlow Condensed',sans-serif;letter-spacing:.08em;padding:17px 22px;min-width:240px;text-align:left;cursor:pointer}button:hover{background:#fff0a1}button span{float:right}.controls{display:flex;gap:26px;border-top:1px solid #aeb99b55;padding-top:20px}.controls div{display:flex;flex-direction:column;gap:5px}.controls b{font-size:11px}.controls span{font-size:9px;color:#a5b195;letter-spacing:.13em}.foot{margin-top:36px;color:#9eab8e}.sidecopy{margin-left:auto;align-self:flex-end;font:900 clamp(50px,7vw,110px)/.8 'Barlow Condensed',sans-serif;color:#dfe3cb22;text-align:right}.sidecopy span{display:block;color:#e56b43;font-size:50px;margin-top:20px}@media(max-width:700px){.sidecopy{display:none}#hud{padding:18px}.controls{gap:12px}.controls b{font-size:9px}.health strong,.ammo strong{font-size:38px}.score strong{font-size:32px}.bar{width:95px}}
+#doorPrompt{display:none;position:fixed;z-index:4;left:50%;top:61%;transform:translateX(-50%);padding:9px 14px;max-width:90vw;width:max-content;text-align:center;white-space:pre-line;background:#18211de0;border-left:3px solid #e6c778;color:#f1e7bf;box-shadow:0 3px 14px #0008;font:700 12px/1.5 'IBM Plex Mono',monospace;letter-spacing:.06em;pointer-events:none}
+#waveStatus{display:block;margin-top:5px;color:#d4d6bd;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.14em;white-space:nowrap}
+#surgeHud{display:block;margin-top:5px;color:#efb77e;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;white-space:nowrap}#surgeHud:empty{display:none}
+#perkHud{position:fixed;z-index:3;bottom:122px;left:34px;color:#ead9a7;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-shadow:0 2px 5px #000;pointer-events:none}#perkHud:empty{display:none}@media(max-width:700px){#perkHud{left:18px;bottom:98px}}
+#pickupHud{position:fixed;z-index:3;top:78px;left:34px;padding:5px 9px;border-left:3px solid #e8c777;background:#151d17c7;color:#f7db91;font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-shadow:0 2px 5px #000;pointer-events:none}#pickupHud:empty{display:none}@media(max-width:700px){#pickupHud{top:68px;left:18px}}
+/* Combat information stays around the edge, leaving the sight picture clear. */
+.score{position:fixed;left:32%;bottom:28px;transform:translateX(-50%)}
+.health small{font-size:13px;letter-spacing:.05em}.critical .health strong{color:#ff937d}.critical .bar div{background:#ff624f}
+#announce{top:12%;font-size:clamp(26px,3.5vw,40px);white-space:nowrap}#hitmark{font-size:38px}#pop{left:54%;top:53%;font-size:20px;white-space:nowrap}
+.damageDirection{position:fixed;z-index:2;pointer-events:none;opacity:0}
+.damageDirection.front{left:20%;top:0;width:60%;height:17%;background:linear-gradient(to bottom,#d4473b99,transparent)}
+.damageDirection.back{left:20%;bottom:0;width:60%;height:17%;background:linear-gradient(to top,#d4473b99,transparent)}
+.damageDirection.left{left:0;top:20%;width:17%;height:60%;background:linear-gradient(to right,#d4473b99,transparent)}
+.damageDirection.right{right:0;top:20%;width:17%;height:60%;background:linear-gradient(to left,#d4473b99,transparent)}
+#lowHealth{display:none;position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse,transparent 48%,#a3211b88 125%)}
+.critical #lowHealth{display:block;animation:lowPulse 1.7s ease-in-out infinite}
+@keyframes lowPulse{0%,100%{opacity:.24}50%{opacity:.56}}
+@media(prefers-reduced-motion:reduce){.critical #lowHealth{animation:none;opacity:.4}}
+@media(max-width:700px){.score{left:35%;bottom:18px}.score strong{font-size:30px}.health small{font-size:11px}#pop{font-size:16px}}
+#xpHud{position:fixed;z-index:3;top:28px;left:50%;transform:translateX(-50%);width:clamp(150px,24vw,300px);color:#d3e0c8;font:600 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-shadow:0 2px 5px #000;pointer-events:none}.xpLabels{display:flex;justify-content:space-between;gap:12px}.xpTrack{height:4px;margin-top:7px;background:#18231fcc;box-shadow:0 1px 5px #0007}.xpFill{height:100%;width:0;background:#9dc9a9;transition:width .16s ease-out}@media(max-width:700px){#xpHud{top:22px;width:150px;font-size:8px}}
+#levelScreen{display:none;position:fixed;inset:0;z-index:12;align-items:center;justify-content:center;background:#0d1713ed;padding:24px;overflow:auto}.levelPanel{width:min(900px,100%)}.levelKicker{color:#e9c775;font-size:10px;font-weight:600;letter-spacing:.22em}.levelPanel h2{margin:10px 0 4px;font:900 clamp(42px,6vw,72px)/.9 'Barlow Condensed',Impact,sans-serif;color:#f1ecda}.levelSubtitle{margin:10px 0 26px;color:#bac7ad;font-size:11px;letter-spacing:.15em}.levelChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.levelCard{min-width:0;min-height:190px;margin:0;padding:18px;background:#2a392f;border:1px solid #71846d;color:#e8eadb;display:flex;flex-direction:column;gap:10px;text-align:left;cursor:pointer;letter-spacing:0;font:400 12px/1.5 'IBM Plex Mono',monospace}.levelCard:hover,.levelCard:focus-visible{background:#415441;border-color:#e2c67b;outline:none}.levelCard strong{font:900 26px/1 'Barlow Condensed',Impact,sans-serif;letter-spacing:.04em;color:#f3d283}.levelCard small{margin-top:auto;color:#aebfa7;font-size:10px;letter-spacing:.1em}.levelNumber{color:#bacbb0;font-size:10px;letter-spacing:.15em}.levelHint{margin-top:20px;color:#9faf98;font-size:10px;letter-spacing:.16em}@media(max-width:700px){.levelChoices{grid-template-columns:1fr;gap:7px}.levelCard{min-height:0;padding:12px;gap:5px}.levelCard strong{font-size:20px}.levelPanel h2{font-size:40px}.levelSubtitle{margin-bottom:14px}.levelHint{margin-top:10px}}
+.levelCard.evolution{border-color:#d8b76d;background:#4b4532}.levelCard.evolution:hover,.levelCard.evolution:focus-visible{background:#5c5339}.evolutionHints{margin-top:16px;color:#ccb985;font:600 10px/1.6 'IBM Plex Mono',monospace;letter-spacing:.04em}@media(max-width:700px){.evolutionHints{margin-top:8px;font-size:9px}}
+
+#awareness{display:none;position:fixed;inset:0;z-index:3;pointer-events:none;color:#d7dfc9;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-shadow:0 2px 5px #000}
+.compass{position:absolute;top:57px;left:50%;transform:translateX(-50%);width:260px;height:21px;overflow:hidden;background:linear-gradient(90deg,transparent,#17241c99 20%,#17241c99 80%,transparent);border-bottom:1px solid #b4c5a344}
+.compassTape{position:absolute;inset:0}.compassTape span{position:absolute;top:2px;transform:translateX(-50%);opacity:.8}.compassCenter{position:absolute;left:50%;bottom:0;width:1px;height:5px;background:#eff5dd}.compassMarker{position:absolute;bottom:-1px;transform:translateX(-50%);color:#e4c67d;font-size:8px}
+.bearingLabel{position:absolute;top:81px;left:50%;transform:translateX(-50%);color:#dfcb93;font-size:9px;white-space:nowrap}.threatCue{position:absolute;opacity:0;color:#e1a965;font-size:16px;transition:opacity .2s;text-shadow:0 0 9px #28120a,0 2px 5px #000}.threatLeft{left:20px;top:45%}.threatRight{right:20px;top:45%}.threatBack{bottom:130px;left:50%;transform:translateX(-50%)}
+@media(max-width:700px){.compass{top:51px;width:190px}.bearingLabel{top:75px;font-size:8px}.threatBack{bottom:105px}}
+
+#beaconHud{display:block;margin-top:5px;color:#f1cf83;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.08em;white-space:nowrap}#beaconHud:empty{display:none}
+
+#dashHud{position:fixed;right:34px;bottom:123px;z-index:3;color:#d5dfbd;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-align:right;text-shadow:0 2px 5px #000;pointer-events:none}#dashHud>div{width:105px;height:3px;margin-top:5px;margin-left:auto;background:#17231dcc}#dashHud i{display:block;height:100%;width:100%;background:#dbc57f}@media(max-width:700px){#dashHud{right:18px;bottom:96px;font-size:8px}#dashHud>div{width:80px}}
+
+#goalHud{display:block;margin-top:5px;color:#b9d1b5;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.12em;white-space:nowrap}#milestoneScreen{display:none;position:fixed;inset:0;z-index:13;align-items:center;justify-content:center;background:#0d1713ed;padding:24px}.milestonePanel{width:min(720px,100%)}.milestonePanel h2{margin:12px 0;font:900 clamp(44px,7vw,78px)/.95 'Barlow Condensed',Impact,sans-serif;color:#efd48b}.milestoneSummary{font-size:12px;letter-spacing:.09em}.milestoneActions{display:flex;gap:12px;flex-wrap:wrap}.milestoneActions button{margin:12px 0;min-width:210px}.milestoneActions .finishRun{background:#36473a;color:#e4e7d3;border:1px solid #788b73}.milestoneActions .finishRun:hover{background:#4c5e4b}
+
+#kitPicker{margin:12px 0 0;max-width:450px;color:#cfdbbe}#kitPicker label{display:block;margin-bottom:6px;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.14em}#kitSelect{width:100%;padding:9px 10px;border:1px solid #899c7e;background:#24362a;color:#f0eacb;font:700 12px 'IBM Plex Mono',monospace;cursor:pointer}#kitPicker small{display:block;margin-top:6px;font:400 10px/1.4 'IBM Plex Mono',monospace;color:#bec9ac}#kitPicker+button{margin-top:14px}@media(max-height:750px){.panel h1{margin:20px 0 16px;font-size:clamp(60px,10vh,100px)}.panel .foot{margin-top:15px}.panel button#start{margin-bottom:18px}}
+
+#resultDetails,#bestRecord{max-width:560px;color:#d6dcbf;font:600 10px/1.55 'IBM Plex Mono',monospace;letter-spacing:.05em;white-space:pre-line}#resultDetails{padding:8px 10px;border-left:2px solid #d7bb72;background:#15221acc}#bestRecord{color:#c5d3b4;margin-top:8px}.milestoneBuild{font-size:10px;line-height:1.6;color:#cbd7b7;letter-spacing:.05em}
+
+#overlay{overflow-y:auto}#milestoneScreen{overflow-y:auto}
+
+/* Twilight palette: blue slate surroundings, lamplight brass, weathered paper. */
+:root{color:#e9e6d5;background:#182426}#vignette{background:radial-gradient(ellipse at center,transparent 40%,#0c171cba 120%)}#overlay{background:linear-gradient(90deg,#172624f7 0%,#263a35ee 47%,#1b2b30b8 100%)}.brand span,h1 em,.sidecopy span{color:#c47a56}.wavebox strong,.score strong{color:#e5c783}.bar div{background:#d57c5d}#doorPrompt{border-left-color:#d9b974;background:#202d29e8;color:#efe5c4}
+
+/* Shared field-manual styling keeps choices legible without crowding play. */
+#levelScreen{background:linear-gradient(125deg,#111e1beb,#172824f5);padding:clamp(14px,3vw,32px)}.levelPanel h2{letter-spacing:.025em}.levelSubtitle{color:#c9d5be}.levelKicker{display:inline-block;padding-bottom:7px;border-bottom:2px solid #d4b776}.levelCard{position:relative;min-height:216px;padding:19px;background:linear-gradient(155deg,#33483c,#25372f);border-color:#718576;box-shadow:0 9px 24px #07100b55;transition:background-color .15s,border-color .15s,transform .15s}.levelCard:hover,.levelCard:focus-visible{transform:translateY(-3px);outline:2px solid #e4c780;outline-offset:2px}.cardTop{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}.upgradeIcon{display:grid;place-items:center;width:40px;height:40px;flex:none;color:#d7d8aa;background:#1b3029;border:1px solid #8e9e83}.upgradeIcon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.levelNumber{color:#c7d4bd;font-size:9px;letter-spacing:.12em;text-align:right}.upgradeDescription{color:#d4dfcf;line-height:1.5}.levelCard small{padding-top:9px;border-top:1px solid #98ad8f55;width:100%;color:#c9d4bb}.levelCard.evolution .upgradeIcon{color:#f0d28d;background:#4e4733;border-color:#b69c67}.xpTrack{height:5px;border:1px solid #a8bfa766}.xpFill{background:#b2d2b7}.wavebox strong{letter-spacing:.025em}.health .eyebrow,.ammo .eyebrow,.score .eyebrow{color:#d1dac2}.ammo #reload{color:#d2dac4}.levelHint{color:#bdcbb2}@media(max-width:700px){.levelCard{min-height:0;padding:10px 12px;gap:5px}.cardTop{width:auto;position:absolute;right:12px;top:10px}.upgradeIcon{width:28px;height:28px}.upgradeIcon svg{width:18px;height:18px}.levelNumber{font-size:8px}.levelCard strong,.upgradeDescription,.levelCard small{padding-right:105px}.levelCard small{padding-top:5px}.levelCard:hover,.levelCard:focus-visible{transform:none}}@media(prefers-reduced-motion:reduce){.levelCard{transition:none}}
+
+/* Outpost field-note title and end-of-run hierarchy. */
+#overlay{padding:clamp(24px,5vw,72px);background:linear-gradient(105deg,#14211ef9 0%,#24352fed 55%,#263b3bbd 100%)}#overlay .panel{position:relative;width:min(680px,100%);max-width:680px}#overlay .panel:before{content:'DEAD CIRCUIT  /  SURVIVOR TRANSMISSION';display:block;margin-bottom:20px;color:#aabca5;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.17em}#overlay h1{font-size:clamp(72px,9vw,128px);margin:30px 0 22px;text-shadow:0 3px 20px #06100d70}#overlay .kicker{color:#d8c18b;border-color:#be7e59}#overlay #description{margin:0 0 16px;font-size:13px;color:#d2ddcb}#overlay .sidecopy{color:#d6dfc51f;letter-spacing:-.035em}#overlay #start{display:block;width:min(100%,340px);margin:14px 0 22px;border-left:5px solid #a27d4f;box-shadow:0 8px 24px #08130e55}#overlay #start:focus-visible,#kitSelect:focus-visible,.milestoneActions button:focus-visible{outline:3px solid #f2d995;outline-offset:3px}#overlay .controls{flex-wrap:wrap;gap:14px 23px;padding-top:16px}#overlay .controls div{min-width:64px}#overlay .foot{margin-top:20px}#overlay[data-mode="pause"] h1,#overlay[data-mode="results"] h1{font-size:clamp(62px,8vw,105px);margin:24px 0 18px}#resultDetails{display:none;white-space:normal;padding:12px 14px;border-left:3px solid #d7bb72;background:#16261fdb}#resultDetails strong,#resultDetails span,#resultDetails small{display:block}#resultDetails strong{font:800 16px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.06em;color:#f1daa0}#resultDetails span{margin-top:7px;font-size:10px;line-height:1.5;color:#c5d3bd}#resultDetails small{margin-top:8px;color:#e4c98c;font-size:9px;letter-spacing:.1em}.milestoneSummary{padding:12px 14px;border-left:3px solid #d7bb72;background:#16261fdb;color:#efdda9;font-weight:700}.milestoneBuild{max-width:680px}.milestoneActions button{border-left:4px solid #a27d4f}@media(max-width:700px){#overlay{align-items:flex-start;padding:24px 20px}#overlay .panel:before{margin-bottom:14px}#overlay h1{font-size:clamp(60px,16vw,90px);margin:22px 0 17px}#overlay .controls{gap:10px 16px}#overlay .controls b{font-size:10px}#overlay .controls span{font-size:9px}}
+
+/* Brief reward entrances stay confined to the choice and milestone panels. */
+@keyframes rewardEntrance{from{opacity:.55;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes evolutionEdge{from{border-color:#f0d596;box-shadow:0 0 16px #d0b57244}to{border-color:#d8b76d;box-shadow:0 9px 24px #07100b55}}#levelScreen .levelPanel,#milestoneScreen .milestonePanel{animation:rewardEntrance .32s ease-out both}.levelCard.evolution{animation:evolutionEdge .65s ease-out both}@media(prefers-reduced-motion:reduce){#levelScreen .levelPanel,#milestoneScreen .milestonePanel,.levelCard.evolution{animation:none}}
+/* Keep transient announcements clear of compass bearings and reserve space for the ammo panel. */
+#announce{top:104px;max-width:90vw;white-space:normal;line-height:1.05}
+#perkHud{max-width:55vw;line-height:1.5}
+@media(max-width:850px){#perkHud{max-width:56vw;font-size:9px;bottom:120px}.bearingLabel{max-width:46vw;overflow:hidden;text-overflow:ellipsis}#announce{top:100px;font-size:clamp(22px,4vw,32px)}}
+@media(max-height:700px){#overlay,#levelScreen,#milestoneScreen{align-items:flex-start}#overlay .sidecopy{display:none}}
+#rendererStatus{position:fixed;left:34px;top:110px;z-index:3;pointer-events:none;padding:4px 7px;background:#18231fcc;border-left:2px solid #9dc9a9;color:#d9e7d1;text-shadow:0 2px 5px #000;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.08em}
+@media(max-width:700px){#rendererStatus{left:18px;top:100px}}
+#motionOption{display:flex;align-items:center;gap:8px;width:max-content;max-width:100%;margin:12px 0 0;color:#d2ddc5;font:600 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.08em;cursor:pointer}#motionOption input{accent-color:#dfc680;width:15px;height:15px;margin:0}#motionOption input:focus-visible{outline:2px solid #f2d995;outline-offset:3px}
+#rendererCompare{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0;color:#c6d1b9;font:600 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.06em}#rendererCompare .compareStatus{color:#e9d49a}#rendererCompare a{color:#c7e3d0;text-decoration:underline;text-underline-offset:3px}#rendererCompare a:focus-visible{outline:2px solid #f2d995;outline-offset:3px}#rendererCompare small{flex-basis:100%;font-size:9px;color:#aabca5}#overlay[data-mode="pause"] #rendererCompare small{display:none}
+#overlay #start:disabled{cursor:wait;opacity:.55}
+
+#rendererStatus:empty{display:none}
+
+/* Stable center with spread-only guides; hits leave the target center open. */
+#crosshair{--spread-x:8px;--spread-y:4px;overflow:visible}
+#crosshair:before{left:50%;top:50%;width:2px;height:2px;transform:translate(-50%,-50%);border-radius:50%}
+#crosshair:after{display:none}
+#crosshair i,#crosshair b{position:absolute;inset:0;display:block}
+#crosshair i:before,#crosshair i:after,#crosshair b:before,#crosshair b:after{content:'';position:absolute;background:#f2f2dd;box-shadow:0 0 3px #111}
+#crosshair i:before,#crosshair i:after{width:5px;height:1.5px;top:calc(50% - .75px)}
+#crosshair i:before{left:calc(50% - var(--spread-x) - 5px)}#crosshair i:after{left:calc(50% + var(--spread-x))}
+#crosshair b:before,#crosshair b:after{width:1.5px;height:5px;left:calc(50% - .75px)}
+#crosshair b:before{top:calc(50% - var(--spread-y) - 5px)}#crosshair b:after{top:calc(50% + var(--spread-y))}
+#hitmark{width:30px;height:30px;transform:translate(-50%,-50%);font-size:0}
+#hitmark:before,#hitmark:after{content:'';position:absolute;left:3px;top:14px;width:24px;height:2px;background:linear-gradient(90deg,currentColor 0 32%,transparent 32% 68%,currentColor 68% 100%);box-shadow:none}
+#hitmark:before{transform:rotate(45deg)}#hitmark:after{transform:rotate(-45deg)}
+#hitmark.kill:before,#hitmark.kill:after{left:1px;width:28px;height:2.5px}
+
+/* A thinner, shorter marker means only outer shotgun pellets connected. */
+#hitmark.edge:before,#hitmark.edge:after{left:5px;width:20px;height:1px;background:linear-gradient(90deg,currentColor 0 24%,transparent 24% 76%,currentColor 76% 100%)}
+
+/* A quiet, stationary highlight draws attention to the empty-ammo instruction. */
+.ammo #reload.empty-cue{color:#ffd39b;background:#603a2bc9;outline:1px solid #e1a77e;padding:4px 6px}
+
+/* Body hit: X; head hit: plus; kill: X enclosed in a ring. */
+#hitmark.head:before{transform:rotate(0deg)}#hitmark.head:after{transform:rotate(90deg)}
+#hitmark.kill{border:1.5px solid currentColor;border-radius:50%}
+
+/* Reload progress follows the existing reload clock; no animated transition is needed. */
+#reloadProgress{width:84px;height:3px;margin:5px 0 0 auto;background:#ffffff35;overflow:hidden}#reloadProgress[hidden]{display:none}#reloadProgressFill{height:100%;width:0;background:#e2c987}
+
+.threatCue[data-role]:not([data-role=""])::after{content:attr(data-role);display:block;font-size:9px;letter-spacing:.08em;color:#ead1a7;white-space:nowrap;text-align:center}
+
+.keeperCue{display:none;position:absolute;top:99px;left:50%;transform:translateX(-50%);padding:3px 8px;background:#18221ee6;border:1px solid #c9ab73;color:#efd3a0;font-size:10px;white-space:nowrap;text-align:center}
+@media(max-width:700px){.keeperCue{top:93px;font-size:9px}}
+
+#roleReward{display:none;color:#e8c99b;font-size:9px;letter-spacing:.04em;white-space:nowrap}
+
+#soundOption{display:flex;align-items:center;gap:8px;width:max-content;max-width:100%;margin:12px 0 0;color:#d2ddc5;font:600 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.08em;cursor:pointer}#soundOption input{accent-color:#dfc680;width:15px;height:15px;margin:0}#soundOption input:focus-visible{outline:2px solid #f2d995;outline-offset:3px}
+
+#ambienceOption{display:flex;align-items:center;gap:8px;width:max-content;max-width:100%;margin:8px 0 0;color:#d2ddc5;font:600 10px/1.4 'IBM Plex Mono',monospace;letter-spacing:.08em;cursor:pointer}#ambienceOption input{accent-color:#dfc680;width:15px;height:15px;margin:0}#ambienceOption input:focus-visible{outline:2px solid #f2d995;outline-offset:3px}
+
+.levelCard .evolutionHint{display:block;margin-top:6px;color:#d4c58f;font-size:10px;line-height:1.35;letter-spacing:0}
+
+#pauseBuild{max-width:560px;max-height:22vh;overflow-y:auto;white-space:pre-line;margin:8px 0;padding:9px 12px;border-left:2px solid #d7bb72;background:#15221acc;color:#d6dcbf;font:600 10px/1.5 'IBM Plex Mono',monospace;letter-spacing:.03em}
+/* Keep longer reward and purchase receipts below the aiming lane. */
+#pop{left:34px;top:auto;bottom:170px;max-width:min(340px,38vw);white-space:normal;overflow-wrap:anywhere;font-size:16px;line-height:1.2}
+@media(max-width:700px){#pop{left:18px;bottom:155px;max-width:42vw;font-size:14px}}
+/* Separate magazine and reserve labels without enlarging the ammo panel. */
+.ammo .magLabel{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.05em;color:#cbd6bd}.ammo small{font-size:13px;letter-spacing:.04em}
+/* Long upgrade details get a full-width reading column on smaller desktops. */
+.levelCard strong,.levelCard .upgradeDescription,.levelCard small{overflow-wrap:anywhere}
+@media(max-width:850px){
+  .levelChoices{grid-template-columns:minmax(0,1fr);gap:8px}
+  .levelCard{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 12px;min-height:0;padding:12px}
+  .levelCard .cardTop{position:static;grid-column:1;grid-row:1 / span 4;width:auto;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;gap:5px}
+  .levelCard strong,.levelCard .upgradeDescription,.levelCard small{grid-column:2;padding-right:0}
+  .levelCard small{margin-top:2px;padding-top:5px}
+  .levelCard:focus-visible{outline:2px solid #e4c780;outline-offset:2px}
+  .levelSubtitle{margin-bottom:14px}
+}
+/* Longer workbench offers stay below and beside the aiming lane. */
+#doorPrompt[data-kind="workbench"]{left:auto;right:34px;top:52%;transform:none;max-width:min(420px,40vw);text-align:left;font-size:10px;line-height:1.3;overflow-wrap:anywhere}
+@media(max-width:700px){#doorPrompt[data-kind="workbench"]{right:18px;max-width:44vw;font-size:9px;line-height:1.25}}
+/* Keep essential edge HUD and menu actions inside narrow resized windows. */
+#doorPrompt{overflow-wrap:anywhere}
+#overlay #start{min-width:0;max-width:100%}
+.milestoneActions button{min-width:min(210px,100%);max-width:100%}
+@media(max-width:480px){
+  .health{max-width:30vw}.health .bar{width:min(95px,30vw)}
+  .ammo{max-width:32vw}.ammo .eyebrow,.ammo #reload{white-space:normal;overflow-wrap:anywhere}
+  .score{left:50%;max-width:22vw}.score strong{font-size:24px;letter-spacing:0;overflow-wrap:anywhere}
+  .wavebox{max-width:30vw}#waveStatus,#goalHud,#surgeHud,#beaconHud{white-space:normal;overflow-wrap:anywhere}
+}
+#rendererStatus{max-width:min(440px,80vw);white-space:normal;overflow-wrap:anywhere}
+/* The in-game motion preference also quiets HUD pulsing and transitions. */
+.reducedHudMotion #lowHealth{animation:none;opacity:.4}
+.reducedHudMotion .threatCue,.reducedHudMotion .xpFill{transition:none}
+/* Damage direction uses a short text-and-arrow cue as well as the edge tint. */
+.damageDirection::after{position:absolute;color:#ffe3cd;font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.06em;text-shadow:0 1px 4px #1b0907}
+.damageDirection.front::after{content:'HIT ▲';top:7px;left:50%;transform:translateX(-50%)}
+.damageDirection.back::after{content:'HIT ▼';bottom:7px;left:50%;transform:translateX(-50%)}
+.damageDirection.left::after{content:'◀ HIT';left:7px;top:50%;transform:translateY(-50%)}
+.damageDirection.right::after{content:'HIT ▶';right:7px;top:50%;transform:translateY(-50%)}
+
+#inspectionStatus:not([hidden]){position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#17231fe8;color:#f2dfaa;padding:8px 12px;font-size:11px;letter-spacing:.1em;text-align:center}

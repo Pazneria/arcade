@@ -1,0 +1,18 @@
+{
+  "release": "0855d7bbe9cd0370a28a5f19492ec5e52297842fc27af3439626816325330fb1",
+  "files": {
+    "THIRD_PARTY_NOTICES.md": "0a53ff8536e13c3c2fb884dd8abb867900f4a206186f33a66f11d113dd7797c2",
+    "game.js": "20c690832da1f1c6871ff7a434529302c22e0de9d67778e48ed549748fe3661c",
+    "index.html": "831b8fec57afee1ffef51f2586ee3f653ce1adfa0bbf4024f05bd566c9bb6f96",
+    "sonoma/blockout.mjs": "d7d2e9cff97b5fb9dc207529a085a8ae90b336d0f221fd2831161e6e877f77bf",
+    "sonoma/import_osm.py": "33efc117f921ca2ef8e6e87287810035ac8e477664fae70127f5ddf1ea9b87be",
+    "sonoma/layout.mjs": "29cffb7e538d1c29cd92ad0f8581f501eb8e6ae5a388900b47ae01f2b351831f",
+    "sonoma/source-data/sonoma-features.json": "f03f6a2ddbd3a4cc700008d222b59cdcfd6a74000843932b86ec6b726262fd02",
+    "sonoma/source-data/sonoma-plaza.osm": "5a99668cf8f554e35f5af85df5d23648d795bc49554c1b966dda197245f459ba",
+    "stage3d/adapter.mjs": "70e15271dee329bb0892bdc507aaa31893d9481f1626f553a8a8605c5d0cb22e",
+    "stage3d/vendor/THREE-LICENSE.txt": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc",
+    "stage3d/vendor/three.core.min.js": "05b2609338c76cd65daf74f3ac515bc9a5045e1b3b33edc07d8c9bd55250fa90",
+    "stage3d/vendor/three.module.min.js": "86bcee248b64f44bcfc23c331ae74619061957d59cab040171dcb6fb5900beb6",
+    "style.css": "babc4ecacf5deb9585e0ecad2f1c8a1d8e170314f568489daebd8446299f4951"
+  }
+}
